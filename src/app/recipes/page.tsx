@@ -10,6 +10,7 @@ import DayPickerSheet from "@/components/recipes/DayPickerSheet";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import EmptyState from "@/components/shared/EmptyState";
 import { useAppContext } from "@/store/context";
+import { getRecipeEmoji } from "@/lib/recipe-emoji";
 import type { RecipeSummary, CustomRecipe } from "@/types";
 
 type Tab = "discover" | "favorites" | "custom";
@@ -237,8 +238,8 @@ export default function RecipesPage() {
                   key={cr.id}
                   className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-lg flex-shrink-0">
-                    {cr.title[0]}
+                  <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
+                    {getRecipeEmoji(cr.title)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-800 truncate">{cr.title}</p>

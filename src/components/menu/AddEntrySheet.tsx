@@ -6,6 +6,7 @@ import clsx from "clsx";
 import BottomSheet from "@/components/shared/BottomSheet";
 import type { DayEntry, RecipeSummary } from "@/types";
 import { useAppContext } from "@/store/context";
+import { getRecipeEmoji } from "@/lib/recipe-emoji";
 
 interface AddEntrySheetProps {
   open: boolean;
@@ -148,8 +149,8 @@ export default function AddEntrySheet({
                     onClick={() => addCustomRecipe(cr)}
                     className="w-full text-left flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50 active:bg-brand-100"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-brand-100 flex items-center justify-center text-brand-500 font-bold text-lg flex-shrink-0">
-                      {cr.title[0]}
+                    <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
+                      {getRecipeEmoji(cr.title)}
                     </div>
                     <span className="text-sm font-medium text-gray-800">{cr.title}</span>
                   </button>

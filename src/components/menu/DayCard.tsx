@@ -5,8 +5,10 @@ import { Plus } from "lucide-react";
 import clsx from "clsx";
 import DayEntryItem from "./DayEntryItem";
 import AddEntrySheet from "./AddEntrySheet";
+import CustomRecipeSheet from "@/components/recipes/CustomRecipeSheet";
 import { useAppContext } from "@/store/context";
 import { formatDateLabelRelative } from "@/lib/dates";
+import type { CustomRecipe, DayEntry } from "@/types";
 
 interface DayCardProps {
   dateStr: string;
@@ -16,9 +18,21 @@ interface DayCardProps {
 export default function DayCard({ dateStr, isToday }: DayCardProps) {
   const { state, removeDayEntry } = useAppContext();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [viewingRecipe, setViewingRecipe] = useState<CustomRecipe | null>(null);
 
   const entries = state.menu[dateStr] ?? [];
   const { primary, secondary } = formatDateLabelRelative(dateStr);
+
+  function getOnOpen(entry: DayEntry): (() => void) | undefined {
+    if (entry.type === "recipe" && entry.recipeUrl) {
+      return () => window.open(entry.recipeUrl, "_blank", "noopener,noreferrer");
+    }
+    if (entry.type === "custom-recipe" && entry.customRecipeId) {
+      const cr = state.customRecipes.find((r) => r.id === entry.customRecipeId);
+      if (cr) return () => setViewingRecipe(cr);
+    }
+    return undefined;
+  }
 
   return (
     <div
@@ -82,6 +96,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
                 key={entry.id}
                 entry={entry}
                 onRemove={() => removeDayEntry(dateStr, entry.id)}
+                onOpen={getOnOpen(entry)}
               />
             ))}
           </div>
@@ -94,6 +109,15 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
         dateStr={dateStr}
         dateLabel={primary}
       />
+
+      {viewingRecipe && (
+        <CustomRecipeSheet
+          key={viewingRecipe.id}
+          open={true}
+          onClose={() => setViewingRecipe(null)}
+          existing={viewingRecipe}
+        />
+      )}
     </div>
   );
 }

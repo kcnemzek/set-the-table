@@ -52,6 +52,7 @@ export interface DayEntry {
   recipeId?: string;
   recipeTitle?: string;
   recipeImage?: string;
+  recipeUrl?: string;
   // type === "custom-recipe"
   customRecipeId?: string;
   // type === "text"

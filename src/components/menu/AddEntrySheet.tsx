@@ -54,6 +54,7 @@ export default function AddEntrySheet({
         recipeId: recipe.id,
         recipeTitle: recipe.title,
         recipeImage: recipe.image || `/api/recipes/${recipe.id}/image`,
+        recipeUrl: recipe.sourceUrl,
       };
       addDayEntry(dateStr, entry);
       onClose();

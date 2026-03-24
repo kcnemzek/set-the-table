@@ -56,9 +56,7 @@ async function writeData(userId: string, body: unknown) {
 }
 
 export async function GET() {
-  console.log("[api/data GET] invoked, hasKV:", hasKV);
   const session = await auth();
-  console.log("[api/data GET] session:", session?.user?.id ?? "null");
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -70,19 +68,15 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  console.log("[api/data POST] invoked, hasKV:", hasKV);
   const session = await auth();
-  console.log("[api/data POST] session:", session?.user?.id ?? "null");
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
     const body = await request.json();
     await writeData(session.user.id, body);
-    console.log("[api/data POST] write ok for", session.user.id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.log("[api/data POST] write error:", err);
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }

@@ -1,6 +1,6 @@
 .next/
 node_modules/
 .env.local
-data/
+/data/
 *.log
 .DS_Store

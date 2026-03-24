@@ -7,6 +7,7 @@ interface DayEntryItemProps {
   entry: DayEntry;
   onRemove: () => void;
   onOpen?: () => void;
+  readOnly?: boolean;
 }
 
 function getFoodEmoji(title: string): string {
@@ -35,7 +36,7 @@ function getFoodEmoji(title: string): string {
   return "🍽️";
 }
 
-export default function DayEntryItem({ entry, onRemove, onOpen }: DayEntryItemProps) {
+export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayEntryItemProps) {
   const isText = entry.type === "text";
   const isCustomRecipe = entry.type === "custom-recipe";
   const label =
@@ -83,13 +84,15 @@ export default function DayEntryItem({ entry, onRemove, onOpen }: DayEntryItemPr
         </div>
       )}
 
-      <button
-        onClick={onRemove}
-        className="flex-shrink-0 p-1.5 rounded-full text-gray-400 hover:text-red-400 hover:bg-red-50 active:bg-red-100 transition-colors"
-        aria-label="Remove"
-      >
-        <X size={16} />
-      </button>
+      {!readOnly && (
+        <button
+          onClick={onRemove}
+          className="flex-shrink-0 p-1.5 rounded-full text-gray-400 hover:text-red-400 hover:bg-red-50 active:bg-red-100 transition-colors"
+          aria-label="Remove"
+        >
+          <X size={16} />
+        </button>
+      )}
     </div>
   );
 }

@@ -26,6 +26,7 @@ interface AppState {
   manualGroceryItems: ManualGroceryItem[];
   /** key: aisle|name|unit → checked for auto-generated grocery items */
   groceryChecked: Record<string, boolean>;
+  familyMembers: string[];
   /** cache of full recipe details fetched for grocery aggregation */
   recipeCache: Record<string, RecipeDetail>;
   hydrated: boolean;
@@ -38,6 +39,7 @@ const initialState: AppState = {
   customRecipes: [],
   manualGroceryItems: [],
   groceryChecked: {},
+  familyMembers: [],
   recipeCache: {},
   hydrated: false,
 };
@@ -60,7 +62,9 @@ type Action =
   | { type: "REMOVE_MANUAL_GROCERY"; id: string }
   | { type: "TOGGLE_MANUAL_GROCERY_CHECKED"; id: string }
   | { type: "TOGGLE_GROCERY_CHECKED"; key: string }
-  | { type: "CACHE_RECIPE"; recipe: RecipeDetail };
+  | { type: "CACHE_RECIPE"; recipe: RecipeDetail }
+  | { type: "ADD_FAMILY_MEMBER"; name: string }
+  | { type: "REMOVE_FAMILY_MEMBER"; name: string };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -159,6 +163,16 @@ function reducer(state: AppState, action: Action): AppState {
         recipeCache: { ...state.recipeCache, [action.recipe.id]: action.recipe },
       };
 
+    case "ADD_FAMILY_MEMBER":
+      if (state.familyMembers.includes(action.name)) return state;
+      return { ...state, familyMembers: [...state.familyMembers, action.name] };
+
+    case "REMOVE_FAMILY_MEMBER":
+      return {
+        ...state,
+        familyMembers: state.familyMembers.filter((n) => n !== action.name),
+      };
+
     default:
       return state;
   }
@@ -175,6 +189,8 @@ interface AppContextValue {
   isFavorite: (id: string) => boolean;
   toggleDisliked: (id: string) => void;
   isDisliked: (id: string) => boolean;
+  addFamilyMember: (name: string) => void;
+  removeFamilyMember: (name: string) => void;
   forceSave: () => Promise<void>;
 }
 
@@ -201,6 +217,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             customRecipes: data.customRecipes ?? [],
             manualGroceryItems: data.manualGroceryItems ?? [],
             groceryChecked: data.groceryChecked ?? {},
+            familyMembers: data.familyMembers ?? [],
           },
         });
       })
@@ -224,6 +241,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           customRecipes: state.customRecipes,
           manualGroceryItems: state.manualGroceryItems,
           groceryChecked: state.groceryChecked,
+          familyMembers: state.familyMembers,
         }),
       });
     }, 500);
@@ -235,6 +253,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.customRecipes,
     state.manualGroceryItems,
     state.groceryChecked,
+    state.familyMembers,
     state.hydrated,
   ]);
 
@@ -270,6 +289,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.dislikedRecipes]
   );
 
+  const addFamilyMember = useCallback(
+    (name: string) => dispatch({ type: "ADD_FAMILY_MEMBER", name }),
+    []
+  );
+
+  const removeFamilyMember = useCallback(
+    (name: string) => dispatch({ type: "REMOVE_FAMILY_MEMBER", name }),
+    []
+  );
+
   const forceSave = useCallback(async () => {
     await fetch("/api/data", {
       method: "POST",
@@ -281,6 +310,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         customRecipes: state.customRecipes,
         manualGroceryItems: state.manualGroceryItems,
         groceryChecked: state.groceryChecked,
+        familyMembers: state.familyMembers,
       }),
     });
   }, [
@@ -290,6 +320,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.customRecipes,
     state.manualGroceryItems,
     state.groceryChecked,
+    state.familyMembers,
   ]);
 
   return (
@@ -303,6 +334,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isFavorite,
         toggleDisliked,
         isDisliked,
+        addFamilyMember,
+        removeFamilyMember,
         forceSave,
       }}
     >

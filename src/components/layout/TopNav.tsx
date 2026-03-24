@@ -28,7 +28,10 @@ export default function TopNav() {
           className="flex items-center gap-2 font-bold text-brand-600 text-lg hover:text-brand-700 transition-colors"
         >
           <ChefHat className="w-7 h-7" />
-          <span>Mom, What&apos;s for Dinner?</span>
+          <div className="flex flex-col leading-tight">
+            <span>Mom, What&apos;s for Dinner?</span>
+            <span className="text-[10px] font-normal text-gray-500">v{process.env.NEXT_PUBLIC_VERSION}</span>
+          </div>
         </Link>
 
         {/* Tabs */}

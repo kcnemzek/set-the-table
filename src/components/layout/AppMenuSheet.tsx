@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChefHat, Link as LinkIcon, Users, Plus, X, RefreshCw } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";

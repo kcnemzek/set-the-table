@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ChefHat } from "lucide-react";
+import { ChefHat, LogOut } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
+import Image from "next/image";
 
 export default function MobileHeader() {
+  const { data: session } = useSession();
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
       <div className="flex items-center justify-between h-14 px-4">
@@ -16,10 +20,27 @@ export default function MobileHeader() {
           <span>Mom, What&apos;s for Dinner?</span>
         </Link>
 
-        {/* Right side — settings/user icons will go here */}
-        <div className="flex items-center gap-1">
-          {/* placeholder for future icons */}
-        </div>
+        {/* User area */}
+        {session?.user && (
+          <div className="flex items-center gap-2">
+            {session.user.image && (
+              <Image
+                src={session.user.image}
+                alt={session.user.name ?? "User"}
+                width={32}
+                height={32}
+                className="rounded-full"
+              />
+            )}
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="p-2 text-gray-400 hover:text-gray-600 active:text-gray-800"
+              title="Sign out"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

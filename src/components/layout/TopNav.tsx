@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChefHat, CalendarDays, BookOpen, ShoppingCart } from "lucide-react";
+import { ChefHat, CalendarDays, BookOpen, ShoppingCart, LogOut } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
+import Image from "next/image";
 import clsx from "clsx";
 
 const TABS = [
@@ -13,6 +15,7 @@ const TABS = [
 
 export default function TopNav() {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
@@ -47,6 +50,34 @@ export default function TopNav() {
             );
           })}
         </div>
+
+        {/* User area */}
+        {session?.user && (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {session.user.image && (
+                <Image
+                  src={session.user.image}
+                  alt={session.user.name ?? "User"}
+                  width={32}
+                  height={32}
+                  className="rounded-full"
+                />
+              )}
+              <span className="text-sm text-gray-600 hidden lg:block">
+                {session.user.name?.split(" ")[0]}
+              </span>
+            </div>
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+              title="Sign out"
+            >
+              <LogOut size={16} />
+              <span className="hidden lg:inline">Sign out</span>
+            </button>
+          </div>
+        )}
       </nav>
     </header>
   );

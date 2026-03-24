@@ -6,6 +6,7 @@ import { ChefHat, CalendarDays, BookOpen, ShoppingCart, LogOut } from "lucide-re
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import clsx from "clsx";
+import { useAppContext } from "@/store/context";
 
 const TABS = [
   { href: "/menu", label: "Menu", Icon: CalendarDays },
@@ -16,6 +17,7 @@ const TABS = [
 export default function TopNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { forceSave } = useAppContext();
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
@@ -69,7 +71,7 @@ export default function TopNav() {
               </span>
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={async () => { await forceSave(); signOut({ callbackUrl: "/login" }); }}
               className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
               title="Sign out"
             >

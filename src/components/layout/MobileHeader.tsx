@@ -4,9 +4,11 @@ import Link from "next/link";
 import { ChefHat, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
+import { useAppContext } from "@/store/context";
 
 export default function MobileHeader() {
   const { data: session } = useSession();
+  const { forceSave } = useAppContext();
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
@@ -33,7 +35,7 @@ export default function MobileHeader() {
               />
             )}
             <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={async () => { await forceSave(); signOut({ callbackUrl: "/login" }); }}
               className="p-2 text-gray-400 hover:text-gray-600 active:text-gray-800"
               title="Sign out"
             >

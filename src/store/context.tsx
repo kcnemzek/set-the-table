@@ -175,6 +175,7 @@ interface AppContextValue {
   isFavorite: (id: string) => boolean;
   toggleDisliked: (id: string) => void;
   isDisliked: (id: string) => boolean;
+  forceSave: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -269,6 +270,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.dislikedRecipes]
   );
 
+  const forceSave = useCallback(async () => {
+    await fetch("/api/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        menu: state.menu,
+        favorites: state.favorites,
+        dislikedRecipes: state.dislikedRecipes,
+        customRecipes: state.customRecipes,
+        manualGroceryItems: state.manualGroceryItems,
+        groceryChecked: state.groceryChecked,
+      }),
+    });
+  }, [
+    state.menu,
+    state.favorites,
+    state.dislikedRecipes,
+    state.customRecipes,
+    state.manualGroceryItems,
+    state.groceryChecked,
+  ]);
+
   return (
     <AppContext.Provider
       value={{
@@ -280,6 +303,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isFavorite,
         toggleDisliked,
         isDisliked,
+        forceSave,
       }}
     >
       {children}

@@ -13,35 +13,34 @@ interface AppMenuSheetProps {
 export default function AppMenuSheet({ open, onClose }: AppMenuSheetProps) {
   const version = process.env.NEXT_PUBLIC_VERSION ?? "—";
   const { state, addFamilyMember, removeFamilyMember } = useAppContext();
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "loading">("idle");
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
   const [newName, setNewName] = useState("");
 
-  async function handleCopyLink() {
-    setCopyState("loading");
-    try {
-      const res = await fetch("/api/share-token");
-      const { token } = await res.json();
-      const url = `${window.location.origin}/view/${token}`;
-      await navigator.clipboard.writeText(url);
+  // Load share token when sheet opens
+  useEffect(() => {
+    if (!open || shareUrl) return;
+    fetch("/api/share-token")
+      .then((r) => r.json())
+      .then(({ token }) => setShareUrl(`${window.location.origin}/view/${token}`))
+      .catch(() => {});
+  }, [open, shareUrl]);
+
+  function handleCopyLink() {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
       setCopyState("copied");
       setTimeout(() => setCopyState("idle"), 2500);
-    } catch {
-      setCopyState("idle");
-    }
+    }).catch(() => {});
   }
 
   async function handleResetLink() {
-    setCopyState("loading");
     try {
       const res = await fetch("/api/share-token", { method: "DELETE" });
       const { token } = await res.json();
-      const url = `${window.location.origin}/view/${token}`;
-      await navigator.clipboard.writeText(url);
-      setCopyState("copied");
-      setTimeout(() => setCopyState("idle"), 2500);
-    } catch {
+      setShareUrl(`${window.location.origin}/view/${token}`);
       setCopyState("idle");
-    }
+    } catch { /* ignore */ }
   }
 
   function handleAddMember() {
@@ -78,16 +77,15 @@ export default function AppMenuSheet({ open, onClose }: AppMenuSheetProps) {
           <div className="flex gap-2">
             <button
               onClick={handleCopyLink}
-              disabled={copyState === "loading"}
+              disabled={!shareUrl}
               className="flex-1 py-2.5 rounded-xl bg-brand-500 text-white text-sm font-medium hover:bg-brand-600 active:bg-brand-700 disabled:opacity-50 transition-colors"
             >
-              {copyState === "copied" ? "Copied!" : copyState === "loading" ? "…" : "Copy Link"}
+              {copyState === "copied" ? "Copied!" : !shareUrl ? "…" : "Copy Link"}
             </button>
             <button
               onClick={handleResetLink}
-              disabled={copyState === "loading"}
               title="Reset link (old link will stop working)"
-              className="p-2.5 rounded-xl border border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2.5 rounded-xl border border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
             >
               <RefreshCw size={16} />
             </button>

@@ -188,9 +188,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Hydrate from server on mount
   useEffect(() => {
+    console.log("[AppProvider] fetching /api/data");
     fetch("/api/data")
-      .then((r) => r.json())
+      .then((r) => {
+        console.log("[AppProvider] GET /api/data status:", r.status);
+        return r.json();
+      })
       .then((data) => {
+        console.log("[AppProvider] GET /api/data body:", JSON.stringify(data).slice(0, 200));
         hydrationOk.current = true;
         dispatch({
           type: "HYDRATE",
@@ -204,7 +209,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           },
         });
       })
-      .catch(() => {
+      .catch((e) => {
+        console.log("[AppProvider] GET /api/data error:", e);
         hydrationOk.current = true;
         dispatch({ type: "HYDRATE", payload: { ...initialState } });
       });

@@ -179,7 +179,7 @@ export default function CustomRecipeSheet({
                 </div>
                 <button
                   onClick={() => removeRow(idx)}
-                  className="mt-2 p-2 text-gray-300 hover:text-red-400 active:text-red-500"
+                  className="mt-2 p-2 text-gray-400 hover:text-red-400 active:text-red-500"
                 >
                   <Trash2 size={16} />
                 </button>

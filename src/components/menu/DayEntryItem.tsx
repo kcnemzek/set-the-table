@@ -77,7 +77,7 @@ export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayE
         >
           {icon}
           <span className="flex-1 text-sm text-gray-800 leading-tight line-clamp-2">{label}</span>
-          <ChevronRight size={15} className="flex-shrink-0 text-gray-300" />
+          <ChevronRight size={15} className="flex-shrink-0 text-gray-400" />
         </button>
       ) : (
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -89,7 +89,7 @@ export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayE
       {!readOnly && (
         <button
           onClick={onRemove}
-          className="flex-shrink-0 p-1.5 rounded-full text-gray-400 hover:text-red-400 hover:bg-red-50 active:bg-red-100 transition-colors"
+          className="flex-shrink-0 p-1.5 rounded-full text-gray-500 hover:text-red-400 hover:bg-red-50 active:bg-red-100 transition-colors"
           aria-label="Remove"
         >
           <X size={16} />

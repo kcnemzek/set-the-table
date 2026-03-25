@@ -27,7 +27,7 @@ export default function BottomNav() {
                 "flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors",
                 active
                   ? "text-brand-500"
-                  : "text-gray-400 hover:text-gray-600 active:text-brand-400"
+                  : "text-gray-500 hover:text-gray-600 active:text-brand-400"
               )}
             >
               <Icon

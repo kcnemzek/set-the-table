@@ -15,10 +15,10 @@ export default function GrocerySection({ aisle, items }: GrocerySectionProps) {
 
   return (
     <div>
-      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-4 pt-4 pb-2">
+      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest px-4 pt-4 pb-2">
         {aisle}
       </h3>
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mx-4">
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mx-4">
         {items.map((item, i) => {
           const key = groceryItemKey(item.aisle, item.name, item.unit);
           const checked = state.groceryChecked[key] ?? false;
@@ -30,7 +30,7 @@ export default function GrocerySection({ aisle, items }: GrocerySectionProps) {
               className={clsx(
                 "w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors",
                 i > 0 && "border-t border-gray-50",
-                checked ? "bg-gray-50" : "hover:bg-gray-50 active:bg-gray-100"
+                checked ? "bg-gray-100" : "hover:bg-gray-100 active:bg-gray-200"
               )}
             >
               {/* Checkbox */}
@@ -59,7 +59,7 @@ export default function GrocerySection({ aisle, items }: GrocerySectionProps) {
               <span
                 className={clsx(
                   "flex-1 text-sm capitalize",
-                  checked ? "text-gray-400 line-through" : "text-gray-800"
+                  checked ? "text-gray-500 line-through" : "text-gray-800"
                 )}
               >
                 {item.name}
@@ -67,7 +67,7 @@ export default function GrocerySection({ aisle, items }: GrocerySectionProps) {
 
               {/* Amount */}
               {item.totalAmount > 0 && (
-                <span className={clsx("text-xs", checked ? "text-gray-300" : "text-gray-400")}>
+                <span className={clsx("text-xs", checked ? "text-gray-400" : "text-gray-500")}>
                   {item.totalAmount % 1 === 0
                     ? item.totalAmount
                     : item.totalAmount.toFixed(2)}{" "}

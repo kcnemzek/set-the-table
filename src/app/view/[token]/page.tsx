@@ -47,7 +47,7 @@ export default function FamilyViewPage({ params }: { params: Promise<{ token: st
   if (error) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-3 px-6 text-center">
-        <ChefHat size={40} className="text-gray-300" />
+        <ChefHat size={40} className="text-gray-400" />
         <p className="text-gray-500 text-sm">This link doesn&apos;t seem to work.<br />Ask for a new one!</p>
       </div>
     );
@@ -72,7 +72,7 @@ export default function FamilyViewPage({ params }: { params: Promise<{ token: st
         </div>
 
         {data.familyMembers.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center">
+          <p className="text-sm text-gray-500 text-center">
             No family members set up yet. Ask Mom to add you!
           </p>
         ) : (
@@ -96,7 +96,7 @@ export default function FamilyViewPage({ params }: { params: Promise<{ token: st
   const today = toDateStr(new Date());
 
   return (
-    <div className="min-h-dvh bg-gray-50">
+    <div className="min-h-dvh bg-gray-100">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center justify-between h-14 px-4 max-w-2xl mx-auto">
@@ -112,7 +112,7 @@ export default function FamilyViewPage({ params }: { params: Promise<{ token: st
               localStorage.removeItem(STORAGE_KEY);
               setFamilyName(null);
             }}
-            className="text-xs text-gray-400 hover:text-gray-600"
+            className="text-xs text-gray-500 hover:text-gray-600"
           >
             Not {familyName}?
           </button>

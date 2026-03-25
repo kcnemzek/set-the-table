@@ -85,11 +85,11 @@ export default function GroceriesPage() {
   return (
     <div className="pb-6">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-gray-800">Grocery List</h1>
           {!loading && totalItems > 0 && (
-            <p className="text-xs text-gray-400">{totalItems} items</p>
+            <p className="text-xs text-gray-500">{totalItems} items</p>
           )}
         </div>
         <button
@@ -136,7 +136,7 @@ export default function GroceriesPage() {
                     dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.id })
                   )
                 }
-                className="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 py-2"
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-400 py-2"
               >
                 <Trash2 size={14} />
                 Clear manually added items

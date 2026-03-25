@@ -38,14 +38,14 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
     <div
       className={clsx(
         "bg-white rounded-2xl shadow-sm border",
-        isToday ? "border-brand-300 ring-1 ring-brand-200" : "border-gray-100"
+        isToday ? "border-brand-300 ring-1 ring-brand-200" : "border-gray-200"
       )}
     >
       {/* Day Header */}
       <div
         className={clsx(
           "flex items-center justify-between px-4 py-3 rounded-t-2xl",
-          isToday ? "bg-brand-500" : "bg-gray-50"
+          isToday ? "bg-brand-500" : "bg-gray-100"
         )}
       >
         <div>
@@ -60,7 +60,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
           <p
             className={clsx(
               "text-xs leading-tight",
-              isToday ? "text-brand-100" : "text-gray-400"
+              isToday ? "text-brand-100" : "text-gray-500"
             )}
           >
             {secondary}
@@ -85,7 +85,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
         {entries.length === 0 ? (
           <button
             onClick={() => setSheetOpen(true)}
-            className="w-full py-4 text-sm text-gray-300 hover:text-gray-400 text-center"
+            className="w-full py-4 text-sm text-gray-400 hover:text-gray-500 text-center"
           >
             Tap + to add something
           </button>

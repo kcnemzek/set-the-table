@@ -57,7 +57,7 @@ export default function DayPickerSheet({
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-800">{primary}</p>
-                <p className="text-xs text-gray-400">{secondary}</p>
+                <p className="text-xs text-gray-500">{secondary}</p>
               </div>
               {i === 0 && (
                 <span className="ml-auto text-xs font-semibold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full">

@@ -114,7 +114,7 @@ export default function RecipesPage() {
   return (
     <div className="flex flex-col min-h-full">
       {/* Tabs */}
-      <div className="flex border-b border-gray-100 bg-white sticky top-0 z-10">
+      <div className="flex border-b border-gray-200 bg-white sticky top-0 z-10">
         {(["discover", "favorites", "custom"] as Tab[]).map((t) => (
           <button
             key={t}
@@ -123,7 +123,7 @@ export default function RecipesPage() {
               "flex-1 py-3 text-sm font-medium transition-colors border-b-2 -mb-px",
               tab === t
                 ? "border-brand-500 text-brand-600"
-                : "border-transparent text-gray-400 hover:text-gray-600"
+                : "border-transparent text-gray-500 hover:text-gray-600"
             )}
           >
             {t === "discover" && "Discover"}
@@ -236,14 +236,14 @@ export default function RecipesPage() {
               {state.customRecipes.map((cr) => (
                 <div
                   key={cr.id}
-                  className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3"
+                  className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3"
                 >
                   <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
                     {getRecipeEmoji(cr.title)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-800 truncate">{cr.title}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500">
                       {cr.extendedIngredients.length} ingredient
                       {cr.extendedIngredients.length !== 1 ? "s" : ""} · {cr.servings} servings
                     </p>
@@ -251,7 +251,7 @@ export default function RecipesPage() {
                   <div className="flex gap-1">
                     <button
                       onClick={() => setDayPickerRecipe(customToSummary(cr))}
-                      className="p-2 text-gray-400 hover:text-brand-500 hover:bg-brand-50 rounded-xl"
+                      className="p-2 text-gray-500 hover:text-brand-500 hover:bg-brand-50 rounded-xl"
                       title="Add to menu"
                     >
                       <Plus size={18} />
@@ -261,7 +261,7 @@ export default function RecipesPage() {
                         setEditingRecipe(cr);
                         setCustomSheetOpen(true);
                       }}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl"
+                      className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-200 rounded-xl"
                       title="Edit"
                     >
                       <Pencil size={16} />
@@ -270,7 +270,7 @@ export default function RecipesPage() {
                       onClick={() =>
                         dispatch({ type: "REMOVE_CUSTOM_RECIPE", id: cr.id })
                       }
-                      className="p-2 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-xl"
+                      className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-50 rounded-xl"
                       title="Delete"
                     >
                       <Trash2 size={16} />

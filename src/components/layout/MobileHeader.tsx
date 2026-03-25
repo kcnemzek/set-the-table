@@ -43,14 +43,14 @@ export default function MobileHeader() {
             )}
             <button
               onClick={async () => { await forceSave(); signOut({ callbackUrl: "/login" }); }}
-              className="p-2 text-gray-400 hover:text-gray-600 active:text-gray-800"
+              className="p-2 text-gray-500 hover:text-gray-600 active:text-gray-800"
               title="Sign out"
             >
               <LogOut size={18} />
             </button>
             <button
               onClick={() => setMenuOpen(true)}
-              className="p-2 text-gray-400 hover:text-gray-600 active:text-gray-800"
+              className="p-2 text-gray-500 hover:text-gray-600 active:text-gray-800"
               title="Menu"
             >
               <Menu size={18} />

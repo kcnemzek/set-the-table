@@ -28,12 +28,12 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
     <>
       <div
         className={clsx(
-          "bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col",
+          "bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col",
           disliked && "opacity-50"
         )}
       >
         {/* Image */}
-        <div className="relative aspect-[4/3] bg-gray-100">
+        <div className="relative aspect-[4/3] bg-gray-200">
           {recipe.sourceUrl && (
             <a
               href={recipe.sourceUrl}
@@ -54,7 +54,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
               <svg viewBox="0 0 24 24" className="w-10 h-10" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -99,7 +99,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
             </p>
           )}
 
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
             {recipe.readyInMinutes > 0 && (
               <span className="flex items-center gap-1">
                 <Clock size={11} />
@@ -120,7 +120,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
                 "flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-medium transition-colors",
                 favorited
                   ? "bg-red-50 text-red-500"
-                  : "bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-400"
+                  : "bg-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-400"
               )}
             >
               <Heart size={14} fill={favorited ? "currentColor" : "none"} />
@@ -133,8 +133,8 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
               className={clsx(
                 "flex items-center justify-center p-3 rounded-xl text-xs transition-colors",
                 disliked
-                  ? "bg-gray-200 text-gray-500"
-                  : "bg-gray-50 text-gray-300 hover:bg-gray-100 hover:text-gray-500"
+                  ? "bg-gray-300 text-gray-600"
+                  : "bg-gray-200 text-gray-500 hover:bg-gray-300 hover:text-gray-600"
               )}
               title={disliked ? "Remove dislike" : "Not interested"}
             >

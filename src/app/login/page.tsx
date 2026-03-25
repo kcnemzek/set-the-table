@@ -3,8 +3,8 @@ import { ChefHat } from "lucide-react";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-[100dvh] bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 w-full max-w-sm text-center">
+    <div className="min-h-[100dvh] bg-gray-100 flex items-center justify-center px-4">
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 w-full max-w-sm text-center">
         {/* Brand */}
         <div className="flex flex-col items-center gap-3 mb-8">
           <div className="w-16 h-16 rounded-2xl bg-brand-500 flex items-center justify-center">
@@ -12,7 +12,7 @@ export default function LoginPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-800">Mom, What&apos;s for Dinner?</h1>
-            <p className="text-sm text-gray-400 mt-1">Plan meals. Build your grocery list.</p>
+            <p className="text-sm text-gray-500 mt-1">Plan meals. Build your grocery list.</p>
           </div>
         </div>
 
@@ -25,7 +25,7 @@ export default function LoginPage() {
         >
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-3 px-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-gray-50 active:bg-gray-100 shadow-sm transition-colors"
+            className="w-full flex items-center justify-center gap-3 px-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-gray-100 active:bg-gray-200 shadow-sm transition-colors"
           >
             {/* Google logo */}
             <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
@@ -38,7 +38,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-xs text-gray-400 mt-6">
+        <p className="text-xs text-gray-500 mt-6">
           Family meal planning — your data stays private to your account.
         </p>
       </div>

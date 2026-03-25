@@ -38,11 +38,11 @@ export default function BottomSheet({ open, onClose, title, children }: BottomSh
         </div>
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-100">
+          <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-full hover:bg-gray-100 active:bg-gray-200"
+              className="p-2 rounded-full hover:bg-gray-200 active:bg-gray-200"
             >
               <X size={20} className="text-gray-500" />
             </button>

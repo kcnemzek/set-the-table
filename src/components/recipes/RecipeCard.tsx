@@ -124,7 +124,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
               )}
             >
               <Heart size={14} fill={favorited ? "currentColor" : "none"} />
-              {favorited ? "Saved" : "Save"}
+              <span className="hidden sm:inline">{favorited ? "Saved" : "Save"}</span>
             </button>
 
             {/* Dislike */}
@@ -154,12 +154,12 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
               {addedFlash ? (
                 <>
                   <Check size={14} />
-                  Added!
+                  <span className="hidden sm:inline">Added!</span>
                 </>
               ) : (
                 <>
                   <Plus size={14} />
-                  Menu
+                  <span className="hidden sm:inline">Menu</span>
                 </>
               )}
             </button>

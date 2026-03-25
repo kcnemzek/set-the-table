@@ -34,6 +34,15 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       >
         {/* Image */}
         <div className="relative aspect-[4/3] bg-gray-100">
+          {recipe.sourceUrl && (
+            <a
+              href={recipe.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute inset-0 z-10"
+              aria-label={`Open ${recipe.title} recipe`}
+            />
+          )}
           {recipe.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -54,7 +63,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
           )}
 
           {/* Dietary badges */}
-          <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+          <div className="absolute top-2 left-2 flex flex-wrap gap-1 z-20">
             {recipe.vegan && (
               <span className="px-1.5 py-0.5 bg-green-500 text-white text-[10px] font-semibold rounded-full">
                 Vegan
@@ -75,9 +84,20 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
 
         {/* Info */}
         <div className="p-3 flex-1 flex flex-col gap-2">
-          <p className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2">
-            {recipe.title}
-          </p>
+          {recipe.sourceUrl ? (
+            <a
+              href={recipe.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2 hover:underline"
+            >
+              {recipe.title}
+            </a>
+          ) : (
+            <p className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2">
+              {recipe.title}
+            </p>
+          )}
 
           <div className="flex items-center gap-2 text-xs text-gray-400">
             {recipe.readyInMinutes > 0 && (
@@ -97,7 +117,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
             <button
               onClick={() => toggleFavorite(recipe.id)}
               className={clsx(
-                "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors",
+                "flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-medium transition-colors",
                 favorited
                   ? "bg-red-50 text-red-500"
                   : "bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-400"
@@ -111,7 +131,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
             <button
               onClick={() => toggleDisliked(recipe.id)}
               className={clsx(
-                "flex items-center justify-center p-2 rounded-xl text-xs transition-colors",
+                "flex items-center justify-center p-3 rounded-xl text-xs transition-colors",
                 disliked
                   ? "bg-gray-200 text-gray-500"
                   : "bg-gray-50 text-gray-300 hover:bg-gray-100 hover:text-gray-500"
@@ -125,7 +145,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
             <button
               onClick={() => setDayPickerOpen(true)}
               className={clsx(
-                "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors",
+                "flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-medium transition-colors",
                 addedFlash
                   ? "bg-green-100 text-green-600"
                   : "bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700"

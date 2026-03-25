@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Search, Type, Loader2 } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import clsx from "clsx";
 import BottomSheet from "@/components/shared/BottomSheet";
 import type { DayEntry, RecipeSummary } from "@/types";
@@ -110,8 +110,8 @@ export default function AddEntrySheet({
                 : "border-transparent text-gray-400 hover:text-gray-600"
             )}
           >
-            {t === "search" ? <Search size={15} /> : <Type size={15} />}
-            {t === "search" ? "Recipe" : "Custom note"}
+            {t === "search" ? <Search size={15} /> : <span className="text-sm leading-none">📝</span>}
+            {t === "search" ? "Recipe" : "Note"}
           </button>
         ))}
       </div>

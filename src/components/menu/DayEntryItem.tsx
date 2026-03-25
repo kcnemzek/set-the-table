@@ -58,7 +58,9 @@ export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayE
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
-      ) : isCustomRecipe || isText ? (
+      ) : isText ? (
+        <span className="text-lg leading-none">📝</span>
+      ) : isCustomRecipe ? (
         <span className="text-lg leading-none">{getFoodEmoji(label ?? "")}</span>
       ) : (
         <UtensilsCrossed size={16} className="text-brand-400" />

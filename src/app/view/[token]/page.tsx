@@ -67,7 +67,7 @@ export default function FamilyViewPage({ params }: { params: Promise<{ token: st
       <div className="min-h-dvh flex flex-col items-center justify-center gap-6 px-6">
         <div className="flex flex-col items-center gap-2 text-center">
           <ChefHat size={40} className="text-brand-500" />
-          <h1 className="text-xl font-bold text-gray-800">Mom, What&apos;s for Dinner?</h1>
+          <h1 className="text-xl font-bold text-gray-800">What&apos;s for Dinner?</h1>
           <p className="text-sm text-gray-500">Who are you?</p>
         </div>
 
@@ -103,7 +103,7 @@ export default function FamilyViewPage({ params }: { params: Promise<{ token: st
           <div className="flex items-center gap-2 font-bold text-brand-600 text-base">
             <ChefHat className="w-6 h-6" />
             <div className="flex flex-col leading-tight">
-              <span>Mom, What&apos;s for Dinner?</span>
+              <span>What&apos;s for Dinner?</span>
               <span className="text-[10px] font-normal text-gray-500">v{process.env.NEXT_PUBLIC_VERSION}</span>
             </div>
           </div>

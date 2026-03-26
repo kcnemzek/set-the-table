@@ -136,27 +136,29 @@ export default function RecipesPage() {
       {/* Discover Tab */}
       {tab === "discover" && (
         <div className="flex flex-col flex-1 p-4 gap-4">
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <SearchBar
-                value={query}
-                onChange={setQuery}
-                onSubmit={() => handleSearch()}
-              />
+          <div className="sticky top-[45px] z-10 bg-white -mx-4 px-4 pb-2 pt-3">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <SearchBar
+                  value={query}
+                  onChange={setQuery}
+                  onSubmit={() => handleSearch()}
+                />
+              </div>
+              <button
+                onClick={handleGenerate}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-4 py-3 bg-brand-50 text-brand-600 rounded-xl text-sm font-medium hover:bg-brand-100 active:bg-brand-200 disabled:opacity-50"
+                title="Generate 10 random recipes"
+              >
+                {loading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Shuffle size={16} />
+                )}
+                <span className="hidden sm:inline">Generate</span>
+              </button>
             </div>
-            <button
-              onClick={handleGenerate}
-              disabled={loading}
-              className="flex items-center gap-1.5 px-4 py-3 bg-brand-50 text-brand-600 rounded-xl text-sm font-medium hover:bg-brand-100 active:bg-brand-200 disabled:opacity-50"
-              title="Generate 10 random recipes"
-            >
-              {loading ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Shuffle size={16} />
-              )}
-              <span className="hidden sm:inline">Generate</span>
-            </button>
           </div>
 
           {loading && results.length === 0 ? (
@@ -214,16 +216,18 @@ export default function RecipesPage() {
       {/* Custom Recipes Tab */}
       {tab === "custom" && (
         <div className="p-4">
-          <button
-            onClick={() => {
-              setEditingRecipe(undefined);
-              setCustomSheetOpen(true);
-            }}
-            className="w-full flex items-center justify-center gap-2 py-3 mb-4 border-2 border-dashed border-brand-200 text-brand-500 rounded-xl text-sm font-medium hover:bg-brand-50 active:bg-brand-100"
-          >
-            <Plus size={18} />
-            New Custom Recipe
-          </button>
+          <div className="sticky top-[45px] z-10 bg-white -mx-4 px-4 pb-3 pt-3">
+            <button
+              onClick={() => {
+                setEditingRecipe(undefined);
+                setCustomSheetOpen(true);
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-brand-200 text-brand-500 rounded-xl text-sm font-medium hover:bg-brand-50 active:bg-brand-100"
+            >
+              <Plus size={18} />
+              New Custom Recipe
+            </button>
+          </div>
 
           {state.customRecipes.length === 0 ? (
             <EmptyState

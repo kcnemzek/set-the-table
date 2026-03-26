@@ -12,7 +12,7 @@ export default function LoginPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-800">Mom, What&apos;s for Dinner?</h1>
-            <p className="text-sm text-gray-500 mt-1">Plan meals. Build your grocery list.</p>
+            <p className="text-sm text-gray-500 mt-1">Plan the week, build the list, and finally end the interrogation.</p>
           </div>
         </div>
 

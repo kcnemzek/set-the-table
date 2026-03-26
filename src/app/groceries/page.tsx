@@ -96,6 +96,8 @@ export default function GroceriesPage() {
             <p className="text-xs text-gray-500">
               {hideChecked && checkedCount > 0
                 ? `${totalItems - checkedCount} of ${totalItems} items · ${checkedCount} hidden`
+                : checkedCount > 0
+                ? `${totalItems} items · ${checkedCount} shopped`
                 : `${totalItems} items`}
             </p>
           )}
@@ -103,14 +105,16 @@ export default function GroceriesPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setHideChecked((v) => !v)}
-            className="flex items-center justify-center gap-1.5 w-[118px] py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium active:bg-gray-200"
+            className="flex items-center justify-center gap-1.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium active:bg-gray-200"
+            style={{ width: 120, height: 38 }}
           >
             {hideChecked ? <Eye size={16} /> : <EyeOff size={16} />}
             {hideChecked ? "Show all" : "Hide checked"}
           </button>
           <button
             onClick={() => setAddSheetOpen(true)}
-            className="flex items-center justify-center gap-1.5 w-[118px] py-2 bg-brand-500 text-white rounded-xl text-sm font-medium active:bg-brand-600"
+            className="flex items-center justify-center gap-1.5 bg-brand-500 text-white rounded-xl text-sm font-medium active:bg-brand-600"
+            style={{ width: 120, height: 38 }}
           >
             <Plus size={16} />
             Add item

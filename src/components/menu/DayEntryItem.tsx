@@ -55,7 +55,12 @@ export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayE
           alt={label ?? ""}
           className="w-full h-full object-cover"
           onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
+            const img = e.target as HTMLImageElement;
+            if (entry.type === "recipe" && entry.recipeId && !img.src.includes("/api/recipes/")) {
+              img.src = `/api/recipes/${entry.recipeId}/image`;
+            } else {
+              img.style.display = "none";
+            }
           }}
         />
       ) : isText ? (

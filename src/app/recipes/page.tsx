@@ -198,10 +198,29 @@ export default function RecipesPage() {
           {favLoading ? (
             <LoadingSpinner className="py-16" />
           ) : favRecipes.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {favRecipes.map((recipe) => (
-                <RecipeCard key={recipe.id} recipe={recipe} />
-              ))}
+            <div className="space-y-4">
+              {Object.entries(
+                favRecipes.reduce<Record<string, { emoji: string; recipes: typeof favRecipes }>>((groups, recipe) => {
+                  const { emoji, label } = getRecipeCategory(recipe.title);
+                  if (!groups[label]) groups[label] = { emoji, recipes: [] };
+                  groups[label].recipes.push(recipe);
+                  groups[label].recipes.sort((a, b) => a.title.localeCompare(b.title));
+                  return groups;
+                }, {})
+              )
+                .sort(([a], [b]) => a === "Other" ? 1 : b === "Other" ? -1 : a.localeCompare(b))
+                .map(([label, { emoji, recipes }]) => (
+                  <div key={label}>
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1 pb-2">
+                      {emoji} {label}
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {recipes.map((recipe) => (
+                        <RecipeCard key={recipe.id} recipe={recipe} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
             </div>
           ) : (
             <EmptyState
@@ -243,6 +262,7 @@ export default function RecipesPage() {
                   const { emoji, label } = getRecipeCategory(cr.title);
                   if (!groups[label]) groups[label] = { emoji, recipes: [] };
                   groups[label].recipes.push(cr);
+                  groups[label].recipes.sort((a, b) => a.title.localeCompare(b.title));
                   return groups;
                 }, {})
               )

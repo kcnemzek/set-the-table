@@ -229,6 +229,7 @@ export default function RecipesPage() {
             </button>
           </div>
 
+          <div className="mt-4" />
           {state.customRecipes.length === 0 ? (
             <EmptyState
               icon={<BookOpen size={48} />}

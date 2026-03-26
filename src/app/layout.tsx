@@ -9,6 +9,11 @@ import SessionWrapper from "@/components/layout/SessionWrapper";
 export const metadata: Metadata = {
   title: "Mom, What's for Dinner?",
   description: "Simple meal planning for the week ahead",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "What's for Dinner",
+  },
 };
 
 export const viewport: Viewport = {

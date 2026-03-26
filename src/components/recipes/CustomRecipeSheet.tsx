@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
@@ -58,6 +58,22 @@ export default function CustomRecipeSheet({
       aisle: i.aisle,
     })) ?? [emptyRow()]
   );
+
+  useEffect(() => {
+    if (open) {
+      setTitle(existing?.title ?? "");
+      setServings(String(existing?.servings ?? 4));
+      setDirections(existing?.directions ?? "");
+      setRows(
+        existing?.extendedIngredients.map((i) => ({
+          name: i.name,
+          amount: String(i.amount),
+          unit: i.unit,
+          aisle: i.aisle,
+        })) ?? [emptyRow()]
+      );
+    }
+  }, [open, existing]);
 
   const updateRow = (idx: number, field: keyof IngredientRow, value: string) => {
     setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));

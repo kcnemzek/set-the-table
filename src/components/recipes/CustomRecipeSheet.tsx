@@ -48,7 +48,7 @@ export default function CustomRecipeSheet({
 }: CustomRecipeSheetProps) {
   const { dispatch } = useAppContext();
   const [title, setTitle] = useState(existing?.title ?? "");
-  const [servings, setServings] = useState(String(existing?.servings ?? 4));
+  const [servings, setServings] = useState(String(existing?.servings || ""));
   const [directions, setDirections] = useState(existing?.directions ?? "");
   const [rows, setRows] = useState<IngredientRow[]>(
     existing?.extendedIngredients.map((i) => ({
@@ -62,7 +62,7 @@ export default function CustomRecipeSheet({
   useEffect(() => {
     if (open) {
       setTitle(existing?.title ?? "");
-      setServings(String(existing?.servings ?? 4));
+      setServings(String(existing?.servings || ""));
       setDirections(existing?.directions ?? "");
       setRows(
         existing?.extendedIngredients.map((i) => ({
@@ -102,7 +102,7 @@ export default function CustomRecipeSheet({
     const recipe: CustomRecipe = {
       id: existing?.id ?? `custom_${crypto.randomUUID()}`,
       title: title.trim(),
-      servings: parseInt(servings) || 4,
+      servings: parseInt(servings) || 0,
       extendedIngredients,
       directions: directions.trim() || undefined,
     };

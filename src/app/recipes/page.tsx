@@ -247,10 +247,17 @@ export default function RecipesPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-800 truncate">{cr.title}</p>
-                    <p className="text-xs text-gray-500">
-                      {cr.extendedIngredients.length} ingredient
-                      {cr.extendedIngredients.length !== 1 ? "s" : ""} · {cr.servings} servings
-                    </p>
+                    {(cr.extendedIngredients.length > 0 || cr.servings > 0) && (
+                      <p className="text-xs text-gray-500">
+                        {[
+                          cr.extendedIngredients.length > 0 &&
+                            `${cr.extendedIngredients.length} ingredient${cr.extendedIngredients.length !== 1 ? "s" : ""}`,
+                          cr.servings > 0 && `${cr.servings} servings`,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-1">
                     <button

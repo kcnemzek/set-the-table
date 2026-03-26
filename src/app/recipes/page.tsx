@@ -10,7 +10,7 @@ import DayPickerSheet from "@/components/recipes/DayPickerSheet";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import EmptyState from "@/components/shared/EmptyState";
 import { useAppContext } from "@/store/context";
-import { getRecipeEmoji } from "@/lib/recipe-emoji";
+import { getRecipeEmoji, getRecipeCategory } from "@/lib/recipe-emoji";
 import type { RecipeSummary, CustomRecipe } from "@/types";
 
 type Tab = "discover" | "favorites" | "custom";
@@ -216,7 +216,7 @@ export default function RecipesPage() {
       {/* Custom Recipes Tab */}
       {tab === "custom" && (
         <div className="p-4">
-          <div className="sticky top-[45px] z-10 bg-white -mx-4 px-4 pb-3 pt-3">
+          <div className="sticky top-[45px] z-10 bg-white -mx-4 px-4 pb-4 pt-3">
             <button
               onClick={() => {
                 setEditingRecipe(undefined);
@@ -236,59 +236,77 @@ export default function RecipesPage() {
               description="Add your own recipes with ingredients for the grocery list"
             />
           ) : (
-            <div className="space-y-2">
-              {state.customRecipes.map((cr) => (
-                <div
-                  key={cr.id}
-                  className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
-                    {getRecipeEmoji(cr.title)}
+            <div className="space-y-4">
+              {Object.entries(
+                state.customRecipes.reduce<Record<string, { emoji: string; recipes: typeof state.customRecipes }>>((groups, cr) => {
+                  const { emoji, label } = getRecipeCategory(cr.title);
+                  if (!groups[label]) groups[label] = { emoji, recipes: [] };
+                  groups[label].recipes.push(cr);
+                  return groups;
+                }, {})
+              )
+                .sort(([a], [b]) => a === "Other" ? 1 : b === "Other" ? -1 : a.localeCompare(b))
+                .map(([label, { emoji, recipes }]) => (
+                  <div key={label}>
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1 pb-2">
+                      {emoji} {label}
+                    </h3>
+                    <div className="space-y-2">
+                      {recipes.map((cr) => (
+                        <div
+                          key={cr.id}
+                          className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
+                            {getRecipeEmoji(cr.title)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 truncate">{cr.title}</p>
+                            {(cr.extendedIngredients.length > 0 || cr.servings > 0) && (
+                              <p className="text-xs text-gray-500">
+                                {[
+                                  cr.extendedIngredients.length > 0 &&
+                                    `${cr.extendedIngredients.length} ingredient${cr.extendedIngredients.length !== 1 ? "s" : ""}`,
+                                  cr.servings > 0 && `${cr.servings} servings`,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => setDayPickerRecipe(customToSummary(cr))}
+                              className="p-2 text-gray-500 hover:text-brand-500 hover:bg-brand-50 rounded-xl"
+                              title="Add to menu"
+                            >
+                              <Plus size={18} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingRecipe(cr);
+                                setCustomSheetOpen(true);
+                              }}
+                              className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-200 rounded-xl"
+                              title="Edit"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                dispatch({ type: "REMOVE_CUSTOM_RECIPE", id: cr.id })
+                              }
+                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-50 rounded-xl"
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{cr.title}</p>
-                    {(cr.extendedIngredients.length > 0 || cr.servings > 0) && (
-                      <p className="text-xs text-gray-500">
-                        {[
-                          cr.extendedIngredients.length > 0 &&
-                            `${cr.extendedIngredients.length} ingredient${cr.extendedIngredients.length !== 1 ? "s" : ""}`,
-                          cr.servings > 0 && `${cr.servings} servings`,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => setDayPickerRecipe(customToSummary(cr))}
-                      className="p-2 text-gray-500 hover:text-brand-500 hover:bg-brand-50 rounded-xl"
-                      title="Add to menu"
-                    >
-                      <Plus size={18} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingRecipe(cr);
-                        setCustomSheetOpen(true);
-                      }}
-                      className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-200 rounded-xl"
-                      title="Edit"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      onClick={() =>
-                        dispatch({ type: "REMOVE_CUSTOM_RECIPE", id: cr.id })
-                      }
-                      className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-50 rounded-xl"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </div>

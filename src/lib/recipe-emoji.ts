@@ -1,3 +1,35 @@
+const CATEGORY_MAP: [string[], string, string][] = [
+  // [keywords, emoji, label]
+  [["pasta", "spaghetti", "lasagna", "fettuccine", "linguine", "penne", "rigatoni", "ravioli", "gnocchi", "carbonara", "bolognese", "alfredo"], "🍝", "Pasta & Italian"],
+  [["pizza", "calzone", "flatbread"], "🍕", "Pizza"],
+  [["chicken", "poultry", "hen", "wing", "nugget", "tender"], "🍗", "Chicken"],
+  [["burger", "hamburger", "cheeseburger", "patty", "slider"], "🍔", "Burgers"],
+  [["sandwich", "sub", "hoagie", "wrap", "panini", "club", "blt", "gyro", "pita"], "🥪", "Sandwiches & Wraps"],
+  [["taco", "burrito", "enchilada", "quesadilla", "fajita", "nacho", "tamale", "salsa"], "🌮", "Mexican"],
+  [["sushi", "sashimi", "maki", "onigiri", "tempura", "ramen", "udon", "miso"], "🍱", "Japanese"],
+  [["noodle", "lo mein", "chow mein", "pad thai", "pho", "vermicelli"], "🍜", "Noodles"],
+  [["fried rice", "risotto", "paella", "pilaf", "biryani"], "🍚", "Rice Dishes"],
+  [["curry", "tikka", "masala", "korma", "dal", "dhal", "chana", "saag", "vindaloo"], "🍛", "Curry & Indian"],
+  [["steak", "ribeye", "sirloin", "brisket", "roast beef", "prime rib", "beef", "meatball", "meatloaf"], "🥩", "Beef"],
+  [["pork", "bacon", "ham", "prosciutto", "sausage", "bratwurst", "chorizo", "pulled pork", "ribs", "carnitas"], "🥓", "Pork"],
+  [["turkey", "thanksgiving"], "🦃", "Turkey"],
+  [["lamb", "mutton", "rack of lamb", "shepherd"], "🍖", "Lamb"],
+  [["salmon", "tuna", "tilapia", "cod", "halibut", "mahi", "sea bass", "trout", "catfish", "swordfish", "snapper", "flounder"], "🐟", "Fish"],
+  [["shrimp", "prawn", "lobster", "crab", "scallop", "clam", "mussel", "oyster", "squid", "calamari", "octopus", "seafood"], "🦐", "Seafood"],
+  [["salad", "slaw", "coleslaw", "caesar", "cobb", "caprese", "nicoise"], "🥗", "Salads"],
+  [["soup", "stew", "chili", "chowder", "bisque", "broth", "gumbo", "minestrone", "gazpacho", "pozole"], "🍲", "Soups & Stews"],
+  [["egg", "omelette", "omelet", "frittata", "quiche", "scrambled", "benedict", "shakshuka", "pancake", "waffle", "crepe", "french toast"], "🍳", "Breakfast"],
+  [["bread", "baguette", "focaccia", "biscuit", "roll", "loaf", "brioche", "sourdough"], "🍞", "Bread & Baked"],
+  [["pot pie", "empanada", "pasty", "samosa", "dumpling", "pierogi"], "🥟", "Savory Pastry"],
+  [["vegetable", "veggie", "stir fry", "stir-fry", "ratatouille", "roasted veg", "corn", "elote", "mushroom", "portobello", "potato", "mashed", "hash", "latke", "gratin", "sweet potato", "yam"], "🥦", "Vegetables"],
+  [["mac and cheese", "macaroni and cheese", "grilled cheese", "fondue"], "🧀", "Cheese"],
+  [["bean", "lentil", "hummus", "falafel", "chickpea", "black bean", "edamame"], "🫘", "Beans & Legumes"],
+  [["cake", "cupcake", "cheesecake", "tiramisu", "mousse", "cookie", "brownie", "biscotti", "macaroon", "pie", "tart", "cobbler", "crisp", "ice cream", "gelato", "sorbet", "sundae", "chocolate", "truffle", "fudge", "donut", "doughnut"], "🍪", "Desserts"],
+  [["smoothie", "shake", "juice", "lemonade"], "🥤", "Drinks"],
+  [["guacamole", "avocado toast", "bruschetta", "crostini"], "🥑", "Dips & Spreads"],
+  [["rice"], "🍚", "Rice Dishes"],
+];
+
 const EMOJI_MAP: [string[], string][] = [
   // Pasta & Italian
   [["pasta", "spaghetti", "lasagna", "fettuccine", "linguine", "penne", "rigatoni", "ravioli", "gnocchi", "carbonara", "bolognese", "alfredo"], "🍝"],
@@ -81,4 +113,12 @@ export function getRecipeEmoji(title: string): string {
     if (keywords.some((kw) => lower.includes(kw))) return emoji;
   }
   return "🍽️";
+}
+
+export function getRecipeCategory(title: string): { emoji: string; label: string } {
+  const lower = title.toLowerCase();
+  for (const [keywords, emoji, label] of CATEGORY_MAP) {
+    if (keywords.some((kw) => lower.includes(kw))) return { emoji, label };
+  }
+  return { emoji: "🍽️", label: "Other" };
 }

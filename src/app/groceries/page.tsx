@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { Plus, ShoppingCart, Trash2, EyeOff, Eye } from "lucide-react";
 import GrocerySection from "@/components/groceries/GrocerySection";
 import ManualAddSheet from "@/components/groceries/ManualAddSheet";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import EmptyState from "@/components/shared/EmptyState";
 import { useAppContext } from "@/store/context";
-import { aggregateIngredients } from "@/lib/ingredient-utils";
+import { aggregateIngredients, groceryItemKey } from "@/lib/ingredient-utils";
 import { getNext10Days } from "@/lib/dates";
 import type { RecipeDetail, GroceryListByAisle } from "@/types";
 
@@ -16,6 +16,7 @@ export default function GroceriesPage() {
   const [groceryList, setGroceryList] = useState<GroceryListByAisle>({});
   const [loading, setLoading] = useState(true);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
+  const [hideChecked, setHideChecked] = useState(false);
 
   const buildList = useCallback(async () => {
     if (!state.hydrated) return;
@@ -81,6 +82,9 @@ export default function GroceriesPage() {
 
   const aisles = Object.keys(groceryList);
   const totalItems = aisles.reduce((n, a) => n + groceryList[a].length, 0);
+  const checkedCount = aisles.reduce((n, a) =>
+    n + groceryList[a].filter((item) => state.groceryChecked[groceryItemKey(item.aisle, item.name, item.unit)] ?? false).length, 0
+  );
 
   return (
     <div className="pb-6">
@@ -89,16 +93,29 @@ export default function GroceriesPage() {
         <div>
           <h1 className="text-lg font-bold text-gray-800">Grocery List</h1>
           {!loading && totalItems > 0 && (
-            <p className="text-xs text-gray-500">{totalItems} items</p>
+            <p className="text-xs text-gray-500">
+              {hideChecked && checkedCount > 0
+                ? `${totalItems - checkedCount} of ${totalItems} items · ${checkedCount} hidden`
+                : `${totalItems} items`}
+            </p>
           )}
         </div>
-        <button
-          onClick={() => setAddSheetOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-2 bg-brand-500 text-white rounded-xl text-sm font-medium active:bg-brand-600"
-        >
-          <Plus size={16} />
-          Add item
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setHideChecked((v) => !v)}
+            className="flex items-center justify-center gap-1.5 w-[118px] py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium active:bg-gray-200"
+          >
+            {hideChecked ? <Eye size={16} /> : <EyeOff size={16} />}
+            {hideChecked ? "Show all" : "Hide checked"}
+          </button>
+          <button
+            onClick={() => setAddSheetOpen(true)}
+            className="flex items-center justify-center gap-1.5 w-[118px] py-2 bg-brand-500 text-white rounded-xl text-sm font-medium active:bg-brand-600"
+          >
+            <Plus size={16} />
+            Add item
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -124,6 +141,7 @@ export default function GroceriesPage() {
               key={aisle}
               aisle={aisle}
               items={groceryList[aisle]}
+              hideChecked={hideChecked}
             />
           ))}
 

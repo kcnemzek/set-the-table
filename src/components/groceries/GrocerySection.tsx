@@ -8,10 +8,20 @@ import type { AggregatedIngredient } from "@/types";
 interface GrocerySectionProps {
   aisle: string;
   items: AggregatedIngredient[];
+  hideChecked?: boolean;
 }
 
-export default function GrocerySection({ aisle, items }: GrocerySectionProps) {
+export default function GrocerySection({ aisle, items, hideChecked }: GrocerySectionProps) {
   const { dispatch, state } = useAppContext();
+
+  const visibleItems = hideChecked
+    ? items.filter((item) => {
+        const key = groceryItemKey(item.aisle, item.name, item.unit);
+        return !(state.groceryChecked[key] ?? false);
+      })
+    : items;
+
+  if (visibleItems.length === 0) return null;
 
   return (
     <div>
@@ -19,7 +29,7 @@ export default function GrocerySection({ aisle, items }: GrocerySectionProps) {
         {aisle}
       </h3>
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mx-4">
-        {items.map((item, i) => {
+        {visibleItems.map((item, i) => {
           const key = groceryItemKey(item.aisle, item.name, item.unit);
           const checked = state.groceryChecked[key] ?? false;
 

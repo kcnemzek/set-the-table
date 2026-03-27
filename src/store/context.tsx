@@ -123,13 +123,25 @@ function reducer(state: AppState, action: Action): AppState {
     case "ADD_CUSTOM_RECIPE":
       return { ...state, customRecipes: [...state.customRecipes, action.recipe] };
 
-    case "UPDATE_CUSTOM_RECIPE":
+    case "UPDATE_CUSTOM_RECIPE": {
+      const updatedMenu = Object.fromEntries(
+        Object.entries(state.menu).map(([date, entries]) => [
+          date,
+          entries.map((e) =>
+            e.type === "custom-recipe" && e.customRecipeId === action.recipe.id
+              ? { ...e, recipeTitle: action.recipe.title }
+              : e
+          ),
+        ])
+      );
       return {
         ...state,
         customRecipes: state.customRecipes.map((r) =>
           r.id === action.recipe.id ? action.recipe : r
         ),
+        menu: updatedMenu,
       };
+    }
 
     case "REMOVE_CUSTOM_RECIPE":
       return {

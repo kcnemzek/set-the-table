@@ -50,6 +50,7 @@ export default function CustomRecipeSheet({
   const [title, setTitle] = useState(existing?.title ?? "");
   const [servings, setServings] = useState(String(existing?.servings || ""));
   const [directions, setDirections] = useState(existing?.directions ?? "");
+  const [url, setUrl] = useState(existing?.url ?? "");
   const [rows, setRows] = useState<IngredientRow[]>(
     existing?.extendedIngredients.map((i) => ({
       name: i.name,
@@ -64,6 +65,7 @@ export default function CustomRecipeSheet({
       setTitle(existing?.title ?? "");
       setServings(String(existing?.servings || ""));
       setDirections(existing?.directions ?? "");
+      setUrl(existing?.url ?? "");
       setRows(
         existing?.extendedIngredients.map((i) => ({
           name: i.name,
@@ -105,6 +107,7 @@ export default function CustomRecipeSheet({
       servings: parseInt(servings) || 0,
       extendedIngredients,
       directions: directions.trim() || undefined,
+      url: url.trim() || undefined,
     };
 
     dispatch({
@@ -223,6 +226,20 @@ export default function CustomRecipeSheet({
             placeholder="Step 1: Preheat oven to 375°F&#10;Step 2: ..."
             rows={5}
             className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
+          />
+        </div>
+
+        {/* Link */}
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Link (optional)
+          </label>
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://..."
+            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
         </div>
 

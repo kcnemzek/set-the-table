@@ -40,6 +40,7 @@ export interface CustomRecipe {
   extendedIngredients: ExtendedIngredient[];
   directions?: string;
   notes?: string;
+  url?: string;
 }
 
 // ─── Menu ─────────────────────────────────────────────────────────────────────
@@ -57,6 +58,7 @@ export interface DayEntry {
   customRecipeId?: string;
   // type === "text"
   text?: string;
+  url?: string;
 }
 
 /** Menu keyed by "YYYY-MM-DD" → ordered list of entries */

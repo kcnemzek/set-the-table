@@ -1,12 +1,13 @@
 "use client";
 
-import { X, UtensilsCrossed, ChevronRight } from "lucide-react";
+import { X, UtensilsCrossed, ChevronRight, ExternalLink, Pencil } from "lucide-react";
 import type { DayEntry } from "@/types";
 
 interface DayEntryItemProps {
   entry: DayEntry;
   onRemove: () => void;
   onOpen?: () => void;
+  onEdit?: () => void;
   readOnly?: boolean;
 }
 
@@ -36,7 +37,7 @@ function getFoodEmoji(title: string): string {
   return "🍽️";
 }
 
-export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayEntryItemProps) {
+export default function DayEntryItem({ entry, onRemove, onOpen, onEdit, readOnly }: DayEntryItemProps) {
   const isText = entry.type === "text";
   const isCustomRecipe = entry.type === "custom-recipe";
   const label =
@@ -82,7 +83,9 @@ export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayE
         >
           {icon}
           <span className="flex-1 text-sm text-gray-800 leading-tight line-clamp-2">{label}</span>
-          <ChevronRight size={15} className="flex-shrink-0 text-gray-400" />
+          {entry.type === "text" && entry.url
+            ? <ExternalLink size={14} className="flex-shrink-0 text-brand-400" />
+            : <ChevronRight size={15} className="flex-shrink-0 text-gray-400" />}
         </button>
       ) : (
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -92,13 +95,24 @@ export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayE
       )}
 
       {!readOnly && (
-        <button
-          onClick={onRemove}
-          className="flex-shrink-0 p-1.5 rounded-full text-gray-500 hover:text-red-400 hover:bg-red-50 active:bg-red-100 transition-colors"
-          aria-label="Remove"
-        >
-          <X size={16} />
-        </button>
+        <div className="flex items-center gap-0.5 flex-shrink-0">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="p-1.5 rounded-full text-gray-400 hover:text-brand-500 hover:bg-brand-50 active:bg-brand-100 transition-colors"
+              aria-label="Edit"
+            >
+              <Pencil size={14} />
+            </button>
+          )}
+          <button
+            onClick={onRemove}
+            className="p-1.5 rounded-full text-gray-500 hover:text-red-400 hover:bg-red-50 active:bg-red-100 transition-colors"
+            aria-label="Remove"
+          >
+            <X size={16} />
+          </button>
+        </div>
       )}
     </div>
   );

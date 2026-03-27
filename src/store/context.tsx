@@ -53,6 +53,7 @@ type Action =
     }
   | { type: "ADD_DAY_ENTRY"; dateStr: string; entry: DayEntry }
   | { type: "REMOVE_DAY_ENTRY"; dateStr: string; entryId: string }
+  | { type: "UPDATE_DAY_ENTRY"; dateStr: string; entry: DayEntry }
   | { type: "TOGGLE_FAVORITE"; id: string }
   | { type: "TOGGLE_DISLIKED"; id: string }
   | { type: "ADD_CUSTOM_RECIPE"; recipe: CustomRecipe }
@@ -82,6 +83,16 @@ function reducer(state: AppState, action: Action): AppState {
     case "REMOVE_DAY_ENTRY": {
       const updated = (state.menu[action.dateStr] ?? []).filter(
         (e) => e.id !== action.entryId
+      );
+      return {
+        ...state,
+        menu: { ...state.menu, [action.dateStr]: updated },
+      };
+    }
+
+    case "UPDATE_DAY_ENTRY": {
+      const updated = (state.menu[action.dateStr] ?? []).map((e) =>
+        e.id === action.entry.id ? action.entry : e
       );
       return {
         ...state,

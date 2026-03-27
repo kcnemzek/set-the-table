@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import clsx from "clsx";
 import DayEntryItem from "./DayEntryItem";
 import AddEntrySheet from "./AddEntrySheet";
+import EditNoteSheet from "./EditNoteSheet";
 import CustomRecipeSheet from "@/components/recipes/CustomRecipeSheet";
 import { useAppContext } from "@/store/context";
 import { formatDateLabelRelative } from "@/lib/dates";
@@ -19,6 +20,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
   const { state, removeDayEntry } = useAppContext();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [viewingRecipe, setViewingRecipe] = useState<CustomRecipe | null>(null);
+  const [editingNote, setEditingNote] = useState<DayEntry | null>(null);
 
   const entries = state.menu[dateStr] ?? [];
   const { primary, secondary } = formatDateLabelRelative(dateStr);
@@ -29,7 +31,13 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
     }
     if (entry.type === "custom-recipe" && entry.customRecipeId) {
       const cr = state.customRecipes.find((r) => r.id === entry.customRecipeId);
-      if (cr) return () => setViewingRecipe(cr);
+      if (cr) {
+        if (cr.url) return () => window.open(cr.url, "_blank", "noopener,noreferrer");
+        return () => setViewingRecipe(cr);
+      }
+    }
+    if (entry.type === "text" && entry.url) {
+      return () => window.open(entry.url, "_blank", "noopener,noreferrer");
     }
     return undefined;
   }
@@ -97,6 +105,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
                 entry={entry}
                 onRemove={() => removeDayEntry(dateStr, entry.id)}
                 onOpen={getOnOpen(entry)}
+                onEdit={entry.type === "text" ? () => setEditingNote(entry) : undefined}
               />
             ))}
           </div>
@@ -116,6 +125,15 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
           open={true}
           onClose={() => setViewingRecipe(null)}
           existing={viewingRecipe}
+        />
+      )}
+
+      {editingNote && (
+        <EditNoteSheet
+          open={true}
+          onClose={() => setEditingNote(null)}
+          entry={editingNote}
+          dateStr={dateStr}
         />
       )}
     </div>

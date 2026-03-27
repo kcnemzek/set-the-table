@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Shuffle, Plus, Heart, BookOpen, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Shuffle, Plus, Heart, BookOpen, Trash2, Loader2 } from "lucide-react";
 import clsx from "clsx";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import SearchBar from "@/components/recipes/SearchBar";
@@ -278,23 +278,28 @@ export default function RecipesPage() {
                           key={cr.id}
                           className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3"
                         >
-                          <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
-                            {getRecipeEmoji(cr.title)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 truncate">{cr.title}</p>
-                            {(cr.extendedIngredients.length > 0 || cr.servings > 0) && (
-                              <p className="text-xs text-gray-500">
-                                {[
-                                  cr.extendedIngredients.length > 0 &&
-                                    `${cr.extendedIngredients.length} ingredient${cr.extendedIngredients.length !== 1 ? "s" : ""}`,
-                                  cr.servings > 0 && `${cr.servings} servings`,
-                                ]
-                                  .filter(Boolean)
-                                  .join(" · ")}
-                              </p>
-                            )}
-                          </div>
+                          <button
+                            onClick={() => { setEditingRecipe(cr); setCustomSheetOpen(true); }}
+                            className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                          >
+                            <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
+                              {getRecipeEmoji(cr.title)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-800 truncate">{cr.title}</p>
+                              {(cr.extendedIngredients.length > 0 || cr.servings > 0) && (
+                                <p className="text-xs text-gray-500">
+                                  {[
+                                    cr.extendedIngredients.length > 0 &&
+                                      `${cr.extendedIngredients.length} ingredient${cr.extendedIngredients.length !== 1 ? "s" : ""}`,
+                                    cr.servings > 0 && `${cr.servings} servings`,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                                </p>
+                              )}
+                            </div>
+                          </button>
                           <div className="flex gap-1">
                             <button
                               onClick={() => setDayPickerRecipe(customToSummary(cr))}
@@ -302,16 +307,6 @@ export default function RecipesPage() {
                               title="Add to menu"
                             >
                               <Plus size={18} />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingRecipe(cr);
-                                setCustomSheetOpen(true);
-                              }}
-                              className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-200 rounded-xl"
-                              title="Edit"
-                            >
-                              <Pencil size={16} />
                             </button>
                             <button
                               onClick={() =>

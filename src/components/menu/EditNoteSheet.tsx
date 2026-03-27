@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { X } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
 import type { DayEntry } from "@/types";
@@ -46,13 +47,29 @@ export default function EditNoteSheet({ open, onClose, entry, dateStr }: EditNot
           className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           autoFocus
         />
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Link (optional)"
-          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-        />
+        {url.trim() ? (
+          <div className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3">
+            <a
+              href={url.trim()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 text-sm text-brand-500 underline truncate"
+            >
+              {url.trim()}
+            </a>
+            <button onClick={() => setUrl("")} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+              <X size={15} />
+            </button>
+          </div>
+        ) : (
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Link (optional)"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          />
+        )}
         <button
           onClick={handleSave}
           disabled={!text.trim()}

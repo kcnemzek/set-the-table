@@ -1,43 +1,18 @@
 "use client";
 
-import { X, UtensilsCrossed, ChevronRight, ExternalLink, Pencil } from "lucide-react";
+import { X, UtensilsCrossed, ChevronRight } from "lucide-react";
 import type { DayEntry } from "@/types";
+import { getRecipeEmoji } from "@/lib/recipe-emoji";
 
 interface DayEntryItemProps {
   entry: DayEntry;
   onRemove: () => void;
   onOpen?: () => void;
-  onEdit?: () => void;
   readOnly?: boolean;
 }
 
-function getFoodEmoji(title: string): string {
-  const t = title.toLowerCase();
-  if (/pasta|spaghetti|lasagna|linguine|fettuccine|penne|rigatoni|noodle/.test(t)) return "🍝";
-  if (/pizza/.test(t)) return "🍕";
-  if (/burger|hamburger/.test(t)) return "🍔";
-  if (/taco|burrito|quesadilla|enchilada|fajita/.test(t)) return "🌮";
-  if (/soup|stew|chowder|bisque|broth/.test(t)) return "🍲";
-  if (/salad/.test(t)) return "🥗";
-  if (/sandwich|sub|wrap|panini/.test(t)) return "🥪";
-  if (/chicken|poultry|hen/.test(t)) return "🍗";
-  if (/steak|beef|brisket|roast|meatball/.test(t)) return "🥩";
-  if (/fish|salmon|tuna|cod|shrimp|prawn|seafood|sushi|sashimi/.test(t)) return "🐟";
-  if (/rice|pilaf|risotto|fried rice/.test(t)) return "🍚";
-  if (/curry/.test(t)) return "🍛";
-  if (/egg|omelette|frittata|quiche/.test(t)) return "🍳";
-  if (/pancake|waffle|crepe/.test(t)) return "🥞";
-  if (/bread|toast|baguette|muffin|scone/.test(t)) return "🍞";
-  if (/cake|cupcake|brownie|cookie|dessert|pie|tart/.test(t)) return "🎂";
-  if (/ice cream|gelato|sorbet/.test(t)) return "🍦";
-  if (/smoothie|juice|shake/.test(t)) return "🥤";
-  if (/pork|bacon|ham|sausage/.test(t)) return "🥓";
-  if (/potato|fries|chips/.test(t)) return "🥔";
-  if (/vegetable|veggie|vegan|tofu|green bean|broccoli|spinach|zucchini|asparagus|brussels/.test(t)) return "🥦";
-  return "🍽️";
-}
 
-export default function DayEntryItem({ entry, onRemove, onOpen, onEdit, readOnly }: DayEntryItemProps) {
+export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayEntryItemProps) {
   const isText = entry.type === "text";
   const isCustomRecipe = entry.type === "custom-recipe";
   const label =
@@ -67,7 +42,7 @@ export default function DayEntryItem({ entry, onRemove, onOpen, onEdit, readOnly
       ) : isText ? (
         <span className="text-lg leading-none">📝</span>
       ) : isCustomRecipe ? (
-        <span className="text-lg leading-none">{getFoodEmoji(label ?? "")}</span>
+        <span className="text-lg leading-none">{getRecipeEmoji(label ?? "")}</span>
       ) : (
         <UtensilsCrossed size={16} className="text-brand-400" />
       )}
@@ -83,9 +58,7 @@ export default function DayEntryItem({ entry, onRemove, onOpen, onEdit, readOnly
         >
           {icon}
           <span className="flex-1 text-sm text-gray-800 leading-tight line-clamp-2">{label}</span>
-          {entry.type === "text" && entry.url
-            ? <ExternalLink size={14} className="flex-shrink-0 text-brand-400" />
-            : <ChevronRight size={15} className="flex-shrink-0 text-gray-400" />}
+          <ChevronRight size={15} className="flex-shrink-0 text-gray-400" />
         </button>
       ) : (
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -95,24 +68,13 @@ export default function DayEntryItem({ entry, onRemove, onOpen, onEdit, readOnly
       )}
 
       {!readOnly && (
-        <div className="flex items-center gap-0.5 flex-shrink-0">
-          {onEdit && (
-            <button
-              onClick={onEdit}
-              className="p-1.5 rounded-full text-gray-400 hover:text-brand-500 hover:bg-brand-50 active:bg-brand-100 transition-colors"
-              aria-label="Edit"
-            >
-              <Pencil size={14} />
-            </button>
-          )}
-          <button
-            onClick={onRemove}
-            className="p-1.5 rounded-full text-gray-500 hover:text-red-400 hover:bg-red-50 active:bg-red-100 transition-colors"
-            aria-label="Remove"
-          >
-            <X size={16} />
-          </button>
-        </div>
+        <button
+          onClick={onRemove}
+          className="flex-shrink-0 p-1.5 rounded-full text-gray-500 hover:text-red-400 hover:bg-red-50 active:bg-red-100 transition-colors"
+          aria-label="Remove"
+        >
+          <X size={16} />
+        </button>
       )}
     </div>
   );

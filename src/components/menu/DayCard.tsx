@@ -36,8 +36,8 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
         return () => setViewingRecipe(cr);
       }
     }
-    if (entry.type === "text" && entry.url) {
-      return () => window.open(entry.url, "_blank", "noopener,noreferrer");
+    if (entry.type === "text") {
+      return () => setEditingNote(entry);
     }
     return undefined;
   }
@@ -105,7 +105,6 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
                 entry={entry}
                 onRemove={() => removeDayEntry(dateStr, entry.id)}
                 onOpen={getOnOpen(entry)}
-                onEdit={entry.type === "text" ? () => setEditingNote(entry) : undefined}
               />
             ))}
           </div>

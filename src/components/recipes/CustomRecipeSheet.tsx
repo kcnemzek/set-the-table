@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
 import type { CustomRecipe, ExtendedIngredient } from "@/types";
@@ -234,13 +234,29 @@ export default function CustomRecipeSheet({
           <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Link (optional)
           </label>
-          <input
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://..."
-            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-          />
+          {url.trim() ? (
+            <div className="mt-1 flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3">
+              <a
+                href={url.trim()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 text-sm text-brand-500 underline truncate"
+              >
+                {url.trim()}
+              </a>
+              <button onClick={() => setUrl("")} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+                <X size={15} />
+              </button>
+            </div>
+          ) : (
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://..."
+              className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            />
+          )}
         </div>
 
         {/* Save */}

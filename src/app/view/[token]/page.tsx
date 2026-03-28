@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { use } from "react";
+import { ChefHat } from "lucide-react";
 import ReadOnlyDayCard from "@/components/menu/ReadOnlyDayCard";
 import { getNext10Days, toDateStr } from "@/lib/dates";
 import type { DayEntry, CustomRecipe, Menu } from "@/types";

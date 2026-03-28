@@ -76,10 +76,9 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
       lines.push("");
       for (const entry of menuEntries) {
         if (entry.type === "recipe" || entry.type === "custom-recipe") {
-          const title = entry.recipeTitle ?? "";
-          lines.push(`${getRecipeEmoji(title)} ${title}`);
+          lines.push(entry.recipeTitle ?? "");
         } else if (entry.type === "text") {
-          lines.push(entry.url ? `📝 ${entry.text} — ${entry.url}` : `📝 ${entry.text ?? ""}`);
+          lines.push(entry.url ? `${entry.text} — ${entry.url}` : `${entry.text ?? ""}`);
         }
       }
     }

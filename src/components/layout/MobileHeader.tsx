@@ -3,16 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChefHat, LogOut, Menu } from "lucide-react";
+import { ChefHat, LogOut, Menu, HelpCircle } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import { useAppContext } from "@/store/context";
 import AppMenuSheet from "./AppMenuSheet";
+import HelpSheet from "./HelpSheet";
 
 export default function MobileHeader() {
   const { data: session } = useSession();
   const { forceSave } = useAppContext();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -37,6 +39,13 @@ export default function MobileHeader() {
         {/* User area */}
         {session?.user && (
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setHelpOpen(true)}
+              className="p-2 text-gray-500 hover:text-gray-600 active:text-gray-800"
+              title="Help"
+            >
+              <HelpCircle size={18} />
+            </button>
             <button
               onClick={() => setMenuOpen(true)}
               className="p-2 text-gray-500 hover:text-gray-600 active:text-gray-800"
@@ -80,6 +89,7 @@ export default function MobileHeader() {
     </header>
 
     <AppMenuSheet open={menuOpen} onClose={() => setMenuOpen(false)} />
+    <HelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />
     </>
   );
 }

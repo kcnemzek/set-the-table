@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChefHat, Link as LinkIcon, Users, Plus, X, RefreshCw } from "lucide-react";
+import { Link as LinkIcon, Users, Plus, X, RefreshCw } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
 
@@ -11,7 +11,6 @@ interface AppMenuSheetProps {
 }
 
 export default function AppMenuSheet({ open, onClose }: AppMenuSheetProps) {
-  const version = process.env.NEXT_PUBLIC_VERSION ?? "—";
   const { state, addFamilyMember, removeFamilyMember } = useAppContext();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
@@ -53,17 +52,6 @@ export default function AppMenuSheet({ open, onClose }: AppMenuSheetProps) {
   return (
     <BottomSheet open={open} onClose={onClose} title="Menu">
       <div className="px-4 py-4 space-y-5">
-
-        {/* Branding */}
-        <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-          <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center">
-            <ChefHat size={20} className="text-brand-500" />
-          </div>
-          <div>
-            <p className="font-semibold text-gray-800 text-sm">Mom, What&apos;s for Dinner?</p>
-            <p className="text-xs text-gray-500">v{version}</p>
-          </div>
-        </div>
 
         {/* Family share link */}
         <div className="space-y-2">

@@ -3,12 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChefHat, CalendarDays, BookOpen, ShoppingCart, LogOut, Menu } from "lucide-react";
+import { ChefHat, CalendarDays, BookOpen, ShoppingCart, LogOut, Menu, HelpCircle } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import clsx from "clsx";
 import { useAppContext } from "@/store/context";
 import AppMenuSheet from "./AppMenuSheet";
+import HelpSheet from "./HelpSheet";
 
 const TABS = [
   { href: "/menu", label: "Menu", Icon: CalendarDays },
@@ -21,6 +22,7 @@ export default function TopNav() {
   const { data: session } = useSession();
   const { forceSave } = useAppContext();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
   if (pathname.startsWith("/view")) return null;
@@ -66,6 +68,13 @@ export default function TopNav() {
         {session?.user && (
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setHelpOpen(true)}
+              className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-200 rounded-xl transition-colors"
+              title="Help"
+            >
+              <HelpCircle size={18} />
+            </button>
+            <button
               onClick={() => setMenuOpen(true)}
               className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-200 rounded-xl transition-colors"
               title="Menu"
@@ -109,6 +118,7 @@ export default function TopNav() {
         )}
       </nav>
       <AppMenuSheet open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <HelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />
     </header>
   );
 }

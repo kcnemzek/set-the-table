@@ -118,7 +118,7 @@ export default function AddEntrySheet({
     <BottomSheet open={open} onClose={handleClose} title={`Add to ${dateLabel}`}>
       {/* Tabs */}
       <div className="flex border-b border-gray-200 px-4 pt-2">
-        {(["my-recipes", "favorites", "event", "text"] as Tab[]).map((t) => (
+        {(["my-recipes", "favorites", "text", "event"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => handleTabChange(t)}

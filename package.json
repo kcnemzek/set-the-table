@@ -1,13 +1,14 @@
 {
   "name": "whats-for-dinner",
-  "version": "1.0.28",
+  "version": "1.0.29",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:unit": "vitest run src/test/reducer.test.ts src/test/dates.test.ts src/test/recipe-emoji.test.ts src/test/ingredient-utils.test.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

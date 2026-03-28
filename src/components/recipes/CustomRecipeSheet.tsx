@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Trash2, X } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
+import { CATEGORIES } from "@/lib/recipe-emoji";
 import type { CustomRecipe, ExtendedIngredient } from "@/types";
 
 const AISLES = [
@@ -48,6 +49,7 @@ export default function CustomRecipeSheet({
 }: CustomRecipeSheetProps) {
   const { dispatch } = useAppContext();
   const [title, setTitle] = useState(existing?.title ?? "");
+  const [category, setCategory] = useState(existing?.category ?? "");
   const [servings, setServings] = useState(String(existing?.servings || ""));
   const [directions, setDirections] = useState(existing?.directions ?? "");
   const [url, setUrl] = useState(existing?.url ?? "");
@@ -63,6 +65,7 @@ export default function CustomRecipeSheet({
   useEffect(() => {
     if (open) {
       setTitle(existing?.title ?? "");
+      setCategory(existing?.category ?? "");
       setServings(String(existing?.servings || ""));
       setDirections(existing?.directions ?? "");
       setUrl(existing?.url ?? "");
@@ -108,6 +111,7 @@ export default function CustomRecipeSheet({
       extendedIngredients,
       directions: directions.trim() || undefined,
       url: url.trim() || undefined,
+      category: category || undefined,
     };
 
     dispatch({
@@ -136,6 +140,25 @@ export default function CustomRecipeSheet({
             placeholder="e.g. Mom's Lasagna"
             className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
+        </div>
+
+        {/* Category */}
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Category
+          </label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+          >
+            <option value="">Auto-detect from title</option>
+            {CATEGORIES.map((c) => (
+              <option key={c.label} value={c.label}>
+                {c.emoji} {c.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Servings */}

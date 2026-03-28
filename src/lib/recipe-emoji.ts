@@ -115,7 +115,15 @@ export function getRecipeEmoji(title: string): string {
   return "🍽️";
 }
 
-export function getRecipeCategory(title: string): { emoji: string; label: string } {
+export const CATEGORIES: { emoji: string; label: string }[] = Array.from(
+  new Map(CATEGORY_MAP.map(([, emoji, label]) => [label, { emoji, label }])).values()
+).concat([{ emoji: "🍽️", label: "Other" }]);
+
+export function getRecipeCategory(title: string, categoryOverride?: string): { emoji: string; label: string } {
+  if (categoryOverride) {
+    const match = CATEGORIES.find((c) => c.label === categoryOverride);
+    if (match) return match;
+  }
   const lower = title.toLowerCase();
   for (const [keywords, emoji, label] of CATEGORY_MAP) {
     if (keywords.some((kw) => lower.includes(kw))) return { emoji, label };

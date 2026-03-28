@@ -41,6 +41,7 @@ export interface CustomRecipe {
   directions?: string;
   notes?: string;
   url?: string;
+  category?: string; // overrides auto-detection from title
 }
 
 // ─── Menu ─────────────────────────────────────────────────────────────────────

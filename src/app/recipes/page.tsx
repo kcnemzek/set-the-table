@@ -259,7 +259,7 @@ export default function RecipesPage() {
             <div className="space-y-4">
               {Object.entries(
                 state.customRecipes.reduce<Record<string, { emoji: string; recipes: typeof state.customRecipes }>>((groups, cr) => {
-                  const { emoji, label } = getRecipeCategory(cr.title);
+                  const { emoji, label } = getRecipeCategory(cr.title, cr.category);
                   if (!groups[label]) groups[label] = { emoji, recipes: [] };
                   groups[label].recipes.push(cr);
                   groups[label].recipes.sort((a, b) => a.title.localeCompare(b.title));

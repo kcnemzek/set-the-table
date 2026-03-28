@@ -1,19 +1,33 @@
 "use client";
 
-import { X, UtensilsCrossed, ChevronRight } from "lucide-react";
+import { X, UtensilsCrossed, ChevronRight, GripVertical } from "lucide-react";
 import type { DayEntry } from "@/types";
 import { getRecipeEmoji } from "@/lib/recipe-emoji";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface DayEntryItemProps {
   entry: DayEntry;
   onRemove: () => void;
   onOpen?: () => void;
   readOnly?: boolean;
+  sortable?: boolean;
 }
 
 
-export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayEntryItemProps) {
-  // Event banner — special full-width treatment
+export default function DayEntryItem({ entry, onRemove, onOpen, readOnly, sortable }: DayEntryItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: entry.id,
+    disabled: !sortable,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  // Event banner — special full-width treatment (not sortable)
   if (entry.type === "event") {
     return (
       <div className="py-1.5 px-1">
@@ -75,7 +89,18 @@ export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayE
   );
 
   return (
-    <div className="flex items-center gap-2 py-2 px-1">
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 py-2 px-1">
+      {sortable && !readOnly && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="flex-shrink-0 p-1 text-gray-300 hover:text-gray-400 cursor-grab active:cursor-grabbing touch-none"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical size={16} />
+        </button>
+      )}
+
       {onOpen ? (
         <button
           onClick={onOpen}

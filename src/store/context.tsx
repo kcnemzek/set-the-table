@@ -53,6 +53,7 @@ type Action =
     }
   | { type: "ADD_DAY_ENTRY"; dateStr: string; entry: DayEntry }
   | { type: "REMOVE_DAY_ENTRY"; dateStr: string; entryId: string }
+  | { type: "REORDER_DAY_ENTRIES"; dateStr: string; entries: DayEntry[] }
   | { type: "UPDATE_DAY_ENTRY"; dateStr: string; entry: DayEntry }
   | { type: "TOGGLE_FAVORITE"; id: string }
   | { type: "TOGGLE_DISLIKED"; id: string }
@@ -89,6 +90,9 @@ function reducer(state: AppState, action: Action): AppState {
         menu: { ...state.menu, [action.dateStr]: updated },
       };
     }
+
+    case "REORDER_DAY_ENTRIES":
+      return { ...state, menu: { ...state.menu, [action.dateStr]: action.entries } };
 
     case "UPDATE_DAY_ENTRY": {
       const updated = (state.menu[action.dateStr] ?? []).map((e) =>

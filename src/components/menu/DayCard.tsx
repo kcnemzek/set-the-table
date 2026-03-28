@@ -3,6 +3,16 @@
 import { useState } from "react";
 import { Plus, Share2, Check } from "lucide-react";
 import clsx from "clsx";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import DayEntryItem from "./DayEntryItem";
 import AddEntrySheet from "./AddEntrySheet";
 import EditNoteSheet from "./EditNoteSheet";
@@ -18,16 +28,31 @@ interface DayCardProps {
 }
 
 export default function DayCard({ dateStr, isToday }: DayCardProps) {
-  const { state, removeDayEntry } = useAppContext();
+  const { state, removeDayEntry, dispatch } = useAppContext();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [viewingRecipe, setViewingRecipe] = useState<CustomRecipe | null>(null);
   const [editingNote, setEditingNote] = useState<DayEntry | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const rawEntries = state.menu[dateStr] ?? [];
-  const entries = [...rawEntries].sort((a, b) =>
-    a.type === "event" && b.type !== "event" ? -1 : a.type !== "event" && b.type === "event" ? 1 : 0
+  const allEntries = state.menu[dateStr] ?? [];
+  const eventEntries = allEntries.filter((e) => e.type === "event");
+  const menuEntries = allEntries.filter((e) => e.type !== "event");
+  const entries = [...eventEntries, ...menuEntries];
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
   );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = menuEntries.findIndex((e) => e.id === active.id);
+    const newIndex = menuEntries.findIndex((e) => e.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(menuEntries, oldIndex, newIndex);
+    dispatch({ type: "REORDER_DAY_ENTRIES", dateStr, entries: [...eventEntries, ...reordered] });
+  }
   const { primary, secondary } = formatDateLabelRelative(dateStr);
 
   function buildShareText(): string {
@@ -167,16 +192,21 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
             Tap + to add something
           </button>
         ) : (
-          <div className="divide-y divide-gray-50">
-            {entries.map((entry) => (
-              <DayEntryItem
-                key={entry.id}
-                entry={entry}
-                onRemove={() => removeDayEntry(dateStr, entry.id)}
-                onOpen={getOnOpen(entry)}
-              />
-            ))}
-          </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={menuEntries.map((e) => e.id)} strategy={verticalListSortingStrategy}>
+              <div className="divide-y divide-gray-50">
+                {entries.map((entry) => (
+                  <DayEntryItem
+                    key={entry.id}
+                    entry={entry}
+                    onRemove={() => removeDayEntry(dateStr, entry.id)}
+                    onOpen={getOnOpen(entry)}
+                    sortable={entry.type !== "event"}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 

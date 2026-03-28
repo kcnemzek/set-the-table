@@ -21,7 +21,7 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 | Styling | Tailwind CSS |
 | Icons | Lucide React |
 | Auth | NextAuth v5 (Auth.js) + Google OAuth |
-| Database | Vercel KV (Redis via Upstash) |
+| Database | Upstash Redis (via `@vercel/kv`) |
 | Deployment | Vercel |
 | Recipe API | Edamam |
 
@@ -55,8 +55,8 @@ src/
 | `AUTH_GOOGLE_ID` | Google OAuth client ID |
 | `AUTH_GOOGLE_SECRET` | Google OAuth client secret |
 | `AUTH_SECRET` | NextAuth secret key |
-| `KV_REST_API_URL` | Vercel KV REST API URL |
-| `KV_REST_API_TOKEN` | Vercel KV REST API token |
+| `KV_REST_API_URL` | Upstash Redis REST API URL |
+| `KV_REST_API_TOKEN` | Upstash Redis REST API token |
 | `EDAMAM_APP_ID` | Edamam recipe API app ID |
 | `EDAMAM_APP_KEY` | Edamam recipe API app key |
 | `NEXT_PUBLIC_VERSION` | App version shown in header |
@@ -72,4 +72,4 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Data Storage
 
-User data (menu, favorites, custom recipes) is stored in Vercel KV keyed by the user's stable Google account ID. In local development without KV configured, data falls back to local JSON files in `data/`.
+User data (menu, favorites, custom recipes) is stored in **Upstash Redis**, keyed by the user's stable Google account ID (`app-data:<userId>`). The app uses the `@vercel/kv` package, which connects to Upstash under the hood via the `KV_REST_API_URL` and `KV_REST_API_TOKEN` env vars. In local development without those vars configured, data falls back to local JSON files in `data/`.

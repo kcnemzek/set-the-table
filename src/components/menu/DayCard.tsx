@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Plus, Share2, Check } from "lucide-react";
 import clsx from "clsx";
 import {
@@ -21,6 +21,7 @@ import { useAppContext } from "@/store/context";
 import { formatDateLabelRelative } from "@/lib/dates";
 import { getRecipeEmoji } from "@/lib/recipe-emoji";
 import type { CustomRecipe, DayEntry } from "@/types";
+import MenuShareCard from "./MenuShareCard";
 
 interface DayCardProps {
   dateStr: string;
@@ -33,6 +34,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
   const [viewingRecipe, setViewingRecipe] = useState<CustomRecipe | null>(null);
   const [editingNote, setEditingNote] = useState<DayEntry | null>(null);
   const [copied, setCopied] = useState(false);
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   const allEntries = state.menu[dateStr] ?? [];
   const eventEntries = allEntries.filter((e) => e.type === "event");
@@ -92,6 +94,22 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
   }
 
   async function handleShare() {
+    // Try to share as an image first
+    if (shareCardRef.current && navigator.share) {
+      try {
+        const { toPng } = await import("html-to-image");
+        const dataUrl = await toPng(shareCardRef.current, { pixelRatio: 2 });
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], "menu.png", { type: "image/png" });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file] });
+          return;
+        }
+      } catch { /* fall through to text share */ }
+    }
+
+    // Fall back to text
     const text = buildShareText();
     if (navigator.share) {
       try { await navigator.share({ text }); } catch { /* dismissed */ }
@@ -233,6 +251,11 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
           dateStr={dateStr}
         />
       )}
+
+      {/* Off-screen card used for image generation */}
+      <div className="fixed -left-[9999px] top-0 pointer-events-none" aria-hidden>
+        <MenuShareCard ref={shareCardRef} dateStr={dateStr} entries={entries} />
+      </div>
     </div>
   );
 }

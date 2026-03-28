@@ -15,7 +15,7 @@ interface AddEntrySheetProps {
   dateLabel: string;
 }
 
-type Tab = "my-recipes" | "favorites" | "text";
+type Tab = "my-recipes" | "favorites" | "event" | "text";
 
 export default function AddEntrySheet({
   open,
@@ -74,6 +74,18 @@ export default function AddEntrySheet({
     onClose();
   }, [addDayEntry, dateStr, textEntry, urlEntry, onClose]);
 
+  const addEventEntry = useCallback(() => {
+    if (!textEntry.trim()) return;
+    const entry: DayEntry = {
+      id: crypto.randomUUID(),
+      type: "event",
+      text: textEntry.trim(),
+    };
+    addDayEntry(dateStr, entry);
+    setTextEntry("");
+    onClose();
+  }, [addDayEntry, dateStr, textEntry, onClose]);
+
   const loadFavorites = useCallback(async () => {
     if (state.favorites.length === 0) { setFavRecipes([]); return; }
     setFavLoading(true);
@@ -91,6 +103,8 @@ export default function AddEntrySheet({
 
   const handleTabChange = (t: Tab) => {
     setTab(t);
+    setTextEntry("");
+    setUrlEntry("");
     if (t === "favorites") loadFavorites();
   };
 
@@ -104,12 +118,12 @@ export default function AddEntrySheet({
     <BottomSheet open={open} onClose={handleClose} title={`Add to ${dateLabel}`}>
       {/* Tabs */}
       <div className="flex border-b border-gray-200 px-4 pt-2">
-        {(["my-recipes", "favorites", "text"] as Tab[]).map((t) => (
+        {(["my-recipes", "favorites", "event", "text"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => handleTabChange(t)}
             className={clsx(
-              "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
+              "flex items-center gap-2 px-3 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
               tab === t
                 ? "border-brand-500 text-brand-600"
                 : "border-transparent text-gray-500 hover:text-gray-600"
@@ -117,8 +131,9 @@ export default function AddEntrySheet({
           >
             {t === "my-recipes" && <BookOpen size={15} />}
             {t === "favorites" && <Heart size={15} />}
+            {t === "event" && <span className="text-sm leading-none">🎉</span>}
             {t === "text" && <span className="text-sm leading-none">📝</span>}
-            {t === "my-recipes" ? "My Recipes" : t === "favorites" ? "Favorites" : "Note"}
+            {t === "my-recipes" ? "My Recipes" : t === "favorites" ? "Favorites" : t === "event" ? "Event" : "Note"}
           </button>
         ))}
       </div>
@@ -190,6 +205,35 @@ export default function AddEntrySheet({
                 </div>
               </button>
             ))}
+          </div>
+        )}
+
+        {tab === "event" && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500">
+              Mark a special occasion — use emojis to make it pop!
+            </p>
+            <input
+              type="text"
+              value={textEntry}
+              onChange={(e) => setTextEntry(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addEventEntry()}
+              placeholder="e.g. 🎂 Elizabeth's Birthday"
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+              autoFocus
+            />
+            {textEntry.trim() && (
+              <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-sm font-semibold text-amber-800">
+                {textEntry}
+              </div>
+            )}
+            <button
+              onClick={addEventEntry}
+              disabled={!textEntry.trim()}
+              className="w-full py-3 bg-brand-500 text-white rounded-xl text-sm font-semibold disabled:opacity-50 active:bg-brand-600"
+            >
+              Add Event
+            </button>
           </div>
         )}
 

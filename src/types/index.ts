@@ -45,10 +45,10 @@ export interface CustomRecipe {
 
 // ─── Menu ─────────────────────────────────────────────────────────────────────
 
-/** A single entry on a day — either an Edamam/custom recipe or free text */
+/** A single entry on a day — either an Edamam/custom recipe, free text, or a special event/occasion */
 export interface DayEntry {
   id: string; // uuid
-  type: "recipe" | "custom-recipe" | "text";
+  type: "recipe" | "custom-recipe" | "text" | "event";
   // type === "recipe"
   recipeId?: string;
   recipeTitle?: string;

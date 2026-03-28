@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Share2, Check } from "lucide-react";
 import clsx from "clsx";
 import DayEntryItem from "./DayEntryItem";
 import AddEntrySheet from "./AddEntrySheet";
@@ -9,6 +9,7 @@ import EditNoteSheet from "./EditNoteSheet";
 import CustomRecipeSheet from "@/components/recipes/CustomRecipeSheet";
 import { useAppContext } from "@/store/context";
 import { formatDateLabelRelative } from "@/lib/dates";
+import { getRecipeEmoji } from "@/lib/recipe-emoji";
 import type { CustomRecipe, DayEntry } from "@/types";
 
 interface DayCardProps {
@@ -21,9 +22,61 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [viewingRecipe, setViewingRecipe] = useState<CustomRecipe | null>(null);
   const [editingNote, setEditingNote] = useState<DayEntry | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  const entries = state.menu[dateStr] ?? [];
+  const rawEntries = state.menu[dateStr] ?? [];
+  const entries = [...rawEntries].sort((a, b) =>
+    a.type === "event" && b.type !== "event" ? -1 : a.type !== "event" && b.type === "event" ? 1 : 0
+  );
   const { primary, secondary } = formatDateLabelRelative(dateStr);
+
+  function buildShareText(): string {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    const fullDate = date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+
+    const eventEntry = entries.find((e) => e.type === "event");
+    const menuEntries = entries.filter((e) => e.type !== "event");
+
+    const lines: string[] = [];
+
+    if (eventEntry) {
+      lines.push(eventEntry.text ?? "");
+      lines.push(fullDate);
+    } else {
+      lines.push(`📅 ${fullDate}`);
+    }
+
+    if (menuEntries.length > 0) {
+      lines.push("");
+      for (const entry of menuEntries) {
+        if (entry.type === "recipe" || entry.type === "custom-recipe") {
+          const title = entry.recipeTitle ?? "";
+          lines.push(`${getRecipeEmoji(title)} ${title}`);
+        } else if (entry.type === "text") {
+          lines.push(entry.url ? `📝 ${entry.text} — ${entry.url}` : `📝 ${entry.text ?? ""}`);
+        }
+      }
+    }
+
+    if (eventEntry) {
+      lines.push("");
+      lines.push("See you there! 🙌");
+    }
+
+    return lines.join("\n");
+  }
+
+  async function handleShare() {
+    const text = buildShareText();
+    if (navigator.share) {
+      try { await navigator.share({ text }); } catch { /* dismissed */ }
+    } else {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
 
   function getOnOpen(entry: DayEntry): (() => void) | undefined {
     if (entry.type === "recipe" && entry.recipeUrl) {
@@ -36,7 +89,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
         return () => setViewingRecipe(cr);
       }
     }
-    if (entry.type === "text") {
+    if (entry.type === "text" || entry.type === "event") {
       return () => setEditingNote(entry);
     }
     return undefined;
@@ -74,18 +127,34 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
             {secondary}
           </p>
         </div>
-        <button
-          onClick={() => setSheetOpen(true)}
-          className={clsx(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors",
-            isToday
-              ? "bg-white/20 text-white hover:bg-white/30 active:bg-white/40"
-              : "bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700"
+        <div className="flex items-center gap-1.5">
+          {entries.length > 0 && (
+            <button
+              onClick={handleShare}
+              className={clsx(
+                "p-1.5 rounded-xl transition-colors",
+                isToday
+                  ? "text-white/70 hover:text-white hover:bg-white/20 active:bg-white/30"
+                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+              )}
+              title="Share menu"
+            >
+              {copied ? <Check size={15} /> : <Share2 size={15} />}
+            </button>
           )}
-        >
-          <Plus size={14} />
-          Add
-        </button>
+          <button
+            onClick={() => setSheetOpen(true)}
+            className={clsx(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors",
+              isToday
+                ? "bg-white/20 text-white hover:bg-white/30 active:bg-white/40"
+                : "bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700"
+            )}
+          >
+            <Plus size={14} />
+            Add
+          </button>
+        </div>
       </div>
 
       {/* Entries */}

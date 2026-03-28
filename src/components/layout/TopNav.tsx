@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChefHat, CalendarDays, BookOpen, ShoppingCart, LogOut } from "lucide-react";
+import { ChefHat, CalendarDays, BookOpen, ShoppingCart, LogOut, Menu } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import clsx from "clsx";
 import { useAppContext } from "@/store/context";
+import AppMenuSheet from "./AppMenuSheet";
 
 const TABS = [
   { href: "/menu", label: "Menu", Icon: CalendarDays },
@@ -18,6 +20,10 @@ export default function TopNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { forceSave } = useAppContext();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  if (pathname.startsWith("/view")) return null;
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
@@ -58,32 +64,51 @@ export default function TopNav() {
 
         {/* User area */}
         {session?.user && (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              {session.user.image && (
-                <Image
-                  src={session.user.image}
-                  alt={session.user.name ?? "User"}
-                  width={32}
-                  height={32}
-                  className="rounded-full"
-                />
-              )}
-              <span className="text-sm text-gray-600 hidden lg:block">
-                {session.user.name?.split(" ")[0]}
-              </span>
-            </div>
+          <div className="flex items-center gap-2">
             <button
-              onClick={async () => { await forceSave(); signOut({ callbackUrl: "/login" }); }}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-500 hover:text-gray-600 hover:bg-gray-200 rounded-xl transition-colors"
-              title="Sign out"
+              onClick={() => setMenuOpen(true)}
+              className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-200 rounded-xl transition-colors"
+              title="Menu"
             >
-              <LogOut size={16} />
-              <span className="hidden lg:inline">Sign out</span>
+              <Menu size={18} />
             </button>
+            <div className="relative">
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                {session.user.image && (
+                  <Image
+                    src={session.user.image}
+                    alt={session.user.name ?? "User"}
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                  />
+                )}
+                <span className="text-sm text-gray-600 hidden lg:block">
+                  {session.user.name?.split(" ")[0]}
+                </span>
+              </button>
+              {profileOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[140px] z-50">
+                    <button
+                      onClick={async () => { setProfileOpen(false); await forceSave(); signOut({ callbackUrl: "/login" }); }}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+                    >
+                      <LogOut size={15} />
+                      Sign out
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
       </nav>
+      <AppMenuSheet open={menuOpen} onClose={() => setMenuOpen(false)} />
     </header>
   );
 }

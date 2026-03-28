@@ -13,6 +13,31 @@ interface DayEntryItemProps {
 
 
 export default function DayEntryItem({ entry, onRemove, onOpen, readOnly }: DayEntryItemProps) {
+  // Event banner — special full-width treatment
+  if (entry.type === "event") {
+    return (
+      <div className="py-1.5 px-1">
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+          <button
+            onClick={onOpen}
+            className="flex-1 text-left text-sm font-semibold text-amber-800 leading-snug"
+          >
+            {entry.text}
+          </button>
+          {!readOnly && (
+            <button
+              onClick={onRemove}
+              className="flex-shrink-0 p-1 rounded-full text-amber-400 hover:text-red-400 hover:bg-red-50 active:bg-red-100 transition-colors"
+              aria-label="Remove"
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const isText = entry.type === "text";
   const isCustomRecipe = entry.type === "custom-recipe";
   const label =

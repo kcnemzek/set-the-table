@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { use } from "react";
-import { ChefHat } from "lucide-react";
 import ReadOnlyDayCard from "@/components/menu/ReadOnlyDayCard";
 import { getNext10Days, toDateStr } from "@/lib/dates";
 import type { DayEntry, CustomRecipe, Menu } from "@/types";
@@ -97,31 +96,20 @@ export default function FamilyViewPage({ params }: { params: Promise<{ token: st
 
   return (
     <div className="min-h-dvh bg-gray-100">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between h-14 px-4 max-w-2xl mx-auto">
-          <div className="flex items-center gap-2 font-bold text-brand-600 text-base">
-            <ChefHat className="w-6 h-6" />
-            <div className="flex flex-col leading-tight">
-              <span>What&apos;s for Dinner?</span>
-              <span className="text-[10px] font-normal text-gray-500">v{process.env.NEXT_PUBLIC_VERSION}</span>
-            </div>
-          </div>
+      {/* Menu */}
+      <div className="space-y-3 px-4 py-4 max-w-2xl mx-auto">
+        <div className="flex items-baseline gap-3 mb-1">
+          <h1 className="text-xl font-bold text-gray-800">Hey {familyName}! 👋</h1>
           <button
             onClick={() => {
               localStorage.removeItem(STORAGE_KEY);
               setFamilyName(null);
             }}
-            className="text-xs text-gray-500 hover:text-gray-600"
+            className="text-xs text-gray-400 hover:text-gray-600"
           >
             Not {familyName}?
           </button>
         </div>
-      </header>
-
-      {/* Menu */}
-      <div className="space-y-3 px-4 py-4 max-w-2xl mx-auto">
-        <h1 className="text-xl font-bold text-gray-800 mb-1">Hey {familyName}! 👋</h1>
         {days.map((dateStr) => (
           <ReadOnlyDayCard
             key={dateStr}

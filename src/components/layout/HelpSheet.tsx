@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import BottomSheet from "@/components/shared/BottomSheet";
 
 interface HelpSheetProps {
@@ -49,9 +50,39 @@ const SECTIONS = [
   },
 ];
 
+type SubmitState = "idle" | "submitting" | "success" | "error";
+
 export default function HelpSheet({ open, onClose }: HelpSheetProps) {
+  const [type, setType] = useState<"Bug" | "Enhancement">("Bug");
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitState, setSubmitState] = useState<SubmitState>("idle");
+
+  async function handleSubmit() {
+    if (!message.trim()) return;
+    setSubmitState("submitting");
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, name, message }),
+      });
+      if (!res.ok) throw new Error();
+      setSubmitState("success");
+      setMessage("");
+      setName("");
+    } catch {
+      setSubmitState("error");
+    }
+  }
+
+  function handleClose() {
+    setSubmitState("idle");
+    onClose();
+  }
+
   return (
-    <BottomSheet open={open} onClose={onClose} title="Tips & Help">
+    <BottomSheet open={open} onClose={handleClose} title="Tips & Help">
       <div className="p-4 space-y-6 pb-8">
         {SECTIONS.map((section) => (
           <div key={section.title}>
@@ -68,7 +99,61 @@ export default function HelpSheet({ open, onClose }: HelpSheetProps) {
             </ul>
           </div>
         ))}
-        <p className="text-xs text-gray-400 text-center pt-2">
+
+        {/* Feedback form */}
+        <div className="border-t border-gray-100 pt-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-800">💬 Send Feedback</h3>
+
+          {submitState === "success" ? (
+            <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+              Thanks! Your feedback was submitted.
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                {(["Bug", "Enhancement"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setType(t)}
+                    className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                      type === t
+                        ? "bg-brand-500 text-white border-brand-500"
+                        : "bg-white text-gray-500 border-gray-200"
+                    }`}
+                  >
+                    {t === "Bug" ? "🐛 Bug" : "✨ Enhancement"}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name (optional)"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+              />
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder={type === "Bug" ? "What went wrong?" : "What would you like to see?"}
+                rows={3}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
+              />
+              {submitState === "error" && (
+                <p className="text-xs text-red-500">Something went wrong — please try again.</p>
+              )}
+              <button
+                onClick={handleSubmit}
+                disabled={!message.trim() || submitState === "submitting"}
+                className="w-full py-3 bg-brand-500 text-white rounded-xl text-sm font-semibold disabled:opacity-40 active:bg-brand-600"
+              >
+                {submitState === "submitting" ? "Submitting…" : "Submit"}
+              </button>
+            </>
+          )}
+        </div>
+
+        <p className="text-xs text-gray-400 text-center">
           Mom, What&apos;s for Dinner? v{process.env.NEXT_PUBLIC_VERSION}
         </p>
       </div>

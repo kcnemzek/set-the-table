@@ -31,7 +31,7 @@ export default function BottomSheet({ open, onClose, title, children }: BottomSh
         onClick={onClose}
       />
       {/* Sheet */}
-      <div className="relative bg-white rounded-t-2xl shadow-xl max-h-[90dvh] flex flex-col">
+      <div className="relative bg-white rounded-t-2xl shadow-xl max-h-[90dvh] flex flex-col md:max-w-2xl md:w-full md:mx-auto">
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-gray-300" />

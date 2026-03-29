@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Plus, Share2, Check } from "lucide-react";
+import { Plus, Share2, Check, Bookmark } from "lucide-react";
 import clsx from "clsx";
 import {
   DndContext,
@@ -22,6 +22,7 @@ import { formatDateLabelRelative } from "@/lib/dates";
 import { getRecipeEmoji } from "@/lib/recipe-emoji";
 import type { CustomRecipe, DayEntry } from "@/types";
 import MenuShareCard from "./MenuShareCard";
+import SaveMenuSheet from "./SaveMenuSheet";
 
 interface DayCardProps {
   dateStr: string;
@@ -34,6 +35,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
   const [viewingRecipe, setViewingRecipe] = useState<CustomRecipe | null>(null);
   const [editingNote, setEditingNote] = useState<DayEntry | null>(null);
   const [copied, setCopied] = useState(false);
+  const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   const shareCardRef = useRef<HTMLDivElement>(null);
 
   const allEntries = state.menu[dateStr] ?? [];
@@ -171,18 +173,32 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
         </div>
         <div className="flex items-center gap-1.5">
           {entries.length > 0 && (
-            <button
-              onClick={handleShare}
-              className={clsx(
-                "p-1.5 rounded-xl transition-colors",
-                isToday
-                  ? "text-white/70 hover:text-white hover:bg-white/20 active:bg-white/30"
-                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-200 active:bg-gray-300"
-              )}
-              title="Share menu"
-            >
-              {copied ? <Check size={15} /> : <Share2 size={15} />}
-            </button>
+            <>
+              <button
+                onClick={() => setSaveMenuOpen(true)}
+                className={clsx(
+                  "p-1.5 rounded-xl transition-colors",
+                  isToday
+                    ? "text-white/70 hover:text-white hover:bg-white/20 active:bg-white/30"
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+                )}
+                title="Save as menu"
+              >
+                <Bookmark size={15} />
+              </button>
+              <button
+                onClick={handleShare}
+                className={clsx(
+                  "p-1.5 rounded-xl transition-colors",
+                  isToday
+                    ? "text-white/70 hover:text-white hover:bg-white/20 active:bg-white/30"
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+                )}
+                title="Share menu"
+              >
+                {copied ? <Check size={15} /> : <Share2 size={15} />}
+              </button>
+            </>
           )}
           <button
             onClick={() => setSheetOpen(true)}
@@ -251,6 +267,12 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
           dateStr={dateStr}
         />
       )}
+
+      <SaveMenuSheet
+        open={saveMenuOpen}
+        onClose={() => setSaveMenuOpen(false)}
+        entries={entries}
+      />
 
       {/* Off-screen card used for image generation */}
       <div className="fixed -left-[9999px] top-0 pointer-events-none" aria-hidden>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Shuffle, Plus, Heart, BookOpen, Trash2, Loader2 } from "lucide-react";
+import { Shuffle, Plus, Heart, BookOpen, Trash2, Loader2, Bookmark, ChevronRight } from "lucide-react";
 import clsx from "clsx";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import SearchBar from "@/components/recipes/SearchBar";
@@ -11,9 +11,9 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import EmptyState from "@/components/shared/EmptyState";
 import { useAppContext } from "@/store/context";
 import { getRecipeEmoji, getRecipeCategory } from "@/lib/recipe-emoji";
-import type { RecipeSummary, CustomRecipe } from "@/types";
+import type { RecipeSummary, CustomRecipe, DayEntry } from "@/types";
 
-type Tab = "discover" | "favorites" | "custom";
+type Tab = "discover" | "favorites" | "custom" | "menus";
 
 export default function RecipesPage() {
   const { state, dispatch } = useAppContext();
@@ -36,6 +36,10 @@ export default function RecipesPage() {
 
   // Day picker for custom recipes
   const [dayPickerRecipe, setDayPickerRecipe] = useState<RecipeSummary | null>(null);
+
+  // My Menus state
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+  const [pickerEntry, setPickerEntry] = useState<DayEntry | null>(null);
 
   const handleSearch = useCallback(async (token?: string) => {
     if (!query.trim()) return;
@@ -115,7 +119,7 @@ export default function RecipesPage() {
     <div className="flex flex-col min-h-full">
       {/* Tabs */}
       <div className="flex border-b border-gray-200 bg-white sticky top-0 z-10">
-        {(["discover", "favorites", "custom"] as Tab[]).map((t) => (
+        {(["discover", "favorites", "custom", "menus"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => handleTabChange(t)}
@@ -129,6 +133,7 @@ export default function RecipesPage() {
             {t === "discover" && "Discover"}
             {t === "favorites" && "Favorites"}
             {t === "custom" && "My Recipes"}
+            {t === "menus" && "My Menus"}
           </button>
         ))}
       </div>
@@ -328,6 +333,80 @@ export default function RecipesPage() {
         </div>
       )}
 
+      {/* My Menus Tab */}
+      {tab === "menus" && (
+        <div className="p-4 space-y-3">
+          {state.savedMenus.length === 0 ? (
+            <EmptyState
+              icon={<Bookmark size={48} />}
+              title="No saved menus yet"
+              description="Tap the bookmark icon on any day to save it as a menu"
+            />
+          ) : (
+            state.savedMenus.map((savedMenu) => (
+              <div key={savedMenu.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div
+                  onClick={() => setExpandedMenu(expandedMenu === savedMenu.id ? null : savedMenu.id)}
+                  className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
+                >
+                  <Bookmark size={18} className="text-brand-500 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800">{savedMenu.name}</p>
+                    <p className="text-xs text-gray-400">
+                      {savedMenu.entries.length} item{savedMenu.entries.length !== 1 ? "s" : ""} · saved {new Date(savedMenu.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        dispatch({ type: "DELETE_SAVED_MENU", id: savedMenu.id });
+                        if (expandedMenu === savedMenu.id) setExpandedMenu(null);
+                      }}
+                      className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                      title="Delete saved menu"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                    <ChevronRight
+                      size={16}
+                      className={clsx("text-gray-400 transition-transform", expandedMenu === savedMenu.id && "rotate-90")}
+                    />
+                  </div>
+                </div>
+                {expandedMenu === savedMenu.id && (
+                  <div className="border-t border-gray-100 divide-y divide-gray-50">
+                    {savedMenu.entries.map((entry) => (
+                      <button
+                        key={entry.id}
+                        onClick={() => setPickerEntry(entry)}
+                        className="w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-brand-50 active:bg-brand-100"
+                      >
+                        {(entry.type === "recipe" || entry.type === "custom-recipe") && entry.recipeImage ? (
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={entry.recipeImage} alt={entry.recipeTitle ?? ""} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
+                            {entry.type === "event" ? "🎉" : entry.type === "text" ? "📝" : "🍽️"}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 line-clamp-2">{entry.recipeTitle ?? entry.text ?? ""}</p>
+                          <p className="text-xs text-gray-400 capitalize">{entry.type === "custom-recipe" ? "my recipe" : entry.type}</p>
+                        </div>
+                        <Plus size={16} className="text-brand-400 flex-shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
       <CustomRecipeSheet
         open={customSheetOpen}
         onClose={() => setCustomSheetOpen(false)}
@@ -340,6 +419,16 @@ export default function RecipesPage() {
           onClose={() => setDayPickerRecipe(null)}
           recipe={dayPickerRecipe}
           onAdded={() => setDayPickerRecipe(null)}
+        />
+      )}
+
+      {pickerEntry && (
+        <DayPickerSheet
+          open={!!pickerEntry}
+          onClose={() => setPickerEntry(null)}
+          recipe={{ id: "", title: pickerEntry.recipeTitle ?? pickerEntry.text ?? "", image: "", readyInMinutes: 0, servings: 0 }}
+          entry={pickerEntry}
+          onAdded={() => setPickerEntry(null)}
         />
       )}
     </div>

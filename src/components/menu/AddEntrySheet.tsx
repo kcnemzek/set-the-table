@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Loader2, Heart, BookOpen } from "lucide-react";
+import { Loader2, Heart, BookOpen, Bookmark, Trash2, ChevronRight } from "lucide-react";
 import clsx from "clsx";
 import BottomSheet from "@/components/shared/BottomSheet";
 import type { DayEntry, RecipeSummary } from "@/types"; // RecipeSummary used by favorites
@@ -15,7 +15,7 @@ interface AddEntrySheetProps {
   dateLabel: string;
 }
 
-type Tab = "my-recipes" | "favorites" | "event" | "text";
+type Tab = "my-recipes" | "favorites" | "saved" | "event" | "text";
 
 export default function AddEntrySheet({
   open,
@@ -23,12 +23,13 @@ export default function AddEntrySheet({
   dateStr,
   dateLabel,
 }: AddEntrySheetProps) {
-  const { addDayEntry, state } = useAppContext();
+  const { addDayEntry, state, dispatch } = useAppContext();
   const [tab, setTab] = useState<Tab>("my-recipes");
   const [textEntry, setTextEntry] = useState("");
   const [urlEntry, setUrlEntry] = useState("");
   const [favRecipes, setFavRecipes] = useState<RecipeSummary[]>([]);
   const [favLoading, setFavLoading] = useState(false);
+  const [expandedSavedMenu, setExpandedSavedMenu] = useState<string | null>(null);
 
   const addRecipe = useCallback(
     (recipe: RecipeSummary) => {
@@ -101,29 +102,39 @@ export default function AddEntrySheet({
     }
   }, [state.favorites]);
 
+  const addSavedEntry = useCallback(
+    (entry: import("@/types").DayEntry) => {
+      addDayEntry(dateStr, { ...entry, id: crypto.randomUUID() });
+      onClose();
+    },
+    [addDayEntry, dateStr, onClose]
+  );
+
   const handleTabChange = (t: Tab) => {
     setTab(t);
     setTextEntry("");
     setUrlEntry("");
+    setExpandedSavedMenu(null);
     if (t === "favorites") loadFavorites();
   };
 
   const handleClose = () => {
     setTextEntry("");
     setUrlEntry("");
+    setExpandedSavedMenu(null);
     onClose();
   };
 
   return (
     <BottomSheet open={open} onClose={handleClose} title={`Add to ${dateLabel}`}>
       {/* Tabs */}
-      <div className="flex border-b border-gray-200 px-4 pt-2">
-        {(["my-recipes", "favorites", "text", "event"] as Tab[]).map((t) => (
+      <div className="flex border-b border-gray-200 px-4 pt-2 overflow-x-auto">
+        {(["my-recipes", "favorites", "saved", "text", "event"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => handleTabChange(t)}
             className={clsx(
-              "flex items-center gap-2 px-3 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
+              "flex items-center gap-2 px-3 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
               tab === t
                 ? "border-brand-500 text-brand-600"
                 : "border-transparent text-gray-500 hover:text-gray-600"
@@ -131,9 +142,10 @@ export default function AddEntrySheet({
           >
             {t === "my-recipes" && <BookOpen size={15} />}
             {t === "favorites" && <Heart size={15} />}
+            {t === "saved" && <Bookmark size={15} />}
             {t === "event" && <span className="text-sm leading-none">🎉</span>}
             {t === "text" && <span className="text-sm leading-none">📝</span>}
-            {t === "my-recipes" ? "My Recipes" : t === "favorites" ? "Favorites" : t === "event" ? "Event" : "Note"}
+            {t === "my-recipes" ? "My Recipes" : t === "favorites" ? "Favorites" : t === "saved" ? "Saved" : t === "event" ? "Event" : "Note"}
           </button>
         ))}
       </div>
@@ -205,6 +217,70 @@ export default function AddEntrySheet({
                 </div>
               </button>
             ))}
+          </div>
+        )}
+
+        {tab === "saved" && (
+          <div className="space-y-2">
+            {state.savedMenus.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">No saved menus yet — tap the bookmark icon on any day to save it</p>
+            ) : (
+              state.savedMenus.map((savedMenu) => (
+                <div key={savedMenu.id} className="rounded-xl border border-gray-200 overflow-hidden">
+                  <div
+                    onClick={() => setExpandedSavedMenu(expandedSavedMenu === savedMenu.id ? null : savedMenu.id)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Bookmark size={15} className="text-brand-500 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-800">{savedMenu.name}</span>
+                      <span className="text-xs text-gray-400">{savedMenu.entries.length} item{savedMenu.entries.length !== 1 ? "s" : ""}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          dispatch({ type: "DELETE_SAVED_MENU", id: savedMenu.id });
+                        }}
+                        className="p-1 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                        title="Delete saved menu"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <ChevronRight
+                        size={15}
+                        className={clsx("text-gray-400 transition-transform", expandedSavedMenu === savedMenu.id && "rotate-90")}
+                      />
+                    </div>
+                  </div>
+                  {expandedSavedMenu === savedMenu.id && (
+                    <div className="border-t border-gray-100 divide-y divide-gray-50">
+                      {savedMenu.entries.map((entry) => (
+                        <button
+                          key={entry.id}
+                          onClick={() => addSavedEntry(entry)}
+                          className="w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-brand-50 active:bg-brand-100"
+                        >
+                          {(entry.type === "recipe" || entry.type === "custom-recipe") && entry.recipeImage ? (
+                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={entry.recipeImage} alt={entry.recipeTitle ?? ""} className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
+                              {entry.type === "event" ? "🎉" : entry.type === "text" ? "📝" : "🍽️"}
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-gray-800 line-clamp-2">
+                            {entry.recipeTitle ?? entry.text ?? ""}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         )}
 

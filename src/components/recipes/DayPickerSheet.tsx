@@ -11,6 +11,8 @@ interface DayPickerSheetProps {
   onClose: () => void;
   recipe: RecipeSummary;
   onAdded: () => void;
+  /** When provided, this entry is added directly instead of building one from recipe */
+  entry?: DayEntry;
 }
 
 export default function DayPickerSheet({
@@ -18,20 +20,23 @@ export default function DayPickerSheet({
   onClose,
   recipe,
   onAdded,
+  entry,
 }: DayPickerSheetProps) {
   const { addDayEntry, state } = useAppContext();
   const days = getNext10Days();
 
   const handlePick = (dateStr: string) => {
-    const entry: DayEntry = {
-      id: crypto.randomUUID(),
-      type: "recipe",
-      recipeId: recipe.id,
-      recipeTitle: recipe.title,
-      recipeImage: recipe.image || `/api/recipes/${recipe.id}/image`,
-      recipeUrl: recipe.sourceUrl,
-    };
-    addDayEntry(dateStr, entry);
+    const toAdd: DayEntry = entry
+      ? { ...entry, id: crypto.randomUUID() }
+      : {
+          id: crypto.randomUUID(),
+          type: "recipe",
+          recipeId: recipe.id,
+          recipeTitle: recipe.title,
+          recipeImage: recipe.image || `/api/recipes/${recipe.id}/image`,
+          recipeUrl: recipe.sourceUrl,
+        };
+    addDayEntry(dateStr, toAdd);
     onAdded();
     onClose();
   };

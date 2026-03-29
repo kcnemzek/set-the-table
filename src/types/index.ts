@@ -65,6 +65,14 @@ export interface DayEntry {
 /** Menu keyed by "YYYY-MM-DD" → ordered list of entries */
 export type Menu = Record<string, DayEntry[]>;
 
+/** A named snapshot of a day's entries that can be reused */
+export interface SavedMenu {
+  id: string;
+  name: string;
+  entries: DayEntry[];
+  createdAt: string; // ISO date string
+}
+
 // ─── Grocery ──────────────────────────────────────────────────────────────────
 
 export interface AggregatedIngredient {

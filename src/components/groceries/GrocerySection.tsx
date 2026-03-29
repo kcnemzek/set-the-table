@@ -65,15 +65,26 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
                 )}
               </div>
 
-              {/* Name */}
-              <span
-                className={clsx(
-                  "flex-1 text-sm capitalize",
-                  checked ? "text-gray-500 line-through" : "text-gray-800"
+              {/* Name + recipe sources */}
+              <div className="flex-1 min-w-0">
+                <span
+                  className={clsx(
+                    "text-sm capitalize",
+                    checked ? "text-gray-500 line-through" : "text-gray-800"
+                  )}
+                >
+                  {item.name}
+                </span>
+                {item.recipes.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    {item.recipes.map((r) => (
+                      <span key={r} className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-2 py-0.5 leading-tight">
+                        {r}
+                      </span>
+                    ))}
+                  </div>
                 )}
-              >
-                {item.name}
-              </span>
+              </div>
 
               {/* Amount */}
               {item.totalAmount > 0 && (

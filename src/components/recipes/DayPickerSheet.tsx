@@ -19,7 +19,7 @@ export default function DayPickerSheet({
   recipe,
   onAdded,
 }: DayPickerSheetProps) {
-  const { addDayEntry } = useAppContext();
+  const { addDayEntry, state } = useAppContext();
   const days = getNext10Days();
 
   const handlePick = (dateStr: string) => {
@@ -41,6 +41,7 @@ export default function DayPickerSheet({
       <div className="p-4 space-y-1">
         {days.map((dateStr, i) => {
           const { primary, secondary } = formatDateLabelRelative(dateStr);
+          const entries = (state.menu[dateStr] ?? []).filter((e) => e.type !== "event");
           return (
             <button
               key={dateStr}
@@ -55,12 +56,18 @@ export default function DayPickerSheet({
                   {secondary.split(" ")[1] ?? secondary}
                 </span>
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-800">{primary}</p>
-                <p className="text-xs text-gray-500">{secondary}</p>
+                {entries.length > 0 ? (
+                  <p className="text-xs text-gray-400 truncate">
+                    {entries.map((e) => e.recipeTitle ?? e.text).join(" · ")}
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-400">{secondary}</p>
+                )}
               </div>
               {i === 0 && (
-                <span className="ml-auto text-xs font-semibold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full">
+                <span className="ml-auto text-xs font-semibold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full flex-shrink-0">
                   Today
                 </span>
               )}

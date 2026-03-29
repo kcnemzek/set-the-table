@@ -10,35 +10,36 @@ export function aggregateIngredients(
   recipes: RecipeDetail[],
   manualItems: ManualGroceryItem[]
 ): GroceryListByAisle {
-  const allIngredients: ExtendedIngredient[] = recipes.flatMap(
-    (r) => r.extendedIngredients ?? []
+  const allIngredients: { ing: ExtendedIngredient; recipeTitle: string }[] = recipes.flatMap(
+    (r) => (r.extendedIngredients ?? []).map((ing) => ({ ing, recipeTitle: r.title }))
   );
 
   // Group by normalized name
-  const byName = new Map<string, ExtendedIngredient[]>();
-  for (const ing of allIngredients) {
-    const key = (ing.nameClean ?? ing.name).toLowerCase().trim();
+  const byName = new Map<string, { ing: ExtendedIngredient; recipeTitle: string }[]>();
+  for (const item of allIngredients) {
+    const key = (item.ing.nameClean ?? item.ing.name).toLowerCase().trim();
     if (!byName.has(key)) byName.set(key, []);
-    byName.get(key)!.push(ing);
+    byName.get(key)!.push(item);
   }
 
   const aggregated: AggregatedIngredient[] = [];
 
   for (const [, group] of byName) {
-    const first = group[0];
+    const first = group[0].ing;
     const aisle = first.aisle ?? "Miscellaneous";
 
     // Sum amounts per unit; keep separate entries for unit mismatches
-    const byUnit = new Map<string, { amount: number; originals: string[] }>();
-    for (const ing of group) {
+    const byUnit = new Map<string, { amount: number; originals: string[]; recipes: Set<string> }>();
+    for (const { ing, recipeTitle } of group) {
       const unit = ing.unit.toLowerCase().trim();
-      if (!byUnit.has(unit)) byUnit.set(unit, { amount: 0, originals: [] });
+      if (!byUnit.has(unit)) byUnit.set(unit, { amount: 0, originals: [], recipes: new Set() });
       const entry = byUnit.get(unit)!;
       entry.amount += ing.amount;
       entry.originals.push(ing.original);
+      entry.recipes.add(recipeTitle);
     }
 
-    for (const [unit, { amount, originals }] of byUnit) {
+    for (const [unit, { amount, originals, recipes }] of byUnit) {
       aggregated.push({
         name: first.nameClean ?? first.name,
         totalAmount: parseFloat(amount.toFixed(2)),
@@ -46,6 +47,7 @@ export function aggregateIngredients(
         aisle: normalizeAisle(aisle),
         originalLines: originals,
         checked: false,
+        recipes: Array.from(recipes),
       });
     }
   }
@@ -68,6 +70,7 @@ export function aggregateIngredients(
       aisle,
       originalLines: [],
       checked: item.checked,
+      recipes: [],
     });
   }
 

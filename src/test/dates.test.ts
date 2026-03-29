@@ -34,8 +34,12 @@ describe("formatDateLabelRelative", () => {
   });
 
   it("returns weekday name for other dates", () => {
-    const { primary } = formatDateLabelRelative("2026-03-30");
-    expect(primary).toBe("Monday");
+    const d = new Date();
+    d.setDate(d.getDate() + 5);
+    const dateStr = toDateStr(d);
+    const expected = d.toLocaleDateString("en-US", { weekday: "long" });
+    const { primary } = formatDateLabelRelative(dateStr);
+    expect(primary).toBe(expected);
   });
 
   it("returns short month/day as secondary", () => {

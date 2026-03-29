@@ -74,6 +74,7 @@ export interface AggregatedIngredient {
   aisle: string;
   originalLines: string[];
   checked: boolean;
+  recipes: string[];
 }
 
 export interface ManualGroceryItem {

@@ -6,18 +6,23 @@ import clsx from "clsx";
 import type { RecipeSummary } from "@/types";
 import { useAppContext } from "@/store/context";
 import DayPickerSheet from "./DayPickerSheet";
+import RecipeDetailSheet from "./RecipeDetailSheet";
 
 interface RecipeCardProps {
   recipe: RecipeSummary;
 }
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
-  const { toggleFavorite, isFavorite, toggleDisliked, isDisliked } = useAppContext();
+  const { toggleFavorite, isFavorite, toggleDisliked, isDisliked, state } = useAppContext();
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
   const [addedFlash, setAddedFlash] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const favorited = isFavorite(recipe.id);
   const disliked = isDisliked(recipe.id);
+  const isOnMenu = Object.values(state.menu).some((entries) =>
+    entries.some((e) => e.type === "recipe" && e.recipeId === recipe.id)
+  );
 
   const handleAddedToMenu = () => {
     setAddedFlash(true);
@@ -34,15 +39,11 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       >
         {/* Image */}
         <div className="relative aspect-[4/3] bg-gray-200">
-          {recipe.sourceUrl && (
-            <a
-              href={recipe.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute inset-0 z-10"
-              aria-label={`Open ${recipe.title} recipe`}
-            />
-          )}
+          <button
+            onClick={() => setDetailOpen(true)}
+            className="absolute inset-0 z-10"
+            aria-label={`View ${recipe.title} details`}
+          />
           {recipe.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -59,6 +60,15 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
+            </div>
+          )}
+
+          {/* On menu badge */}
+          {isOnMenu && (
+            <div className="absolute top-2 right-2 z-20">
+              <span className="px-2 py-0.5 bg-brand-500 text-white text-[10px] font-semibold rounded-full shadow-sm">
+                ✓ On menu
+              </span>
             </div>
           )}
 
@@ -84,20 +94,12 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
 
         {/* Info */}
         <div className="p-3 flex-1 flex flex-col gap-2">
-          {recipe.sourceUrl ? (
-            <a
-              href={recipe.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2 hover:underline"
-            >
-              {recipe.title}
-            </a>
-          ) : (
-            <p className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2">
-              {recipe.title}
-            </p>
-          )}
+          <button
+            onClick={() => setDetailOpen(true)}
+            className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2 text-left hover:underline"
+          >
+            {recipe.title}
+          </button>
 
           <div className="flex items-center gap-2 text-xs text-gray-500">
             {recipe.readyInMinutes > 0 && (
@@ -172,6 +174,11 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         onClose={() => setDayPickerOpen(false)}
         recipe={recipe}
         onAdded={handleAddedToMenu}
+      />
+
+      <RecipeDetailSheet
+        recipe={detailOpen ? recipe : null}
+        onClose={() => setDetailOpen(false)}
       />
     </>
   );

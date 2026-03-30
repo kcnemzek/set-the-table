@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import { AppProvider } from "@/store/context";
 import BottomNav from "@/components/layout/BottomNav";
 import TopNav from "@/components/layout/TopNav";
@@ -50,6 +51,7 @@ export default function RootLayout({
             <BottomNav />
           </AppProvider>
         </SessionWrapper>
+        <Analytics />
       </body>
     </html>
   );

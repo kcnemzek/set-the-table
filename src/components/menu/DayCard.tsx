@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Plus, Share2, Check, Bookmark } from "lucide-react";
+import DayPickerSheet from "@/components/recipes/DayPickerSheet";
 import clsx from "clsx";
 import {
   DndContext,
@@ -20,7 +21,7 @@ import CustomRecipeSheet from "@/components/recipes/CustomRecipeSheet";
 import { useAppContext } from "@/store/context";
 import { formatDateLabelRelative } from "@/lib/dates";
 import { getRecipeEmoji } from "@/lib/recipe-emoji";
-import type { CustomRecipe, DayEntry } from "@/types";
+import type { CustomRecipe, DayEntry, RecipeSummary } from "@/types";
 import MenuShareCard from "./MenuShareCard";
 import SaveMenuSheet from "./SaveMenuSheet";
 
@@ -36,6 +37,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
   const [editingNote, setEditingNote] = useState<DayEntry | null>(null);
   const [copied, setCopied] = useState(false);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
+  const [movingEntry, setMovingEntry] = useState<DayEntry | null>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
 
   const allEntries = state.menu[dateStr] ?? [];
@@ -234,6 +236,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
                     entry={entry}
                     onRemove={() => removeDayEntry(dateStr, entry.id)}
                     onOpen={getOnOpen(entry)}
+                    onMove={entry.type !== "event" ? () => setMovingEntry(entry) : undefined}
                     sortable={entry.type !== "event"}
                   />
                 ))}
@@ -273,6 +276,19 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
         onClose={() => setSaveMenuOpen(false)}
         entries={entries}
       />
+
+      {movingEntry && (
+        <DayPickerSheet
+          open={!!movingEntry}
+          onClose={() => setMovingEntry(null)}
+          recipe={{ id: "", title: movingEntry.recipeTitle ?? movingEntry.text ?? "", image: "", readyInMinutes: 0, servings: 0 } as RecipeSummary}
+          entry={movingEntry}
+          onAdded={() => {
+            removeDayEntry(dateStr, movingEntry.id);
+            setMovingEntry(null);
+          }}
+        />
+      )}
 
       {/* Off-screen card used for image generation */}
       <div className="fixed -left-[9999px] top-0 pointer-events-none" aria-hidden>

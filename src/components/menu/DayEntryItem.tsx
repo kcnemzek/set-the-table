@@ -1,6 +1,6 @@
 "use client";
 
-import { X, UtensilsCrossed, ChevronRight, GripVertical } from "lucide-react";
+import { X, UtensilsCrossed, ArrowRight, GripVertical } from "lucide-react";
 import type { DayEntry } from "@/types";
 import { getRecipeEmoji } from "@/lib/recipe-emoji";
 import { useSortable } from "@dnd-kit/sortable";
@@ -10,12 +10,13 @@ interface DayEntryItemProps {
   entry: DayEntry;
   onRemove: () => void;
   onOpen?: () => void;
+  onMove?: () => void;
   readOnly?: boolean;
   sortable?: boolean;
 }
 
 
-export default function DayEntryItem({ entry, onRemove, onOpen, readOnly, sortable }: DayEntryItemProps) {
+export default function DayEntryItem({ entry, onRemove, onOpen, onMove, readOnly, sortable }: DayEntryItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: entry.id,
     disabled: !sortable,
@@ -108,13 +109,22 @@ export default function DayEntryItem({ entry, onRemove, onOpen, readOnly, sortab
         >
           {icon}
           <span className="flex-1 text-sm text-gray-800 leading-tight line-clamp-2">{label}</span>
-          <ChevronRight size={15} className="flex-shrink-0 text-gray-400" />
         </button>
       ) : (
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {icon}
           <span className="flex-1 text-sm text-gray-800 leading-tight line-clamp-2">{label}</span>
         </div>
+      )}
+
+      {onMove && !readOnly && (
+        <button
+          onClick={onMove}
+          className="flex-shrink-0 p-1.5 rounded-full text-gray-300 hover:text-brand-500 hover:bg-brand-50 active:bg-brand-100 transition-colors"
+          aria-label="Move to another day"
+        >
+          <ArrowRight size={15} />
+        </button>
       )}
 
       {!readOnly && (

@@ -143,8 +143,8 @@ export default function AddEntrySheet({
           >
             {t === "my-recipes" && <BookOpen size={14} />}
             {t === "favorites" && <Heart size={14} className="text-red-400" />}
-            {t === "event" && <span className="inline-flex items-center justify-center w-[14px] h-[14px] text-sm leading-none">🎉</span>}
-            {t === "text" && <span className="inline-flex items-center justify-center w-[14px] h-[14px] text-sm leading-none">📝</span>}
+            {t === "event" && <span className="text-sm leading-none">🎉</span>}
+            {t === "text" && <span className="text-sm leading-none">📝</span>}
             {t === "my-recipes" ? "My Recipes" : t === "favorites" ? "Favorites" : t === "event" ? "Event" : "Note"}
           </button>
         ))}
@@ -248,7 +248,6 @@ export default function AddEntrySheet({
               onKeyDown={(e) => e.key === "Enter" && addEventEntry()}
               placeholder="e.g. 🎂 Elizabeth's Birthday"
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-              autoFocus
             />
             {textEntry.trim() && (
               <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-sm font-semibold text-amber-800">
@@ -277,7 +276,6 @@ export default function AddEntrySheet({
               onKeyDown={(e) => e.key === "Enter" && addTextEntry()}
               placeholder="e.g. Easter Brunch"
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-              autoFocus
             />
             <input
               type="url"

@@ -13,6 +13,8 @@ interface DayPickerSheetProps {
   onAdded: () => void;
   /** When provided, this entry is added directly instead of building one from recipe */
   entry?: DayEntry;
+  /** When provided, all entries are added (merge) instead of a single entry */
+  entries?: DayEntry[];
 }
 
 export default function DayPickerSheet({
@@ -21,22 +23,27 @@ export default function DayPickerSheet({
   recipe,
   onAdded,
   entry,
+  entries,
 }: DayPickerSheetProps) {
   const { addDayEntry, state } = useAppContext();
   const days = getNext10Days();
 
   const handlePick = (dateStr: string) => {
-    const toAdd: DayEntry = entry
-      ? { ...entry, id: crypto.randomUUID() }
-      : {
-          id: crypto.randomUUID(),
-          type: "recipe",
-          recipeId: recipe.id,
-          recipeTitle: recipe.title,
-          recipeImage: recipe.image || `/api/recipes/${recipe.id}/image`,
-          recipeUrl: recipe.sourceUrl,
-        };
-    addDayEntry(dateStr, toAdd);
+    if (entries) {
+      entries.forEach((e) => addDayEntry(dateStr, { ...e, id: crypto.randomUUID() }));
+    } else {
+      const toAdd: DayEntry = entry
+        ? { ...entry, id: crypto.randomUUID() }
+        : {
+            id: crypto.randomUUID(),
+            type: "recipe",
+            recipeId: recipe.id,
+            recipeTitle: recipe.title,
+            recipeImage: recipe.image || `/api/recipes/${recipe.id}/image`,
+            recipeUrl: recipe.sourceUrl,
+          };
+      addDayEntry(dateStr, toAdd);
+    }
     onAdded();
     onClose();
   };
@@ -64,11 +71,11 @@ export default function DayPickerSheet({
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-800">{primary}</p>
                 {entries.length > 0 ? (
-                  <p className="text-xs text-gray-400 truncate">
+                  <p className="text-xs text-gray-500 truncate">
                     {entries.map((e) => e.recipeTitle ?? e.text).join(" · ")}
                   </p>
                 ) : (
-                  <p className="text-xs text-gray-400">{secondary}</p>
+                  <p className="text-xs text-gray-500">{secondary}</p>
                 )}
               </div>
               {i === 0 && (

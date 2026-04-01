@@ -116,7 +116,7 @@ export default function AppMenuSheet({ open, onClose }: AppMenuSheetProps) {
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddMember()}
               placeholder="Add a name…"
-              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-brand-400"
+              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:border-brand-400"
             />
             <button
               onClick={handleAddMember}

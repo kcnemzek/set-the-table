@@ -59,7 +59,7 @@ export default function EditNoteSheet({ open, onClose, entry, dateStr }: EditNot
               >
                 {url.trim()}
               </a>
-              <button onClick={() => setUrl("")} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+              <button onClick={() => setUrl("")} className="text-gray-500 hover:text-gray-600 flex-shrink-0">
                 <X size={15} />
               </button>
             </div>

@@ -55,7 +55,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <div className="w-full h-full flex items-center justify-center text-gray-500">
               <svg viewBox="0 0 24 24" className="w-10 h-10" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

@@ -47,7 +47,7 @@ export default function FamilyViewPage({ params }: { params: Promise<{ token: st
   if (error) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-3 px-6 text-center">
-        <ChefHat size={40} className="text-gray-400" />
+        <ChefHat size={40} className="text-gray-500" />
         <p className="text-gray-500 text-sm">This link doesn&apos;t seem to work.<br />Ask for a new one!</p>
       </div>
     );
@@ -106,7 +106,7 @@ export default function FamilyViewPage({ params }: { params: Promise<{ token: st
               localStorage.removeItem(STORAGE_KEY);
               setFamilyName(null);
             }}
-            className="text-xs text-gray-400 hover:text-gray-600"
+            className="text-xs text-gray-500 hover:text-gray-600"
           >
             Not {familyName}?
           </button>

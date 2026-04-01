@@ -71,7 +71,9 @@ type Action =
   | { type: "ADD_FAMILY_MEMBER"; name: string }
   | { type: "REMOVE_FAMILY_MEMBER"; name: string }
   | { type: "SAVE_DAY_AS_MENU"; savedMenu: SavedMenu }
-  | { type: "DELETE_SAVED_MENU"; id: string };
+  | { type: "DELETE_SAVED_MENU"; id: string }
+  | { type: "RENAME_SAVED_MENU"; id: string; name: string }
+  | { type: "ADD_ENTRY_TO_SAVED_MENU"; savedMenuId: string; entry: DayEntry };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -210,6 +212,22 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "DELETE_SAVED_MENU":
       return { ...state, savedMenus: state.savedMenus.filter((m) => m.id !== action.id) };
+
+    case "RENAME_SAVED_MENU":
+      return {
+        ...state,
+        savedMenus: state.savedMenus.map((m) =>
+          m.id === action.id ? { ...m, name: action.name } : m
+        ),
+      };
+
+    case "ADD_ENTRY_TO_SAVED_MENU":
+      return {
+        ...state,
+        savedMenus: state.savedMenus.map((m) =>
+          m.id === action.savedMenuId ? { ...m, entries: [...m.entries, action.entry] } : m
+        ),
+      };
 
     default:
       return state;

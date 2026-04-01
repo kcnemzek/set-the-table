@@ -11,42 +11,35 @@ interface HelpSheetProps {
 
 const SECTIONS = [
   {
-    emoji: "📅",
-    title: "Menu",
+    title: "🍽️ The Master Plan",
     tips: [
-      "Tap + on any day to add a meal — choose from your recipes, favorites, a note, or a special event.",
-      "Drag the handle on any meal to reorder it within a day.",
-      "Tap a recipe or note to open and edit it.",
-      "Use the share icon on a day to send the menu to someone.",
-      "Events (like birthdays or holidays) always appear at the top of the day.",
+      { label: "Smart Scheduling", body: "Planning your week shouldn't feel like a chore. Tap + on any day to instantly pull from your curated favorites, custom notes, or high-priority events." },
+      { label: "Fluid Organization", body: "Plans change, so your menu should too. Easily move meals from one night to another." },
+      { label: "Events First", body: "Birthdays and holidays automatically take center stage at the top of your day, so you never miss a celebration." },
+      { label: "Share the Vibe", body: "Use the Share icon to beam your daily menu to friends, family, or anyone who keeps asking \"What's for dinner?\"" },
+      { label: "Save Your Greatest Hits", body: "Hosting Thanksviging, but you forgot what awesome pie you made last year? Save special menus, so you can look back and replicate those good times." },
     ],
   },
   {
-    emoji: "📖",
-    title: "Recipes",
+    title: "📖 Your Digital Cookbook",
     tips: [
-      "Custom recipes are yours — add ingredients and they'll show up in your grocery list automatically.",
-      "Set a category on a custom recipe if the auto-detection from the title gets it wrong.",
-      "Heart any recipe on the Discover tab to save it to Favorites.",
-      "Tap a custom recipe to view or edit it.",
+      { label: "Smart Ingredients", body: "When you add a custom recipe, the app does the heavy lifting. Ingredients are automatically parsed and synced directly to your shopping list." },
+      { label: "Category Control", body: "Our AI usually nails the category from your title, but you're still the boss—tap to manually override and keep things organized." },
+      { label: "The \"Heart\" Factor", body: "Spot something delicious in the Discover tab? Hit the heart to save it to your Favorites for instant access later." },
     ],
   },
   {
-    emoji: "🛒",
-    title: "Groceries",
+    title: "🛒 Shopping, Simplified",
     tips: [
-      "Your grocery list is built automatically from recipes on the menu — just plan your week and it populates.",
-      "Tap an item to check it off as you shop.",
-      "Use the + button to add items manually for things not in a recipe.",
-      "Items are grouped by aisle to make shopping faster.",
+      { label: "Auto-Magic Lists", body: "Your grocery list builds itself. As you plan your meals, the ingredients populate in real-time. No more double-checking the pantry at 6:00 PM." },
+      { label: "Aisle-by-Aisle", body: "We group your items by grocery aisle, so you can zip through the store in record time." },
+      { label: "Quick-Add", body: "Need milk or paper towels? Use the + button to toss manual items onto your list in seconds." },
     ],
   },
   {
-    emoji: "👨‍👩‍👧",
-    title: "Family & Sharing",
+    title: "👨‍👩‍👧 Family Sync",
     tips: [
-      "Use the menu icon (☰) to manage family members or share a day's menu.",
-      "Anyone you invite shares the same meal plan and grocery list in real time.",
+      { label: "Real-Time Collaboration", body: "Invite your crew via the ☰ menu. Everyone stays on the same page with a shared meal plan and a live grocery list that updates for everyone...instantly." },
     ],
   },
 ];
@@ -111,19 +104,19 @@ export default function HelpSheet({ open, onClose }: HelpSheetProps) {
             {SECTIONS.map((section) => (
               <div key={section.title}>
                 <h3 className="text-sm font-semibold text-gray-800 mb-2">
-                  {section.emoji} {section.title}
+                  {section.title}
                 </h3>
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                   {section.tips.map((tip) => (
-                    <li key={tip} className="flex gap-2 text-sm text-gray-600">
-                      <span className="text-brand-400 mt-0.5 flex-shrink-0">•</span>
-                      <span>{tip}</span>
+                    <li key={tip.label} className="text-sm text-gray-600">
+                      <span className="font-semibold text-gray-800">{tip.label}: </span>
+                      {tip.body}
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
-            <p className="text-xs text-gray-400 text-center pt-2">
+            <p className="text-xs text-gray-500 text-center pt-2">
               Mom, What&apos;s for Dinner? v{process.env.NEXT_PUBLIC_VERSION}
             </p>
           </div>

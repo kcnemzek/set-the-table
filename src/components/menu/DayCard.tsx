@@ -182,7 +182,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
                   "p-1.5 rounded-xl transition-colors",
                   isToday
                     ? "text-white/70 hover:text-white hover:bg-white/20 active:bg-white/30"
-                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+                    : "text-gray-500 hover:text-gray-600 hover:bg-gray-200 active:bg-gray-300"
                 )}
                 title="Save as menu"
               >
@@ -194,7 +194,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
                   "p-1.5 rounded-xl transition-colors",
                   isToday
                     ? "text-white/70 hover:text-white hover:bg-white/20 active:bg-white/30"
-                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+                    : "text-gray-500 hover:text-gray-600 hover:bg-gray-200 active:bg-gray-300"
                 )}
                 title="Share menu"
               >
@@ -222,7 +222,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
         {entries.length === 0 ? (
           <button
             onClick={() => setSheetOpen(true)}
-            className="w-full py-4 text-sm text-gray-400 hover:text-gray-500 text-center"
+            className="w-full py-4 text-sm text-gray-500 hover:text-gray-500 text-center"
           >
             Tap + to add something
           </button>

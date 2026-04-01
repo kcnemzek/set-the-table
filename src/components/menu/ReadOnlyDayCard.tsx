@@ -39,7 +39,7 @@ export default function ReadOnlyDayCard({ dateStr, isToday, entries }: ReadOnlyD
       {/* Entries */}
       <div className="px-4 py-1">
         {entries.length === 0 ? (
-          <p className="w-full py-4 text-sm text-gray-400 text-center">Nothing planned yet.</p>
+          <p className="w-full py-4 text-sm text-gray-500 text-center">Nothing planned yet.</p>
         ) : (
           <div className="divide-y divide-gray-50">
             {entries.map((entry) => (

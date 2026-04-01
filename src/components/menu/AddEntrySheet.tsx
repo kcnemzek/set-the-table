@@ -1,18 +1,22 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Loader2, Heart, BookOpen } from "lucide-react";
+import { Loader2, Heart, BookOpen, Plus } from "lucide-react";
 import clsx from "clsx";
 import BottomSheet from "@/components/shared/BottomSheet";
-import type { DayEntry, RecipeSummary } from "@/types"; // RecipeSummary used by favorites
+import type { DayEntry, RecipeSummary, CustomRecipe } from "@/types";
 import { useAppContext } from "@/store/context";
 import { getRecipeEmoji, getRecipeCategory } from "@/lib/recipe-emoji";
+import CustomRecipeSheet from "@/components/recipes/CustomRecipeSheet";
+import RecipeDetailSheet from "@/components/recipes/RecipeDetailSheet";
 
 interface AddEntrySheetProps {
   open: boolean;
   onClose: () => void;
   dateStr: string;
   dateLabel: string;
+  /** When provided, entries are sent here instead of added to the day */
+  onAddEntry?: (entry: DayEntry) => void;
 }
 
 type Tab = "my-recipes" | "favorites" | "event" | "text";
@@ -22,69 +26,76 @@ export default function AddEntrySheet({
   onClose,
   dateStr,
   dateLabel,
+  onAddEntry,
 }: AddEntrySheetProps) {
   const { addDayEntry, state } = useAppContext();
+
+  const doAdd = useCallback(
+    (entry: DayEntry) => {
+      if (onAddEntry) {
+        onAddEntry(entry);
+      } else {
+        addDayEntry(dateStr, entry);
+      }
+      onClose();
+    },
+    [onAddEntry, addDayEntry, dateStr, onClose]
+  );
   const [tab, setTab] = useState<Tab>("my-recipes");
   const [textEntry, setTextEntry] = useState("");
   const [urlEntry, setUrlEntry] = useState("");
   const [favRecipes, setFavRecipes] = useState<RecipeSummary[]>([]);
   const [favLoading, setFavLoading] = useState(false);
+  const [viewingCustomRecipe, setViewingCustomRecipe] = useState<CustomRecipe | null>(null);
+  const [viewingFavRecipe, setViewingFavRecipe] = useState<RecipeSummary | null>(null);
 
   const addRecipe = useCallback(
     (recipe: RecipeSummary) => {
-      const entry: DayEntry = {
+      doAdd({
         id: crypto.randomUUID(),
         type: "recipe",
         recipeId: recipe.id,
         recipeTitle: recipe.title,
         recipeImage: recipe.image || `/api/recipes/${recipe.id}/image`,
         recipeUrl: recipe.sourceUrl,
-      };
-      addDayEntry(dateStr, entry);
-      onClose();
+      });
     },
-    [addDayEntry, dateStr, onClose]
+    [doAdd]
   );
 
   const addCustomRecipe = useCallback(
     (cr: { id: string; title: string }) => {
-      const entry: DayEntry = {
+      doAdd({
         id: crypto.randomUUID(),
         type: "custom-recipe",
         customRecipeId: cr.id,
         recipeTitle: cr.title,
-      };
-      addDayEntry(dateStr, entry);
-      onClose();
+      });
     },
-    [addDayEntry, dateStr, onClose]
+    [doAdd]
   );
 
   const addTextEntry = useCallback(() => {
     if (!textEntry.trim()) return;
-    const entry: DayEntry = {
+    doAdd({
       id: crypto.randomUUID(),
       type: "text",
       text: textEntry.trim(),
       url: urlEntry.trim() || undefined,
-    };
-    addDayEntry(dateStr, entry);
+    });
     setTextEntry("");
     setUrlEntry("");
-    onClose();
-  }, [addDayEntry, dateStr, textEntry, urlEntry, onClose]);
+  }, [doAdd, textEntry, urlEntry]);
 
   const addEventEntry = useCallback(() => {
     if (!textEntry.trim()) return;
-    const entry: DayEntry = {
+    doAdd({
       id: crypto.randomUUID(),
       type: "event",
       text: textEntry.trim(),
-    };
-    addDayEntry(dateStr, entry);
+    });
     setTextEntry("");
-    onClose();
-  }, [addDayEntry, dateStr, textEntry, onClose]);
+  }, [doAdd, textEntry]);
 
   const loadFavorites = useCallback(async () => {
     if (state.favorites.length === 0) { setFavRecipes([]); return; }
@@ -115,6 +126,7 @@ export default function AddEntrySheet({
   };
 
   return (
+    <>
     <BottomSheet open={open} onClose={handleClose} title={`Add to ${dateLabel}`}>
       {/* Tabs */}
       <div className="flex border-b border-gray-200 px-4 pt-2">
@@ -156,18 +168,26 @@ export default function AddEntrySheet({
                 .sort(([a], [b]) => a === "Other" ? 1 : b === "Other" ? -1 : a.localeCompare(b))
                 .map(([label, { emoji, recipes }]) => (
                   <div key={label} className="mb-3">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1 mb-1">{emoji} {label}</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-1 mb-1">{emoji} {label}</p>
                     {recipes.map((cr) => (
-                      <button
-                        key={cr.id}
-                        onClick={() => addCustomRecipe(cr)}
-                        className="w-full text-left flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50 active:bg-brand-100"
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
-                          {getRecipeEmoji(cr.title)}
-                        </div>
-                        <span className="text-sm font-medium text-gray-800">{cr.title}</span>
-                      </button>
+                      <div key={cr.id} className="flex items-center gap-2 rounded-xl hover:bg-brand-50 active:bg-brand-100">
+                        <button
+                          onClick={() => setViewingCustomRecipe(cr)}
+                          className="flex items-center gap-3 flex-1 min-w-0 p-3 text-left"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
+                            {getRecipeEmoji(cr.title)}
+                          </div>
+                          <span className="text-sm font-medium text-gray-800">{cr.title}</span>
+                        </button>
+                        <button
+                          onClick={() => addCustomRecipe(cr)}
+                          className="flex-shrink-0 p-2 mr-1 rounded-xl text-brand-500 hover:bg-brand-100"
+                          aria-label="Add to day"
+                        >
+                          <Plus size={18} />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 ))
@@ -186,24 +206,32 @@ export default function AddEntrySheet({
               <p className="text-sm text-gray-500 text-center py-8">No favorites yet — heart a recipe on the Discover tab</p>
             )}
             {!favLoading && favRecipes.map((recipe) => (
-              <button
-                key={recipe.id}
-                onClick={() => addRecipe(recipe)}
-                className="w-full text-left flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50 active:bg-brand-100"
-              >
-                <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
-                  {recipe.image && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 leading-tight line-clamp-2">{recipe.title}</p>
-                  {recipe.readyInMinutes > 0 && (
-                    <p className="text-xs text-gray-500 mt-0.5">{recipe.readyInMinutes} min</p>
-                  )}
-                </div>
-              </button>
+              <div key={recipe.id} className="flex items-center gap-2 rounded-xl hover:bg-brand-50 active:bg-brand-100">
+                <button
+                  onClick={() => setViewingFavRecipe(recipe)}
+                  className="flex items-center gap-3 flex-1 min-w-0 p-3 text-left"
+                >
+                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
+                    {recipe.image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 leading-tight line-clamp-2">{recipe.title}</p>
+                    {recipe.readyInMinutes > 0 && (
+                      <p className="text-xs text-gray-500 mt-0.5">{recipe.readyInMinutes} min</p>
+                    )}
+                  </div>
+                </button>
+                <button
+                  onClick={() => addRecipe(recipe)}
+                  className="flex-shrink-0 p-2 mr-1 rounded-xl text-brand-500 hover:bg-brand-100"
+                  aria-label="Add to day"
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -269,5 +297,18 @@ export default function AddEntrySheet({
         )}
       </div>
     </BottomSheet>
+
+    <CustomRecipeSheet
+      open={!!viewingCustomRecipe}
+      onClose={() => setViewingCustomRecipe(null)}
+      existing={viewingCustomRecipe ?? undefined}
+      readOnly
+    />
+
+    <RecipeDetailSheet
+      recipe={viewingFavRecipe}
+      onClose={() => setViewingFavRecipe(null)}
+    />
+    </>
   );
 }

@@ -95,7 +95,7 @@ export default function DayEntryItem({ entry, onRemove, onOpen, onMove, readOnly
         <button
           {...attributes}
           {...listeners}
-          className="flex-shrink-0 p-1 text-gray-300 hover:text-gray-400 cursor-grab active:cursor-grabbing touch-none"
+          className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-400 cursor-grab active:cursor-grabbing touch-none"
           aria-label="Drag to reorder"
         >
           <GripVertical size={16} />
@@ -120,7 +120,7 @@ export default function DayEntryItem({ entry, onRemove, onOpen, onMove, readOnly
       {onMove && !readOnly && (
         <button
           onClick={onMove}
-          className="flex-shrink-0 p-1.5 rounded-full text-gray-300 hover:text-brand-500 hover:bg-brand-50 active:bg-brand-100 transition-colors"
+          className="flex-shrink-0 p-1.5 rounded-full text-gray-400 hover:text-brand-500 hover:bg-brand-50 active:bg-brand-100 transition-colors"
           aria-label="Move to another day"
         >
           <ArrowRight size={15} />

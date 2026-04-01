@@ -132,19 +132,19 @@ export default function RecipeDetailSheet({ recipe, onClose }: RecipeDetailSheet
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ingredients</p>
               {detailLoading ? (
                 <div className="flex justify-center py-4">
-                  <Loader2 size={18} className="animate-spin text-gray-400" />
+                  <Loader2 size={18} className="animate-spin text-gray-500" />
                 </div>
               ) : detail?.extendedIngredients && detail.extendedIngredients.length > 0 ? (
                 <ul className="space-y-1">
                   {detail.extendedIngredients.map((ing, i) => (
                     <li key={i} className="text-sm text-gray-700 flex gap-2">
-                      <span className="text-gray-400 flex-shrink-0">·</span>
+                      <span className="text-gray-500 flex-shrink-0">·</span>
                       <span>{ing.original}</span>
                     </li>
                   ))}
                 </ul>
               ) : !detailLoading && (
-                <p className="text-sm text-gray-400">No ingredients available.</p>
+                <p className="text-sm text-gray-500">No ingredients available.</p>
               )}
             </div>
 

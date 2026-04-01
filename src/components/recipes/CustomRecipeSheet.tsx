@@ -40,12 +40,14 @@ interface CustomRecipeSheetProps {
   open: boolean;
   onClose: () => void;
   existing?: CustomRecipe;
+  readOnly?: boolean;
 }
 
 export default function CustomRecipeSheet({
   open,
   onClose,
   existing,
+  readOnly,
 }: CustomRecipeSheetProps) {
   const { dispatch } = useAppContext();
   const [title, setTitle] = useState(existing?.title ?? "");
@@ -120,6 +122,47 @@ export default function CustomRecipeSheet({
     });
     onClose();
   };
+
+  if (readOnly && existing) {
+    return (
+      <BottomSheet open={open} onClose={onClose} title={existing.title}>
+        <div className="p-4 space-y-4 pb-8">
+          {existing.servings > 0 && (
+            <p className="text-sm text-gray-500">{existing.servings} servings</p>
+          )}
+          {existing.extendedIngredients.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ingredients</p>
+              <ul className="space-y-1">
+                {existing.extendedIngredients.map((ing, i) => (
+                  <li key={i} className="text-sm text-gray-700 flex gap-2">
+                    <span className="text-gray-500 flex-shrink-0">·</span>
+                    <span>{ing.original}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {existing.directions && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Directions</p>
+              <p className="text-sm text-gray-700 whitespace-pre-line">{existing.directions}</p>
+            </div>
+          )}
+          {existing.url && (
+            <a
+              href={existing.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+            >
+              View full recipe
+            </a>
+          )}
+        </div>
+      </BottomSheet>
+    );
+  }
 
   return (
     <BottomSheet
@@ -221,7 +264,7 @@ export default function CustomRecipeSheet({
                 </div>
                 <button
                   onClick={() => removeRow(idx)}
-                  className="mt-2 p-2 text-gray-400 hover:text-red-400 active:text-red-500"
+                  className="mt-2 p-2 text-gray-500 hover:text-red-400 active:text-red-500"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -267,7 +310,7 @@ export default function CustomRecipeSheet({
               >
                 {url.trim()}
               </a>
-              <button onClick={() => setUrl("")} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+              <button onClick={() => setUrl("")} className="text-gray-500 hover:text-gray-600 flex-shrink-0">
                 <X size={15} />
               </button>
             </div>

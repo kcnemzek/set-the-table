@@ -129,20 +129,20 @@ export default function AddEntrySheet({
     <>
     <BottomSheet open={open} onClose={handleClose} title={`Add to ${dateLabel}`}>
       {/* Tabs */}
-      <div className="flex border-b border-gray-200 px-4 pt-2">
+      <div className="flex border-b border-gray-200 px-2 pt-2">
         {(["my-recipes", "favorites", "text", "event"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => handleTabChange(t)}
             className={clsx(
-              "flex items-center gap-2 px-3 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
+              "flex-1 flex items-center justify-center gap-1 px-1 py-2.5 text-xs font-medium border-b-2 -mb-px transition-colors",
               tab === t
                 ? "border-brand-500 text-brand-600"
                 : "border-transparent text-gray-500 hover:text-gray-600"
             )}
           >
-            {t === "my-recipes" && <BookOpen size={15} />}
-            {t === "favorites" && <Heart size={15} />}
+            {t === "my-recipes" && <BookOpen size={14} />}
+            {t === "favorites" && <Heart size={14} className="text-red-400" />}
             {t === "event" && <span className="text-sm leading-none">🎉</span>}
             {t === "text" && <span className="text-sm leading-none">📝</span>}
             {t === "my-recipes" ? "My Recipes" : t === "favorites" ? "Favorites" : t === "event" ? "Event" : "Note"}
@@ -150,7 +150,7 @@ export default function AddEntrySheet({
         ))}
       </div>
 
-      <div className="p-4">
+      <div className="p-4 min-h-[280px]">
         {tab === "my-recipes" && (
           <div>
             {state.customRecipes.length === 0 ? (

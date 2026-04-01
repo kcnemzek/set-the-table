@@ -150,7 +150,7 @@ export default function AddEntrySheet({
         ))}
       </div>
 
-      <div className="p-4 min-h-[280px]">
+      <div className="p-4 h-72 overflow-y-auto">
         {tab === "my-recipes" && (
           <div>
             {state.customRecipes.length === 0 ? (

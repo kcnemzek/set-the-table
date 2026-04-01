@@ -143,8 +143,8 @@ export default function AddEntrySheet({
           >
             {t === "my-recipes" && <BookOpen size={14} />}
             {t === "favorites" && <Heart size={14} className="text-red-400" />}
-            {t === "event" && <span className="text-sm leading-none">🎉</span>}
-            {t === "text" && <span className="text-sm leading-none">📝</span>}
+            {t === "event" && <span className="inline-flex items-center justify-center w-[14px] h-[14px] text-sm leading-none">🎉</span>}
+            {t === "text" && <span className="inline-flex items-center justify-center w-[14px] h-[14px] text-sm leading-none">📝</span>}
             {t === "my-recipes" ? "My Recipes" : t === "favorites" ? "Favorites" : t === "event" ? "Event" : "Note"}
           </button>
         ))}
@@ -260,7 +260,7 @@ export default function AddEntrySheet({
               disabled={!textEntry.trim()}
               className="w-full py-3 bg-brand-500 text-white rounded-xl text-sm font-semibold disabled:opacity-50 active:bg-brand-600"
             >
-              Add Event
+              Add
             </button>
           </div>
         )}

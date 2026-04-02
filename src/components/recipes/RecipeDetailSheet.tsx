@@ -21,12 +21,16 @@ export default function RecipeDetailSheet({ recipe, onClose }: RecipeDetailSheet
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
-    if (!recipe) return;
+    if (!recipe) {
+      setDetail(null);
+      return;
+    }
     // Use cache if available
     if (state.recipeCache[recipe.id]) {
       setDetail(state.recipeCache[recipe.id]);
       return;
     }
+    setDetail(null);
     setDetailLoading(true);
     fetch(`/api/recipes/${recipe.id}`)
       .then((r) => r.json())
@@ -191,9 +195,9 @@ export default function RecipeDetailSheet({ recipe, onClose }: RecipeDetailSheet
             </div>
 
             {/* View full recipe */}
-            {recipe.sourceUrl && (
+            {(detail?.sourceUrl ?? recipe.sourceUrl) && (
               <a
-                href={recipe.sourceUrl}
+                href={detail?.sourceUrl ?? recipe.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors"

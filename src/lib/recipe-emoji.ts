@@ -5,7 +5,7 @@ const CATEGORY_MAP: [string[], string, string][] = [
   [["chicken", "poultry", "hen", "wing", "nugget", "tender"], "🍗", "Chicken"],
   [["burger", "hamburger", "cheeseburger", "patty", "slider"], "🍔", "Burgers"],
   [["sandwich", "sub", "hoagie", "wrap", "panini", "club", "blt", "gyro", "pita"], "🥪", "Sandwiches & Wraps"],
-  [["taco", "burrito", "enchilada", "quesadilla", "fajita", "nacho", "tamale", "salsa"], "🌮", "Mexican"],
+  [["taco", "burrito", "enchilada", "quesadilla", "fajita", "nacho", "tamale", "salsa", "queso", "elote"], "🌮", "Mexican"],
   [["sushi", "sashimi", "maki", "onigiri", "tempura", "ramen", "udon", "miso"], "🍱", "Japanese"],
   [["noodle", "lo mein", "chow mein", "pad thai", "pho", "vermicelli"], "🍜", "Noodles"],
   [["fried rice", "risotto", "paella", "pilaf", "biryani"], "🍚", "Rice Dishes"],
@@ -42,7 +42,7 @@ const EMOJI_MAP: [string[], string][] = [
   // Sandwiches & Wraps
   [["sandwich", "sub", "hoagie", "wrap", "panini", "club", "blt", "gyro", "pita"], "🥪"],
   // Tacos & Mexican
-  [["taco", "burrito", "enchilada", "quesadilla", "fajita", "nacho", "tamale", "salsa"], "🌮"],
+  [["taco", "burrito", "enchilada", "quesadilla", "fajita", "nacho", "tamale", "salsa", "queso", "elote"], "🌮"],
   // Sushi & Japanese
   [["sushi", "sashimi", "maki", "onigiri", "tempura", "ramen", "udon", "miso"], "🍱"],
   // Noodles

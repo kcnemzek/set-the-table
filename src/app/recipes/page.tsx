@@ -168,7 +168,7 @@ export default function RecipesPage() {
       {/* Discover Tab */}
       {tab === "discover" && (
         <div className="flex flex-col flex-1 p-4 gap-4">
-          <div className="sticky top-[45px] z-10 bg-white -mx-4 px-4 pb-2 pt-3">
+          <div className="sticky top-[45px] z-20 bg-white -mx-4 px-4 pb-2 pt-3">
             <div className="flex gap-2">
               <div className="flex-1">
                 <SearchBar

@@ -131,8 +131,9 @@ export default function RecipesPage() {
     } else if (entry.type === "custom-recipe" && entry.customRecipeId) {
       const cr = state.customRecipes.find((r) => r.id === entry.customRecipeId);
       if (cr) setViewingMenuCustom(cr);
+    } else if (entry.type === "text" && entry.url) {
+      window.open(entry.url, "_blank", "noopener,noreferrer");
     }
-    // text/event entries have nothing extra to show
   };
 
   const customToSummary = (cr: CustomRecipe): RecipeSummary => ({
@@ -462,7 +463,7 @@ export default function RecipesPage() {
                 {expandedMenu === savedMenu.id && (
                   <div className="border-t border-gray-100 divide-y divide-gray-50">
                     {savedMenu.entries.map((entry) => {
-                      const canView = entry.type === "recipe" || entry.type === "custom-recipe";
+                      const canView = entry.type === "recipe" || entry.type === "custom-recipe" || (entry.type === "text" && !!entry.url);
                       return (
                         <div key={entry.id} className="flex items-center gap-2 hover:bg-brand-50 active:bg-brand-100">
                           <button
@@ -483,7 +484,12 @@ export default function RecipesPage() {
                               </div>
                             ) : (
                               <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
-                                {entry.type === "event" ? "🎉" : entry.type === "text" ? "📝" : "🍽️"}
+                                {entry.type === "event" ? "🎉" : entry.type === "text" ? "📝" : getRecipeEmoji(
+                                  entry.recipeTitle ?? "",
+                                  entry.type === "custom-recipe"
+                                    ? state.customRecipes.find((r) => r.id === entry.customRecipeId)?.category
+                                    : undefined
+                                )}
                               </div>
                             )}
                             <div className="flex-1 min-w-0">

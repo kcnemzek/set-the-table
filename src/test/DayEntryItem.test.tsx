@@ -3,6 +3,10 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import DayEntryItem from "@/components/menu/DayEntryItem";
 import type { DayEntry } from "@/types";
 
+vi.mock("@/store/context", () => ({
+  useAppContext: () => ({ state: { customRecipes: [] } }),
+}));
+
 vi.mock("@dnd-kit/sortable", () => ({
   useSortable: () => ({
     attributes: {},

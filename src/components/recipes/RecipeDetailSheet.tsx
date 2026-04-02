@@ -46,8 +46,9 @@ export default function RecipeDetailSheet({ recipe, onClose }: RecipeDetailSheet
 
   const favorited = isFavorite(recipe.id);
   const disliked = isDisliked(recipe.id);
-  const isOnMenu = Object.values(state.menu).some((entries) =>
-    entries.some((e) => e.type === "recipe" && e.recipeId === recipe.id)
+  const today = new Date().toISOString().slice(0, 10);
+  const isOnMenu = Object.entries(state.menu).some(([date, entries]) =>
+    date >= today && entries.some((e) => e.type === "recipe" && e.recipeId === recipe.id)
   );
 
   const handleAdded = () => {

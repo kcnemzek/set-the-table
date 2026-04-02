@@ -4,6 +4,7 @@ import { forwardRef } from "react";
 import { ChefHat } from "lucide-react";
 import type { DayEntry } from "@/types";
 import { getRecipeEmoji } from "@/lib/recipe-emoji";
+import { useAppContext } from "@/store/context";
 
 interface MenuShareCardProps {
   dateStr: string;
@@ -12,6 +13,7 @@ interface MenuShareCardProps {
 
 const MenuShareCard = forwardRef<HTMLDivElement, MenuShareCardProps>(
   ({ dateStr, entries }, ref) => {
+    const { state } = useAppContext();
     const [y, m, d] = dateStr.split("-").map(Number);
     const date = new Date(y, m - 1, d);
     const weekday = date.toLocaleDateString("en-US", { weekday: "long" });
@@ -48,7 +50,10 @@ const MenuShareCard = forwardRef<HTMLDivElement, MenuShareCardProps>(
               entry.type === "recipe" || entry.type === "custom-recipe"
                 ? entry.recipeTitle ?? ""
                 : entry.text ?? "";
-            const emoji = getRecipeEmoji(title);
+            const category = entry.type === "custom-recipe"
+              ? state.customRecipes.find((r) => r.id === entry.customRecipeId)?.category
+              : undefined;
+            const emoji = getRecipeEmoji(title, category);
 
             return (
               <div key={entry.id} className="flex items-center gap-3">

@@ -176,7 +176,7 @@ export default function AddEntrySheet({
                           className="flex items-center gap-3 flex-1 min-w-0 p-3 text-left"
                         >
                           <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
-                            {getRecipeEmoji(cr.title)}
+                            {getRecipeEmoji(cr.title, cr.category)}
                           </div>
                           <span className="text-sm font-medium text-gray-800">{cr.title}</span>
                         </button>

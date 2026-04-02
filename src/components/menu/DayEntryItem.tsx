@@ -3,6 +3,7 @@
 import { X, UtensilsCrossed, ArrowRight, GripVertical } from "lucide-react";
 import type { DayEntry } from "@/types";
 import { getRecipeEmoji } from "@/lib/recipe-emoji";
+import { useAppContext } from "@/store/context";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -17,6 +18,7 @@ interface DayEntryItemProps {
 
 
 export default function DayEntryItem({ entry, onRemove, onOpen, onMove, readOnly, sortable }: DayEntryItemProps) {
+  const { state } = useAppContext();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: entry.id,
     disabled: !sortable,
@@ -82,7 +84,7 @@ export default function DayEntryItem({ entry, onRemove, onOpen, onMove, readOnly
       ) : isText ? (
         <span className="text-lg leading-none">📝</span>
       ) : isCustomRecipe ? (
-        <span className="text-lg leading-none">{getRecipeEmoji(label ?? "")}</span>
+        <span className="text-lg leading-none">{getRecipeEmoji(label ?? "", state.customRecipes.find((r) => r.id === entry.customRecipeId)?.category)}</span>
       ) : (
         <UtensilsCrossed size={16} className="text-brand-400" />
       )}

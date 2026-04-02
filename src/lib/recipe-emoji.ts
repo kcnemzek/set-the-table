@@ -107,17 +107,22 @@ const EMOJI_MAP: [string[], string][] = [
   // General fallback
 ];
 
-export function getRecipeEmoji(title: string): string {
+export const CATEGORIES: { emoji: string; label: string }[] = Array.from(
+  new Map(CATEGORY_MAP.map(([, emoji, label]) => [label, { emoji, label }])).values()
+).sort((a, b) => a.label.localeCompare(b.label))
+  .concat([{ emoji: "🍽️", label: "Other" }]);
+
+export function getRecipeEmoji(title: string, category?: string): string {
+  if (category) {
+    const match = CATEGORIES.find((c) => c.label === category);
+    if (match && match.emoji !== "🍽️") return match.emoji;
+  }
   const lower = title.toLowerCase();
   for (const [keywords, emoji] of EMOJI_MAP) {
     if (keywords.some((kw) => lower.includes(kw))) return emoji;
   }
   return "🍽️";
 }
-
-export const CATEGORIES: { emoji: string; label: string }[] = Array.from(
-  new Map(CATEGORY_MAP.map(([, emoji, label]) => [label, { emoji, label }])).values()
-).concat([{ emoji: "🍽️", label: "Other" }]);
 
 export function getRecipeCategory(title: string, categoryOverride?: string): { emoji: string; label: string } {
   if (categoryOverride) {

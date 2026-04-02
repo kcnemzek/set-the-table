@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Shuffle, Plus, Heart, BookOpen, Trash2, Loader2, Bookmark, ChevronRight, Pencil, Check, ChevronsDown } from "lucide-react";
+import { Shuffle, Plus, Heart, BookOpen, Trash2, Loader2, Bookmark, ChevronRight, Pencil, Check, ChevronsDown, ScrollText } from "lucide-react";
 import clsx from "clsx";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import SearchBar from "@/components/recipes/SearchBar";
@@ -50,6 +50,7 @@ export default function RecipesPage() {
   const [newMenuOpen, setNewMenuOpen] = useState(false);
   const [viewingMenuRecipe, setViewingMenuRecipe] = useState<RecipeSummary | null>(null);
   const [viewingMenuCustom, setViewingMenuCustom] = useState<CustomRecipe | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: "recipe" | "menu"; name: string } | null>(null);
 
   const handleSearch = useCallback(async (token?: string) => {
     if (!query.trim()) return;
@@ -315,7 +316,7 @@ export default function RecipesPage() {
                             className="flex items-center gap-3 flex-1 min-w-0 text-left"
                           >
                             <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
-                              {getRecipeEmoji(cr.title)}
+                              {getRecipeEmoji(cr.title, cr.category)}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-gray-800 truncate">{cr.title}</p>
@@ -341,9 +342,7 @@ export default function RecipesPage() {
                               <Plus size={18} />
                             </button>
                             <button
-                              onClick={() =>
-                                dispatch({ type: "REMOVE_CUSTOM_RECIPE", id: cr.id })
-                              }
+                              onClick={() => setConfirmDelete({ id: cr.id, type: "recipe", name: cr.title })}
                               className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-50 rounded-xl"
                               title="Delete"
                             >
@@ -386,7 +385,7 @@ export default function RecipesPage() {
                   className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none"
                   onClick={() => setExpandedMenu(expandedMenu === savedMenu.id ? null : savedMenu.id)}
                 >
-                  <Bookmark size={16} className="text-brand-500 flex-shrink-0" />
+                  <ScrollText size={16} className="text-brand-500 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     {renamingMenuId === savedMenu.id ? (
                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -445,8 +444,7 @@ export default function RecipesPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        dispatch({ type: "DELETE_SAVED_MENU", id: savedMenu.id });
-                        if (expandedMenu === savedMenu.id) setExpandedMenu(null);
+                        setConfirmDelete({ id: savedMenu.id, type: "menu", name: savedMenu.name });
                       }}
                       className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-50 transition-colors"
                       title="Delete"
@@ -589,6 +587,42 @@ export default function RecipesPage() {
         onClose={() => setNewMenuOpen(false)}
         entries={[]}
       />
+
+      {/* Delete confirmation */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setConfirmDelete(null)}>
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-base font-semibold text-gray-800 mb-1">
+              Delete {confirmDelete.type === "recipe" ? "Recipe" : "Menu"}?
+            </h2>
+            <p className="text-sm text-gray-500 mb-5">
+              &ldquo;{confirmDelete.name}&rdquo; will be permanently deleted.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (confirmDelete.type === "recipe") {
+                    dispatch({ type: "REMOVE_CUSTOM_RECIPE", id: confirmDelete.id });
+                  } else {
+                    dispatch({ type: "DELETE_SAVED_MENU", id: confirmDelete.id });
+                    if (expandedMenu === confirmDelete.id) setExpandedMenu(null);
+                  }
+                  setConfirmDelete(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 text-sm font-medium text-white hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

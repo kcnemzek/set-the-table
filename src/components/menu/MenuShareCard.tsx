@@ -55,7 +55,9 @@ const MenuShareCard = forwardRef<HTMLDivElement, MenuShareCardProps>(
               : undefined;
             const emoji = getRecipeEmoji(title, category);
 
-            const image = (entry.type === "recipe" || entry.type === "custom-recipe") ? entry.recipeImage : undefined;
+            const image = entry.type === "recipe" && entry.recipeId
+              ? `/api/recipes/${entry.recipeId}/image`
+              : undefined;
 
             return (
               <div key={entry.id} className="flex items-center gap-3">

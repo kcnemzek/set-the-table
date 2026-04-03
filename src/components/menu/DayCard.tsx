@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Plus, Share2, Check, Bookmark } from "lucide-react";
+import { Plus, Share2, Bookmark } from "lucide-react";
 import DayPickerSheet from "@/components/recipes/DayPickerSheet";
 import clsx from "clsx";
 import {
@@ -35,7 +35,6 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [viewingRecipe, setViewingRecipe] = useState<CustomRecipe | null>(null);
   const [editingNote, setEditingNote] = useState<DayEntry | null>(null);
-  const [copied, setCopied] = useState(false);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   const [movingEntry, setMovingEntry] = useState<DayEntry | null>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
@@ -97,31 +96,22 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
     return lines.join("\n");
   }
 
-  async function handleShare() {
-    // Try to share as an image first
-    if (shareCardRef.current && navigator.share) {
-      try {
-        const { toPng } = await import("html-to-image");
-        const dataUrl = await toPng(shareCardRef.current, { pixelRatio: 2 });
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        const file = new File([blob], "menu.png", { type: "image/png" });
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file] });
-          return;
-        }
-      } catch { /* fall through to text share */ }
-    }
+  const canShareImage = typeof navigator !== "undefined" &&
+    !!navigator.share &&
+    !!navigator.canShare?.({ files: [new File([], "test.png", { type: "image/png" })] });
 
-    // Fall back to text
-    const text = buildShareText();
-    if (navigator.share) {
-      try { await navigator.share({ text }); } catch { /* dismissed */ }
-    } else {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  async function handleShare() {
+    if (!shareCardRef.current) return;
+    try {
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(shareCardRef.current, { pixelRatio: 2 });
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], "menu.png", { type: "image/png" });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] });
+      }
+    } catch { /* dismissed or failed */ }
   }
 
   function getOnOpen(entry: DayEntry): (() => void) | undefined {
@@ -188,6 +178,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
               >
                 <Bookmark size={15} />
               </button>
+              {canShareImage && (
               <button
                 onClick={handleShare}
                 className={clsx(
@@ -198,8 +189,9 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
                 )}
                 title="Share menu"
               >
-                {copied ? <Check size={15} /> : <Share2 size={15} />}
+                <Share2 size={15} />
               </button>
+            )}
             </>
           )}
           <button

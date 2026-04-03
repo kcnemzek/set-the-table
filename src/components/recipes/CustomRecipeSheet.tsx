@@ -63,6 +63,7 @@ export default function CustomRecipeSheet({
       aisle: i.aisle,
     })) ?? [emptyRow()]
   );
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -79,8 +80,40 @@ export default function CustomRecipeSheet({
           aisle: i.aisle,
         })) ?? [emptyRow()]
       );
+      setShowConfirm(false);
     }
   }, [open, existing]);
+
+  function isDirty() {
+    if (existing) {
+      return (
+        title !== existing.title ||
+        category !== (existing.category ?? "") ||
+        servings !== String(existing.servings || "") ||
+        directions !== (existing.directions ?? "") ||
+        url !== (existing.url ?? "") ||
+        rows.length !== existing.extendedIngredients.length ||
+        rows.some((r, i) => {
+          const orig = existing.extendedIngredients[i];
+          return !orig || r.name !== orig.name || r.amount !== String(orig.amount) || r.unit !== orig.unit || r.aisle !== orig.aisle;
+        })
+      );
+    }
+    return (
+      title.trim() !== "" ||
+      directions.trim() !== "" ||
+      url.trim() !== "" ||
+      rows.some((r) => r.name.trim() !== "")
+    );
+  }
+
+  function handleClose() {
+    if (isDirty()) {
+      setShowConfirm(true);
+    } else {
+      onClose();
+    }
+  }
 
   const updateRow = (idx: number, field: keyof IngredientRow, value: string) => {
     setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
@@ -120,6 +153,7 @@ export default function CustomRecipeSheet({
       type: existing ? "UPDATE_CUSTOM_RECIPE" : "ADD_CUSTOM_RECIPE",
       recipe,
     });
+    setShowConfirm(false);
     onClose();
   };
 
@@ -167,9 +201,29 @@ export default function CustomRecipeSheet({
   return (
     <BottomSheet
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title={existing ? "Edit Recipe" : "New Custom Recipe"}
     >
+      {showConfirm && (
+        <div className="absolute inset-0 z-10 flex items-end justify-center bg-black/20 rounded-t-2xl">
+          <div className="w-full bg-white rounded-t-2xl p-6 space-y-3 shadow-xl">
+            <p className="text-base font-semibold text-gray-800">Discard changes?</p>
+            <p className="text-sm text-gray-500">Your unsaved changes will be lost.</p>
+            <button
+              onClick={onClose}
+              className="w-full py-3 rounded-xl bg-red-500 text-white font-semibold text-sm active:bg-red-600"
+            >
+              Discard
+            </button>
+            <button
+              onClick={() => setShowConfirm(false)}
+              className="w-full py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm active:bg-gray-50"
+            >
+              Keep Editing
+            </button>
+          </div>
+        </div>
+      )}
       <div className="p-4 space-y-4 pb-8">
         {/* Title */}
         <div>

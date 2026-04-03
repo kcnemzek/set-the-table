@@ -55,10 +55,26 @@ const MenuShareCard = forwardRef<HTMLDivElement, MenuShareCardProps>(
               : undefined;
             const emoji = getRecipeEmoji(title, category);
 
+            const image = (entry.type === "recipe" || entry.type === "custom-recipe") ? entry.recipeImage : undefined;
+
             return (
               <div key={entry.id} className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
-                  {emoji}
+                <div className="w-10 h-10 rounded-2xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">
+                  {image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={image}
+                      alt={title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.style.display = "none";
+                        img.parentElement!.textContent = emoji;
+                      }}
+                    />
+                  ) : (
+                    emoji
+                  )}
                 </div>
                 <span className="text-gray-800 text-sm font-medium leading-snug">{title}</span>
               </div>

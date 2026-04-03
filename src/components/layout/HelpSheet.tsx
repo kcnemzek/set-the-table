@@ -11,7 +11,7 @@ interface HelpSheetProps {
 
 const SECTIONS = [
   {
-    title: "🍽️ The Master Plan",
+    title: "🍽️ The Master Plan - Menu",
     tips: [
       { label: "Smart Scheduling", body: "Planning your week shouldn't feel like a chore. Tap + on any day to instantly pull from your curated favorites, custom notes, or high-priority events." },
       { label: "Fluid Organization", body: "Plans change, so your menu should too. Easily move meals from one night to another." },
@@ -21,17 +21,17 @@ const SECTIONS = [
     ],
   },
   {
-    title: "📖 Your Digital Cookbook",
+    title: "📖 Your Digital Cookbook - Recipes",
     tips: [
-      { label: "Smart Discovery", body: "Find exactly what you’re craving by filtering for specific diets, cuisines, or the ingredients already in your pantry." },
-      { label: "The ✨ Sparkle Effect", body: "Feeling uninspired? Tap the Sparkle to let our AI curate a fresh group of surprise recipes, perfect for shaking up your entire 10-day plan." },
-      { label: "Smart Ingredients", body: "When you add a custom recipe, the app does the heavy lifting. Ingredients are automatically parsed and synced directly to your shopping list." },
-      { label: "Category Control", body: "Our AI usually nails the category from your title, but you're still the boss—tap to manually override and keep things organized." },
+      { label: "Smart Discovery", body: "Find exactly what you’re craving in the Discover tab by filtering for specific diets, cuisines, or the ingredients already in your pantry." },
+      { label: "The ✨ Sparkle Effect", body: "Feeling uninspired? Tap the Sparkle to let our AI generate a fresh group of surprise recipes that are sperfect for shaking up your entire 10-day plan." },
       { label: "The \"Heart\" Factor", body: "Spot something delicious in the Discover tab? Hit the heart to save it to your Favorites for instant access later." },
+      { label: "Smart Ingredients", body: "Want to eat your famous meatballs? When you add a custom recipe, the app does the heavy lifting. Ingredients are automatically parsed and synced directly to your shopping list." },
+      { label: "Category Control", body: "Our AI usually nails the category from your title, but you're still the boss...tap to manually override and keep things organized." },
     ],
   },
   {
-    title: "🛒 Shopping, Simplified",
+    title: "🛒 Shopping, Simplified - Groceries",
     tips: [
       { label: "Auto-Magic Lists", body: "Your grocery list builds itself. As you plan your meals, the ingredients populate in real-time. No more double-checking the pantry at 6:00 PM." },
       { label: "Aisle-by-Aisle", body: "We group your items by grocery aisle, so you can zip through the store in record time." },

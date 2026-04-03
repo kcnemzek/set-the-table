@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
   if (type) params.set("dishType", type);
 
   try {
+    console.log("[edamam search]", `${BASE}?${params.toString().replace(appKey, "***")}`);
     const res = await edamamFetch(`${BASE}?${params.toString()}`);
     if (!res.ok) {
       const text = await res.text();

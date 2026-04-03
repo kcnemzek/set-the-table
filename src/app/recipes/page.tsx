@@ -210,12 +210,12 @@ export default function RecipesPage() {
                 <span className="hidden sm:inline">Generate</span>
               </button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto py-1 -my-1 scrollbar-none">
               <select
                 value={filterCuisine}
                 onChange={(e) => setFilterCuisine(e.target.value)}
                 disabled={resultsFromGenerate}
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="min-w-[120px] rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <option value="">All cuisines</option>
                 {["American","Asian","British","Caribbean","Central Europe","Chinese","Eastern Europe","French","Indian","Italian","Japanese","Kosher","Mediterranean","Mexican","Middle Eastern","Nordic","South American","South East Asian"].map((c) => (
@@ -226,10 +226,10 @@ export default function RecipesPage() {
                 value={filterDish}
                 onChange={(e) => setFilterDish(e.target.value)}
                 disabled={resultsFromGenerate}
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="min-w-[120px] rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <option value="">All dishes</option>
-                {["Biscuits and cookies","Bread","Cereals","Condiments and sauces","Desserts","Drinks","Main course","Pancake","Preserve","Salad","Sandwiches","Side dish","Soup","Starter","Sweets"].map((d) => (
+                {["Biscuits and cookies","Bread","Cereals","Condiments and sauces","Desserts","Drinks","Main course","Pancake","Preserve","Salad","Sandwiches","Soup","Starter","Sweets"].map((d) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
@@ -237,7 +237,7 @@ export default function RecipesPage() {
                 value={filterDiet}
                 onChange={(e) => setFilterDiet(e.target.value)}
                 disabled={resultsFromGenerate}
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="min-w-[120px] rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <option value="">All diets</option>
                 {["balanced","high-fiber","high-protein","low-carb","low-fat","low-sodium"].map((d) => (

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Trash2, X } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
-import { CATEGORIES } from "@/lib/recipe-emoji";
+import { CATEGORIES, getRecipeEmoji } from "@/lib/recipe-emoji";
 import type { CustomRecipe, ExtendedIngredient } from "@/types";
 
 const AISLES = [
@@ -55,6 +55,7 @@ export default function CustomRecipeSheet({
   const [servings, setServings] = useState(String(existing?.servings || ""));
   const [directions, setDirections] = useState(existing?.directions ?? "");
   const [url, setUrl] = useState(existing?.url ?? "");
+  const [emoji, setEmoji] = useState(existing?.emoji ?? "");
   const [rows, setRows] = useState<IngredientRow[]>(
     existing?.extendedIngredients.map((i) => ({
       name: i.name,
@@ -72,6 +73,7 @@ export default function CustomRecipeSheet({
       setServings(String(existing?.servings || ""));
       setDirections(existing?.directions ?? "");
       setUrl(existing?.url ?? "");
+      setEmoji(existing?.emoji ?? "");
       setRows(
         existing?.extendedIngredients.map((i) => ({
           name: i.name,
@@ -92,6 +94,7 @@ export default function CustomRecipeSheet({
         servings !== String(existing.servings || "") ||
         directions !== (existing.directions ?? "") ||
         url !== (existing.url ?? "") ||
+        emoji !== (existing.emoji ?? "") ||
         rows.length !== existing.extendedIngredients.length ||
         rows.some((r, i) => {
           const orig = existing.extendedIngredients[i];
@@ -147,6 +150,7 @@ export default function CustomRecipeSheet({
       directions: directions.trim() || undefined,
       url: url.trim() || undefined,
       category: category || undefined,
+      emoji: emoji.trim() || undefined,
     };
 
     dispatch({
@@ -239,23 +243,37 @@ export default function CustomRecipeSheet({
           />
         </div>
 
-        {/* Category */}
-        <div>
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Category
-          </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
-          >
-            <option value="">Auto-detect from title</option>
-            {CATEGORIES.map((c) => (
-              <option key={c.label} value={c.label}>
-                {c.emoji} {c.label}
-              </option>
-            ))}
-          </select>
+        {/* Category + Emoji */}
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Category
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+            >
+              <option value="">Auto-detect from title</option>
+              {CATEGORIES.map((c) => (
+                <option key={c.label} value={c.label}>
+                  {c.emoji} {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="w-20">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Emoji
+            </label>
+            <input
+              type="text"
+              value={emoji}
+              onChange={(e) => setEmoji(e.target.value)}
+              placeholder={getRecipeEmoji(title, category)}
+              className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-3 text-xl text-center focus:outline-none focus:ring-2 focus:ring-brand-400"
+            />
+          </div>
         </div>
 
         {/* Servings */}

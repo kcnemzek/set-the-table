@@ -42,6 +42,7 @@ export interface CustomRecipe {
   notes?: string;
   url?: string;
   category?: string; // overrides auto-detection from title
+  emoji?: string;    // overrides auto-detection from title/category
 }
 
 // ─── Menu ─────────────────────────────────────────────────────────────────────

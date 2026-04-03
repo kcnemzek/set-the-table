@@ -112,7 +112,8 @@ export const CATEGORIES: { emoji: string; label: string }[] = Array.from(
 ).sort((a, b) => a.label.localeCompare(b.label))
   .concat([{ emoji: "🍽️", label: "Other" }]);
 
-export function getRecipeEmoji(title: string, category?: string): string {
+export function getRecipeEmoji(title: string, category?: string, emoji?: string): string {
+  if (emoji?.trim()) return emoji.trim();
   if (category) {
     const match = CATEGORIES.find((c) => c.label === category);
     if (match && match.emoji !== "🍽️") return match.emoji;

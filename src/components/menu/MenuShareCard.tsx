@@ -50,10 +50,10 @@ const MenuShareCard = forwardRef<HTMLDivElement, MenuShareCardProps>(
               entry.type === "recipe" || entry.type === "custom-recipe"
                 ? entry.recipeTitle ?? ""
                 : entry.text ?? "";
-            const category = entry.type === "custom-recipe"
-              ? state.customRecipes.find((r) => r.id === entry.customRecipeId)?.category
+            const customRecipe = entry.type === "custom-recipe"
+              ? state.customRecipes.find((r) => r.id === entry.customRecipeId)
               : undefined;
-            const emoji = getRecipeEmoji(title, category);
+            const emoji = getRecipeEmoji(title, customRecipe?.category, customRecipe?.emoji);
 
             const image = entry.type === "recipe" && entry.recipeId
               ? `/api/recipes/${entry.recipeId}/image`

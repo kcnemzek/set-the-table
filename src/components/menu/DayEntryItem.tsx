@@ -84,7 +84,7 @@ export default function DayEntryItem({ entry, onRemove, onOpen, onMove, readOnly
       ) : isText ? (
         <span className="text-lg leading-none">📝</span>
       ) : isCustomRecipe ? (
-        <span className="text-lg leading-none">{getRecipeEmoji(label ?? "", state.customRecipes.find((r) => r.id === entry.customRecipeId)?.category)}</span>
+        <span className="text-lg leading-none">{(() => { const cr = state.customRecipes.find((r) => r.id === entry.customRecipeId); return getRecipeEmoji(label ?? "", cr?.category, cr?.emoji); })()}</span>
       ) : (
         <UtensilsCrossed size={16} className="text-brand-400" />
       )}

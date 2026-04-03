@@ -369,7 +369,7 @@ export default function RecipesPage() {
                             className="flex items-center gap-3 flex-1 min-w-0 text-left"
                           >
                             <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
-                              {getRecipeEmoji(cr.title, cr.category)}
+                              {getRecipeEmoji(cr.title, cr.category, cr.emoji)}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-gray-800 truncate">{cr.title}</p>
@@ -536,12 +536,10 @@ export default function RecipesPage() {
                               </div>
                             ) : (
                               <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
-                                {entry.type === "event" ? "🎉" : entry.type === "text" ? "📝" : getRecipeEmoji(
-                                  entry.recipeTitle ?? "",
-                                  entry.type === "custom-recipe"
-                                    ? state.customRecipes.find((r) => r.id === entry.customRecipeId)?.category
-                                    : undefined
-                                )}
+                                {entry.type === "event" ? "🎉" : entry.type === "text" ? "📝" : (() => {
+                                  const cr = entry.type === "custom-recipe" ? state.customRecipes.find((r) => r.id === entry.customRecipeId) : undefined;
+                                  return getRecipeEmoji(entry.recipeTitle ?? "", cr?.category, cr?.emoji);
+                                })()}
                               </div>
                             )}
                             <div className="flex-1 min-w-0">

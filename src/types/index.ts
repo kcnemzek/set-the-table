@@ -97,6 +97,16 @@ export interface ManualGroceryItem {
 
 export type GroceryListByAisle = Record<string, AggregatedIngredient[]>;
 
+// ─── Tips ─────────────────────────────────────────────────────────────────────
+
+export interface Tip {
+  id: string;
+  title: string;
+  body: string;
+  category?: string;
+  createdAt: string;
+}
+
 // ─── Search ───────────────────────────────────────────────────────────────────
 
 export interface SearchFilters {

@@ -1,22 +1,31 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Sparkles, Plus, Heart, BookOpen, Trash2, Loader2, Bookmark, ChevronRight, Pencil, Check, ChevronsDown, ScrollText } from "lucide-react";
+import { Sparkles, Plus, Heart, BookOpen, Trash2, Loader2, Bookmark, ChevronRight, Pencil, Check, ChevronsDown, ScrollText, Lightbulb } from "lucide-react";
 import clsx from "clsx";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import SearchBar from "@/components/recipes/SearchBar";
 import CustomRecipeSheet from "@/components/recipes/CustomRecipeSheet";
 import RecipeDetailSheet from "@/components/recipes/RecipeDetailSheet";
 import DayPickerSheet from "@/components/recipes/DayPickerSheet";
+import TipSheet from "@/components/recipes/TipSheet";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import EmptyState from "@/components/shared/EmptyState";
 import AddEntrySheet from "@/components/menu/AddEntrySheet";
 import SaveMenuSheet from "@/components/menu/SaveMenuSheet";
 import { useAppContext } from "@/store/context";
 import { getRecipeEmoji, getRecipeCategory } from "@/lib/recipe-emoji";
-import type { RecipeSummary, CustomRecipe, DayEntry } from "@/types";
+import type { RecipeSummary, CustomRecipe, DayEntry, Tip } from "@/types";
 
-type Tab = "discover" | "favorites" | "custom" | "menus";
+type Tab = "discover" | "favorites" | "custom" | "menus" | "tips";
+
+const TIP_CATEGORY_EMOJI: Record<string, string> = {
+  Technique: "🔪",
+  Timing: "⏱️",
+  Substitution: "🔄",
+  Storage: "📦",
+  General: "💡",
+};
 
 export default function RecipesPage() {
   const { state, dispatch } = useAppContext();
@@ -55,6 +64,11 @@ export default function RecipesPage() {
   const [viewingMenuRecipe, setViewingMenuRecipe] = useState<RecipeSummary | null>(null);
   const [viewingMenuCustom, setViewingMenuCustom] = useState<CustomRecipe | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: "recipe" | "menu"; name: string } | null>(null);
+
+  // Tips state
+  const [tipSheetOpen, setTipSheetOpen] = useState(false);
+  const [editingTip, setEditingTip] = useState<Tip | undefined>();
+  const [confirmDeleteTip, setConfirmDeleteTip] = useState<{ id: string; title: string } | null>(null);
 
   const handleSearch = useCallback(async (token?: string) => {
     if (!query.trim()) return;
@@ -165,12 +179,12 @@ export default function RecipesPage() {
     <div className="flex flex-col min-h-full">
       {/* Tabs */}
       <div className="flex border-b border-gray-200 bg-white sticky top-0 z-10">
-        {(["discover", "favorites", "custom", "menus"] as Tab[]).map((t) => (
+        {(["discover", "favorites", "custom", "menus", "tips"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => handleTabChange(t)}
             className={clsx(
-              "flex-1 py-3 text-sm font-medium transition-colors border-b-2 -mb-px",
+              "flex-1 py-3 text-xs font-medium transition-colors border-b-2 -mb-px",
               tab === t
                 ? "border-brand-500 text-brand-600"
                 : "border-transparent text-gray-500 hover:text-gray-600"
@@ -180,6 +194,7 @@ export default function RecipesPage() {
             {t === "favorites" && "Favorites"}
             {t === "custom" && "My Recipes"}
             {t === "menus" && "My Menus"}
+            {t === "tips" && "Tips"}
           </button>
         ))}
       </div>
@@ -272,7 +287,7 @@ export default function RecipesPage() {
             <EmptyState
               icon={<BookOpen size={48} />}
               title="Find your next meal"
-              description='Search for recipes or tap "Generate" for inspiration'
+              description='Search for recipes or tap ✨ for inspiration'
             />
           )}
         </div>
@@ -573,6 +588,56 @@ export default function RecipesPage() {
         </div>
       )}
 
+      {/* Tips Tab */}
+      {tab === "tips" && (
+        <div className="p-4">
+          <div className="sticky top-[45px] z-10 bg-white -mx-4 px-4 pb-4 pt-3">
+            <button
+              onClick={() => { setEditingTip(undefined); setTipSheetOpen(true); }}
+              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-brand-200 text-brand-500 rounded-xl text-sm font-medium hover:bg-brand-50 active:bg-brand-100"
+            >
+              <Plus size={18} />
+              New Tip
+            </button>
+          </div>
+
+          {state.tips.length === 0 ? (
+            <EmptyState
+              icon={<Lightbulb size={48} />}
+              title="No tips yet"
+              description="Save cooking tips you look up often — techniques, timing, substitutions"
+            />
+          ) : (
+            <div className="space-y-2">
+              {[...state.tips].sort((a, b) => a.title.localeCompare(b.title)).map((tip) => (
+                <div
+                  key={tip.id}
+                  className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
+                    {TIP_CATEGORY_EMOJI[tip.category ?? ""] ?? "💡"}
+                  </div>
+                  <button
+                    onClick={() => { setEditingTip(tip); setTipSheetOpen(true); }}
+                    className="flex-1 min-w-0 text-left"
+                  >
+                    <p className="text-sm font-semibold text-gray-800">{tip.title}</p>
+                    <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{tip.body}</p>
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteTip({ id: tip.id, title: tip.title })}
+                    className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-50 rounded-xl flex-shrink-0"
+                    title="Delete"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <CustomRecipeSheet
         open={customSheetOpen}
         onClose={() => setCustomSheetOpen(false)}
@@ -670,6 +735,41 @@ export default function RecipesPage() {
                     if (expandedMenu === confirmDelete.id) setExpandedMenu(null);
                   }
                   setConfirmDelete(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 text-sm font-medium text-white hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <TipSheet
+        open={tipSheetOpen}
+        onClose={() => { setTipSheetOpen(false); setEditingTip(undefined); }}
+        existing={editingTip}
+      />
+
+      {/* Delete tip confirmation */}
+      {confirmDeleteTip && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setConfirmDeleteTip(null)}>
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-base font-semibold text-gray-800 mb-1">Delete Tip?</h2>
+            <p className="text-sm text-gray-500 mb-5">
+              &ldquo;{confirmDeleteTip.title}&rdquo; will be permanently deleted.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteTip(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  dispatch({ type: "DELETE_TIP", id: confirmDeleteTip.id });
+                  setConfirmDeleteTip(null);
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-red-500 text-sm font-medium text-white hover:bg-red-600"
               >

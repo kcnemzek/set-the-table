@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { DayEntry, CustomRecipe } from "@/types";
+import type { DayEntry, CustomRecipe, Tip } from "@/types";
 
 // ─── Inline the reducer so we don't need to mock next-auth ───────────────────
 
@@ -11,6 +11,7 @@ interface AppState {
   manualGroceryItems: never[];
   groceryChecked: Record<string, boolean>;
   familyMembers: string[];
+  tips: Tip[];
   recipeCache: Record<string, unknown>;
   hydrated: boolean;
 }
@@ -28,7 +29,10 @@ type Action =
   | { type: "REMOVE_CUSTOM_RECIPE"; id: string }
   | { type: "TOGGLE_GROCERY_CHECKED"; key: string }
   | { type: "ADD_FAMILY_MEMBER"; name: string }
-  | { type: "REMOVE_FAMILY_MEMBER"; name: string };
+  | { type: "REMOVE_FAMILY_MEMBER"; name: string }
+  | { type: "ADD_TIP"; tip: Tip }
+  | { type: "UPDATE_TIP"; tip: Tip }
+  | { type: "DELETE_TIP"; id: string };
 
 const initialState: AppState = {
   menu: {},
@@ -38,6 +42,7 @@ const initialState: AppState = {
   manualGroceryItems: [],
   groceryChecked: {},
   familyMembers: [],
+  tips: [],
   recipeCache: {},
   hydrated: false,
 };
@@ -122,6 +127,15 @@ function reducer(state: AppState, action: Action): AppState {
     case "REMOVE_FAMILY_MEMBER":
       return { ...state, familyMembers: state.familyMembers.filter((n) => n !== action.name) };
 
+    case "ADD_TIP":
+      return { ...state, tips: [...state.tips, action.tip] };
+
+    case "UPDATE_TIP":
+      return { ...state, tips: state.tips.map((t) => t.id === action.tip.id ? action.tip : t) };
+
+    case "DELETE_TIP":
+      return { ...state, tips: state.tips.filter((t) => t.id !== action.id) };
+
     default:
       return state;
   }
@@ -139,6 +153,16 @@ function makeRecipe(overrides: Partial<CustomRecipe> = {}): CustomRecipe {
     title: "Pasta",
     servings: 4,
     extendedIngredients: [],
+    ...overrides,
+  };
+}
+
+function makeTip(overrides: Partial<Tip> = {}): Tip {
+  return {
+    id: crypto.randomUUID(),
+    title: "How to poach chicken",
+    body: "Simmer at 160°F for 15 minutes.",
+    createdAt: new Date().toISOString(),
     ...overrides,
   };
 }
@@ -307,6 +331,49 @@ describe("reducer — grocery checked", () => {
   });
 });
 
+describe("reducer — tips", () => {
+  it("adds a tip", () => {
+    const tip = makeTip();
+    const state = reducer(initialState, { type: "ADD_TIP", tip });
+    expect(state.tips).toHaveLength(1);
+    expect(state.tips[0].title).toBe("How to poach chicken");
+  });
+
+  it("updates a tip", () => {
+    const tip = makeTip();
+    let state = reducer(initialState, { type: "ADD_TIP", tip });
+    state = reducer(state, { type: "UPDATE_TIP", tip: { ...tip, title: "How to poach salmon" } });
+    expect(state.tips[0].title).toBe("How to poach salmon");
+    expect(state.tips).toHaveLength(1);
+  });
+
+  it("does not affect other tips when updating", () => {
+    const tip1 = makeTip({ id: "tip_1", title: "Tip One" });
+    const tip2 = makeTip({ id: "tip_2", title: "Tip Two" });
+    let state = reducer(initialState, { type: "ADD_TIP", tip: tip1 });
+    state = reducer(state, { type: "ADD_TIP", tip: tip2 });
+    state = reducer(state, { type: "UPDATE_TIP", tip: { ...tip1, title: "Updated One" } });
+    expect(state.tips.find((t) => t.id === "tip_2")?.title).toBe("Tip Two");
+  });
+
+  it("deletes a tip by id", () => {
+    const tip = makeTip();
+    let state = reducer(initialState, { type: "ADD_TIP", tip });
+    state = reducer(state, { type: "DELETE_TIP", id: tip.id });
+    expect(state.tips).toHaveLength(0);
+  });
+
+  it("does not delete other tips when deleting one", () => {
+    const tip1 = makeTip({ id: "tip_1" });
+    const tip2 = makeTip({ id: "tip_2" });
+    let state = reducer(initialState, { type: "ADD_TIP", tip: tip1 });
+    state = reducer(state, { type: "ADD_TIP", tip: tip2 });
+    state = reducer(state, { type: "DELETE_TIP", id: "tip_1" });
+    expect(state.tips).toHaveLength(1);
+    expect(state.tips[0].id).toBe("tip_2");
+  });
+});
+
 describe("reducer — hydrate", () => {
   it("sets hydrated and merges payload", () => {
     const state = reducer(initialState, {
@@ -319,6 +386,7 @@ describe("reducer — hydrate", () => {
         manualGroceryItems: [],
         groceryChecked: {},
         familyMembers: ["Karen"],
+        tips: [],
       },
     });
     expect(state.hydrated).toBe(true);

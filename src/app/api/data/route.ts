@@ -10,6 +10,7 @@ const EMPTY = {
   groceryChecked: {},
   familyMembers: [],
   savedMenus: [],
+  tips: [],
 };
 
 const hasKV = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);

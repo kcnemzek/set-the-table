@@ -102,6 +102,18 @@ SavedMenu {
 }
 ```
 
+### Tip Types
+
+```typescript
+Tip {
+  id: string
+  title: string
+  body: string
+  category?: string             // Technique | Timing | Substitution | Storage | General
+  createdAt: string             // ISO timestamp
+}
+```
+
 ### Grocery Types
 
 ```typescript
@@ -139,6 +151,7 @@ GroceryListByAisle = Record<string, AggregatedIngredient[]>
   groceryChecked: Record<string, boolean>
   familyMembers: string[]
   savedMenus: SavedMenu[]
+  tips: Tip[]
 }
 ```
 
@@ -158,6 +171,7 @@ AppState
 ├── groceryChecked        Record<string, boolean>
 ├── familyMembers         string[]
 ├── savedMenus            SavedMenu[]
+├── tips                  Tip[]
 ├── recipeCache           Record<string, RecipeDetail>   ← in-memory only, not persisted
 └── hydrated              boolean
 ```
@@ -172,6 +186,7 @@ AppState
 | Groceries | `ADD_MANUAL_GROCERY`, `REMOVE_MANUAL_GROCERY`, `TOGGLE_MANUAL_GROCERY_CHECKED`, `TOGGLE_GROCERY_CHECKED` |
 | Family | `ADD_FAMILY_MEMBER`, `REMOVE_FAMILY_MEMBER` |
 | Saved Menus | `SAVE_DAY_AS_MENU`, `DELETE_SAVED_MENU`, `RENAME_SAVED_MENU`, `ADD_ENTRY_TO_SAVED_MENU` |
+| Tips | `ADD_TIP`, `UPDATE_TIP`, `DELETE_TIP` |
 | Lifecycle | `HYDRATE` |
 
 ### Context Helper Methods
@@ -189,14 +204,14 @@ AppState
 | `/` | No | Redirects to `/menu` |
 | `/login` | No | Google OAuth sign-in |
 | `/menu` | Yes | 10-day meal plan |
-| `/recipes` | Yes | Discovery, Favorites, My Recipes, My Menus tabs |
+| `/recipes` | Yes | My Kitchen — Discovery, Favorites, My Recipes, My Menus, Tips tabs |
 | `/groceries` | Yes | Aggregated shopping list from 10-day menu |
 | `/view/[token]` | No | Read-only family view via share token |
 
 ### Navigation Components
 
 - **Desktop**: `TopNav` — logo, 3 tabs, user avatar, sign out
-- **Mobile**: `MobileHeader` (top) + `BottomNav` (3-tab, bottom)
+- **Mobile**: `MobileHeader` (top) + `BottomNav` (3-tab: Menu, My Kitchen, Groceries)
 - **Route protection**: `src/middleware.ts` intercepts `/menu/*`, `/recipes/*`, `/groceries/*` and redirects unauthenticated users to `/login`
 
 ---
@@ -356,15 +371,17 @@ layout.tsx
 │       │       ├── MenuShareCard     (off-screen, used for image generation)
 │       │       └── DayPickerSheet    (move entry to another day)
 │       │
-│       ├── /recipes → RecipesPage
+│       ├── /recipes → RecipesPage  (nav label: "My Kitchen")
 │       │   ├── Discover tab
 │       │   │   └── SearchBar + filters + RecipeCard[]
 │       │   ├── Favorites tab
 │       │   │   └── RecipeCard[] grouped by category
 │       │   ├── My Recipes tab
 │       │   │   └── CustomRecipeSheet + custom recipe list
-│       │   └── My Menus tab
-│       │       └── SavedMenu[] (expand / rename / delete)
+│       │   ├── My Menus tab
+│       │   │   └── SavedMenu[] (expand / rename / delete)
+│       │   └── Tips tab
+│       │       └── TipSheet + tip list (sorted by title)
 │       │
 │       ├── /groceries → GroceriesPage
 │       │   ├── GrocerySection × n    (grouped by store aisle)
@@ -374,7 +391,7 @@ layout.tsx
 │       │   └── ReadOnlyDayCard × n
 │       │
 │       └── BottomNav (mobile)
-│           └── Menu / Recipes / Groceries tabs
+│           └── Menu / My Kitchen / Groceries tabs
 │
 └── Analytics
 ```

@@ -15,6 +15,7 @@ import type {
   ManualGroceryItem,
   RecipeDetail,
   SavedMenu,
+  Tip,
 } from "@/types";
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -29,6 +30,7 @@ interface AppState {
   groceryChecked: Record<string, boolean>;
   familyMembers: string[];
   savedMenus: SavedMenu[];
+  tips: Tip[];
   /** cache of full recipe details fetched for grocery aggregation */
   recipeCache: Record<string, RecipeDetail>;
   hydrated: boolean;
@@ -43,6 +45,7 @@ const initialState: AppState = {
   groceryChecked: {},
   familyMembers: [],
   savedMenus: [],
+  tips: [],
   recipeCache: {},
   hydrated: false,
 };
@@ -73,7 +76,10 @@ type Action =
   | { type: "SAVE_DAY_AS_MENU"; savedMenu: SavedMenu }
   | { type: "DELETE_SAVED_MENU"; id: string }
   | { type: "RENAME_SAVED_MENU"; id: string; name: string }
-  | { type: "ADD_ENTRY_TO_SAVED_MENU"; savedMenuId: string; entry: DayEntry };
+  | { type: "ADD_ENTRY_TO_SAVED_MENU"; savedMenuId: string; entry: DayEntry }
+  | { type: "ADD_TIP"; tip: Tip }
+  | { type: "UPDATE_TIP"; tip: Tip }
+  | { type: "DELETE_TIP"; id: string };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -229,6 +235,15 @@ function reducer(state: AppState, action: Action): AppState {
         ),
       };
 
+    case "ADD_TIP":
+      return { ...state, tips: [...state.tips, action.tip] };
+
+    case "UPDATE_TIP":
+      return { ...state, tips: state.tips.map((t) => t.id === action.tip.id ? action.tip : t) };
+
+    case "DELETE_TIP":
+      return { ...state, tips: state.tips.filter((t) => t.id !== action.id) };
+
     default:
       return state;
   }
@@ -275,6 +290,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             groceryChecked: data.groceryChecked ?? {},
             familyMembers: data.familyMembers ?? [],
             savedMenus: data.savedMenus ?? [],
+            tips: data.tips ?? [],
           },
         });
       })
@@ -300,6 +316,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           groceryChecked: state.groceryChecked,
           familyMembers: state.familyMembers,
           savedMenus: state.savedMenus,
+          tips: state.tips,
         }),
       });
     }, 500);
@@ -313,6 +330,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.groceryChecked,
     state.familyMembers,
     state.savedMenus,
+    state.tips,
     state.hydrated,
   ]);
 
@@ -371,6 +389,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         groceryChecked: state.groceryChecked,
         familyMembers: state.familyMembers,
         savedMenus: state.savedMenus,
+        tips: state.tips,
       }),
     });
   }, [
@@ -382,6 +401,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.groceryChecked,
     state.familyMembers,
     state.savedMenus,
+    state.tips,
   ]);
 
   return (

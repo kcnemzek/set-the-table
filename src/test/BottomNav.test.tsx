@@ -20,7 +20,7 @@ describe("BottomNav", () => {
     mockPathname.mockReturnValue("/menu");
     render(<BottomNav />);
     expect(screen.getByText("Menu")).toBeInTheDocument();
-    expect(screen.getByText("Recipes")).toBeInTheDocument();
+    expect(screen.getByText("My Kitchen")).toBeInTheDocument();
     expect(screen.getByText("Groceries")).toBeInTheDocument();
   });
 
@@ -37,10 +37,10 @@ describe("BottomNav", () => {
     expect(menuLink?.className).toContain("text-brand-500");
   });
 
-  it("marks Recipes tab as active on /recipes", () => {
+  it("marks My Kitchen tab as active on /recipes", () => {
     mockPathname.mockReturnValue("/recipes");
     render(<BottomNav />);
-    const recipesLink = screen.getByText("Recipes").closest("a");
+    const recipesLink = screen.getByText("My Kitchen").closest("a");
     expect(recipesLink?.className).toContain("text-brand-500");
   });
 
@@ -54,7 +54,7 @@ describe("BottomNav", () => {
   it("marks no tab as active on an unrelated route", () => {
     mockPathname.mockReturnValue("/login");
     render(<BottomNav />);
-    ["Menu", "Recipes", "Groceries"].forEach((label) => {
+    ["Menu", "My Kitchen", "Groceries"].forEach((label) => {
       const link = screen.getByText(label).closest("a");
       expect(link?.className).not.toContain("text-brand-500");
     });
@@ -64,7 +64,7 @@ describe("BottomNav", () => {
     mockPathname.mockReturnValue("/menu");
     render(<BottomNav />);
     expect(screen.getByText("Menu").closest("a")).toHaveAttribute("href", "/menu");
-    expect(screen.getByText("Recipes").closest("a")).toHaveAttribute("href", "/recipes");
+    expect(screen.getByText("My Kitchen").closest("a")).toHaveAttribute("href", "/recipes");
     expect(screen.getByText("Groceries").closest("a")).toHaveAttribute("href", "/groceries");
   });
 });

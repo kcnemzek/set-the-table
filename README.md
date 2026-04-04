@@ -8,6 +8,7 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 - **Recipe discovery** — search recipes or generate random suggestions
 - **Favorites** — save recipes you love for quick access
 - **My Recipes** — add your own custom recipes with ingredients
+- **Tips** — save cooking tips you look up often (techniques, timing, substitutions)
 - **Grocery list** — auto-generated from the week's planned meals
 - **Family sharing** — share a read-only link with family members
 - **PWA** — installable on iPhone/Android home screen

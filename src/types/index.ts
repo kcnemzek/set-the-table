@@ -7,6 +7,7 @@ export interface ExtendedIngredient {
   nameClean?: string;
   original: string;
   amount: number;
+  amountDisplay?: string; // preserves fractions like "1/2" for display/editing
   unit: string;
 }
 

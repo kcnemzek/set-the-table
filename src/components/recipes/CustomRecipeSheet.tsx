@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, Share2 } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
 import { CATEGORIES, getRecipeEmoji } from "@/lib/recipe-emoji";
+import { parseAmount } from "@/lib/parse-amount";
+import { shareRecipe } from "@/lib/share-recipe";
 import type { CustomRecipe, ExtendedIngredient } from "@/types";
 
 const AISLES = [
@@ -36,6 +38,8 @@ const emptyRow = (): IngredientRow => ({
   aisle: "Miscellaneous",
 });
 
+
+
 interface CustomRecipeSheetProps {
   open: boolean;
   onClose: () => void;
@@ -59,12 +63,21 @@ export default function CustomRecipeSheet({
   const [rows, setRows] = useState<IngredientRow[]>(
     existing?.extendedIngredients.map((i) => ({
       name: i.name,
-      amount: String(i.amount),
+      amount: i.amountDisplay ?? String(i.amount),
       unit: i.unit,
       aisle: i.aisle,
     })) ?? [emptyRow()]
   );
   const [showConfirm, setShowConfirm] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const handleShare = async (recipe: CustomRecipe) => {
+    const copied = await shareRecipe(recipe);
+    if (copied) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -77,7 +90,7 @@ export default function CustomRecipeSheet({
       setRows(
         existing?.extendedIngredients.map((i) => ({
           name: i.name,
-          amount: String(i.amount),
+          amount: i.amountDisplay ?? String(i.amount),
           unit: i.unit,
           aisle: i.aisle,
         })) ?? [emptyRow()]
@@ -137,7 +150,8 @@ export default function CustomRecipeSheet({
         name: r.name.trim(),
         nameClean: r.name.trim().toLowerCase(),
         original: `${r.amount} ${r.unit} ${r.name}`.trim(),
-        amount: parseFloat(r.amount) || 0,
+        amount: parseAmount(r.amount),
+        amountDisplay: r.amount.trim() || undefined,
         unit: r.unit.trim(),
         aisle: r.aisle,
       }));
@@ -197,6 +211,13 @@ export default function CustomRecipeSheet({
               View full recipe
             </a>
           )}
+          <button
+            onClick={() => handleShare(existing)}
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+          >
+            <Share2 size={15} />
+            {shareCopied ? "Copied!" : "Share Recipe"}
+          </button>
         </div>
       </BottomSheet>
     );
@@ -397,14 +418,25 @@ export default function CustomRecipeSheet({
           )}
         </div>
 
-        {/* Save */}
-        <button
-          onClick={handleSave}
-          disabled={!title.trim()}
-          className="w-full py-3.5 bg-brand-500 text-white rounded-xl font-semibold text-sm disabled:opacity-40 active:bg-brand-600"
-        >
-          {existing ? "Save Changes" : "Create Recipe"}
-        </button>
+        {/* Save + Share */}
+        <div className="flex gap-3">
+          {existing && (
+            <button
+              onClick={() => handleShare({ ...existing, title, category, emoji: emoji || undefined })}
+              className="flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100"
+            >
+              <Share2 size={16} />
+              {shareCopied ? "Copied!" : "Share"}
+            </button>
+          )}
+          <button
+            onClick={handleSave}
+            disabled={!title.trim()}
+            className="flex-1 py-3.5 bg-brand-500 text-white rounded-xl font-semibold text-sm disabled:opacity-40 active:bg-brand-600"
+          >
+            {existing ? "Save Changes" : "Create Recipe"}
+          </button>
+        </div>
       </div>
     </BottomSheet>
   );

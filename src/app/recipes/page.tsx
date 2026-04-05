@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Sparkles, Plus, Heart, BookOpen, Trash2, Loader2, Bookmark, ChevronRight, Pencil, Check, ChevronsDown, ScrollText, Lightbulb } from "lucide-react";
+import { Sparkles, Plus, Heart, BookOpen, Trash2, Loader2, Bookmark, ChevronRight, Pencil, Check, ChevronsDown, ScrollText, Lightbulb, Share2 } from "lucide-react";
 import clsx from "clsx";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import SearchBar from "@/components/recipes/SearchBar";
@@ -9,6 +9,7 @@ import CustomRecipeSheet from "@/components/recipes/CustomRecipeSheet";
 import RecipeDetailSheet from "@/components/recipes/RecipeDetailSheet";
 import DayPickerSheet from "@/components/recipes/DayPickerSheet";
 import TipSheet from "@/components/recipes/TipSheet";
+import { shareRecipe } from "@/lib/share-recipe";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import EmptyState from "@/components/shared/EmptyState";
 import AddEntrySheet from "@/components/menu/AddEntrySheet";
@@ -64,6 +65,9 @@ export default function RecipesPage() {
   const [viewingMenuRecipe, setViewingMenuRecipe] = useState<RecipeSummary | null>(null);
   const [viewingMenuCustom, setViewingMenuCustom] = useState<CustomRecipe | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: "recipe" | "menu"; name: string } | null>(null);
+
+  // Share state for list view
+  const [sharedRecipeId, setSharedRecipeId] = useState<string | null>(null);
 
   // Tips state
   const [tipSheetOpen, setTipSheetOpen] = useState(false);
@@ -408,6 +412,19 @@ export default function RecipesPage() {
                               title="Add to menu"
                             >
                               <Plus size={18} />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const copied = await shareRecipe(cr);
+                                if (copied) {
+                                  setSharedRecipeId(cr.id);
+                                  setTimeout(() => setSharedRecipeId(null), 2000);
+                                }
+                              }}
+                              className="p-2 text-gray-500 hover:text-brand-500 hover:bg-brand-50 rounded-xl"
+                              title={sharedRecipeId === cr.id ? "Copied!" : "Share"}
+                            >
+                              <Share2 size={16} />
                             </button>
                             <button
                               onClick={() => setConfirmDelete({ id: cr.id, type: "recipe", name: cr.title })}

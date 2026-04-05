@@ -21,13 +21,14 @@ const SECTIONS = [
     ],
   },
   {
-    title: "📖 Your Digital Cookbook - Recipes",
+    title: "📖 Your Digital Cookbook - My Kitchen",
     tips: [
       { label: "Smart Discovery", body: "Find exactly what you’re craving in the Discover tab by filtering for specific diets, cuisines, or the ingredients already in your pantry." },
       { label: "The ✨ Sparkle Effect", body: "Feeling uninspired? Tap the Sparkle to let our AI generate a fresh group of surprise recipes that are sperfect for shaking up your entire 10-day plan." },
       { label: "The \"Heart\" Factor", body: "Spot something delicious in the Discover tab? Hit the heart to save it to your Favorites for instant access later." },
       { label: "Smart Ingredients", body: "Want to eat your famous meatballs? When you add a custom recipe, the app does the heavy lifting. Ingredients are automatically parsed and synced directly to your shopping list." },
-      { label: "Category Control", body: "Our AI usually nails the category from your title, but you're still the boss...tap to manually override and keep things organized." },
+      { label: "Share Your Recipes", body: "Did everyone love your lasagna? Share it with your friends and family with one click." },
+      { label: "Save Your Tips", body: "Use tips to save how long it took to poach your chicken or soft boil your eggs." },
     ],
   },
   {

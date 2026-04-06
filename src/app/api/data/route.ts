@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { storeInviteToken } from "@/lib/invite-tokens";
+import type { FamilyMember } from "@/types";
 
 const EMPTY = {
   menu: {},
@@ -58,13 +60,38 @@ async function writeData(userId: string, body: unknown) {
   );
 }
 
+/** Migrate string[] familyMembers to FamilyMember[] in-place. Returns true if migration happened. */
+async function migrateFamilyMembers(
+  userId: string,
+  data: Record<string, unknown>
+): Promise<{ migrated: boolean; data: Record<string, unknown> }> {
+  const raw = data.familyMembers;
+  if (!Array.isArray(raw) || raw.length === 0 || typeof raw[0] !== "string") {
+    return { migrated: false, data };
+  }
+  const upgraded: FamilyMember[] = await Promise.all(
+    (raw as string[]).map(async (name) => {
+      const inviteToken = crypto.randomUUID();
+      await storeInviteToken(inviteToken, { userId, memberName: name });
+      return { id: crypto.randomUUID(), name, inviteToken };
+    })
+  );
+  return { migrated: true, data: { ...data, familyMembers: upgraded } };
+}
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    return NextResponse.json(await readData(session.user.id));
+    let data = await readData(session.user.id) as Record<string, unknown>;
+    const { migrated, data: migratedData } = await migrateFamilyMembers(session.user.id, data);
+    if (migrated) {
+      data = migratedData;
+      await writeData(session.user.id, data);
+    }
+    return NextResponse.json(data);
   } catch {
     return NextResponse.json(EMPTY);
   }

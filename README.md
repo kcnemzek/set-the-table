@@ -9,8 +9,8 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 - **Favorites** — save recipes you love for quick access
 - **My Recipes** — add your own custom recipes with ingredients
 - **Tips** — save cooking tips you look up often (techniques, timing, substitutions)
-- **Grocery list** — auto-generated from the week's planned meals
-- **Family sharing** — share a read-only link with family members
+- **Grocery list** — auto-generated from the week's planned meals, with tabbed views for Recipes, Family requests, and All
+- **Family sharing** — each family member gets their own invite link; they can view the menu and add grocery requests attributed to them
 - **PWA** — installable on iPhone/Android home screen
 
 ## Tech Stack
@@ -42,7 +42,7 @@ src/
 │   ├── recipes/          # Recipe cards, search
 │   ├── groceries/        # Grocery sections
 │   └── shared/           # Reusable components
-├── lib/                  # Utilities (dates, emoji mapping)
+├── lib/                  # Utilities (dates, emoji mapping, invite token helpers)
 ├── store/                # React context + state management
 ├── types/                # TypeScript types
 ├── auth.ts               # NextAuth configuration

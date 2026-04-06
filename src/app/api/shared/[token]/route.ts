@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolveInviteToken } from "@/lib/invite-tokens";
 
 const hasKV = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 
@@ -6,7 +7,7 @@ function safeFilename(userId: string) {
   return userId.replace(/[^a-z0-9]/gi, "-");
 }
 
-async function resolveToken(token: string): Promise<string | null> {
+async function resolveShareToken(token: string): Promise<string | null> {
   if (hasKV) {
     const { kv } = await import("@vercel/kv");
     return kv.get<string>(`share-token:${token}`);
@@ -45,7 +46,24 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  const userId = await resolveToken(token);
+
+  // Try invite token first (per-member link)
+  const inviteRecord = await resolveInviteToken(token);
+  if (inviteRecord) {
+    const data = await readUserData(inviteRecord.userId);
+    if (!data) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    return NextResponse.json({
+      type: "invite",
+      memberName: inviteRecord.memberName,
+      menu: data.menu ?? {},
+      customRecipes: data.customRecipes ?? [],
+    });
+  }
+
+  // Fall back to shared read-only link
+  const userId = await resolveShareToken(token);
   if (!userId) {
     return NextResponse.json({ error: "Invalid link" }, { status: 404 });
   }
@@ -53,10 +71,12 @@ export async function GET(
   if (!data) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  // Only expose what the family view needs
   return NextResponse.json({
+    type: "shared",
     menu: data.menu ?? {},
     customRecipes: data.customRecipes ?? [],
-    familyMembers: data.familyMembers ?? [],
+    familyMembers: (data.familyMembers ?? []).map((m: unknown) =>
+      typeof m === "string" ? m : (m as { name: string }).name
+    ),
   });
 }

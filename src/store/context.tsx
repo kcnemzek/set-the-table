@@ -16,6 +16,7 @@ import type {
   RecipeDetail,
   SavedMenu,
   Tip,
+  FamilyMember,
 } from "@/types";
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -28,7 +29,7 @@ interface AppState {
   manualGroceryItems: ManualGroceryItem[];
   /** key: aisle|name|unit → checked for auto-generated grocery items */
   groceryChecked: Record<string, boolean>;
-  familyMembers: string[];
+  familyMembers: FamilyMember[];
   savedMenus: SavedMenu[];
   tips: Tip[];
   /** cache of full recipe details fetched for grocery aggregation */
@@ -71,8 +72,8 @@ type Action =
   | { type: "TOGGLE_MANUAL_GROCERY_CHECKED"; id: string }
   | { type: "TOGGLE_GROCERY_CHECKED"; key: string }
   | { type: "CACHE_RECIPE"; recipe: RecipeDetail }
-  | { type: "ADD_FAMILY_MEMBER"; name: string }
-  | { type: "REMOVE_FAMILY_MEMBER"; name: string }
+  | { type: "ADD_FAMILY_MEMBER"; member: FamilyMember }
+  | { type: "REMOVE_FAMILY_MEMBER"; id: string }
   | { type: "SAVE_DAY_AS_MENU"; savedMenu: SavedMenu }
   | { type: "DELETE_SAVED_MENU"; id: string }
   | { type: "RENAME_SAVED_MENU"; id: string; name: string }
@@ -204,13 +205,13 @@ function reducer(state: AppState, action: Action): AppState {
       };
 
     case "ADD_FAMILY_MEMBER":
-      if (state.familyMembers.includes(action.name)) return state;
-      return { ...state, familyMembers: [...state.familyMembers, action.name] };
+      if (state.familyMembers.some((m) => m.id === action.member.id)) return state;
+      return { ...state, familyMembers: [...state.familyMembers, action.member] };
 
     case "REMOVE_FAMILY_MEMBER":
       return {
         ...state,
-        familyMembers: state.familyMembers.filter((n) => n !== action.name),
+        familyMembers: state.familyMembers.filter((m) => m.id !== action.id),
       };
 
     case "SAVE_DAY_AS_MENU":
@@ -260,8 +261,8 @@ interface AppContextValue {
   isFavorite: (id: string) => boolean;
   toggleDisliked: (id: string) => void;
   isDisliked: (id: string) => boolean;
-  addFamilyMember: (name: string) => void;
-  removeFamilyMember: (name: string) => void;
+  addFamilyMember: (member: FamilyMember) => void;
+  removeFamilyMember: (id: string) => void;
   forceSave: () => Promise<void>;
 }
 
@@ -367,12 +368,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const addFamilyMember = useCallback(
-    (name: string) => dispatch({ type: "ADD_FAMILY_MEMBER", name }),
+    (member: FamilyMember) => dispatch({ type: "ADD_FAMILY_MEMBER", member }),
     []
   );
 
   const removeFamilyMember = useCallback(
-    (name: string) => dispatch({ type: "REMOVE_FAMILY_MEMBER", name }),
+    (id: string) => dispatch({ type: "REMOVE_FAMILY_MEMBER", id }),
     []
   );
 

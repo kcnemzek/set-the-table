@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { DayEntry, CustomRecipe, Tip } from "@/types";
+import type { DayEntry, CustomRecipe, Tip, FamilyMember } from "@/types";
 
 // ─── Inline the reducer so we don't need to mock next-auth ───────────────────
 
@@ -10,7 +10,7 @@ interface AppState {
   customRecipes: CustomRecipe[];
   manualGroceryItems: never[];
   groceryChecked: Record<string, boolean>;
-  familyMembers: string[];
+  familyMembers: FamilyMember[];
   tips: Tip[];
   recipeCache: Record<string, unknown>;
   hydrated: boolean;
@@ -28,8 +28,8 @@ type Action =
   | { type: "UPDATE_CUSTOM_RECIPE"; recipe: CustomRecipe }
   | { type: "REMOVE_CUSTOM_RECIPE"; id: string }
   | { type: "TOGGLE_GROCERY_CHECKED"; key: string }
-  | { type: "ADD_FAMILY_MEMBER"; name: string }
-  | { type: "REMOVE_FAMILY_MEMBER"; name: string }
+  | { type: "ADD_FAMILY_MEMBER"; member: FamilyMember }
+  | { type: "REMOVE_FAMILY_MEMBER"; id: string }
   | { type: "ADD_TIP"; tip: Tip }
   | { type: "UPDATE_TIP"; tip: Tip }
   | { type: "DELETE_TIP"; id: string };
@@ -121,11 +121,11 @@ function reducer(state: AppState, action: Action): AppState {
       };
 
     case "ADD_FAMILY_MEMBER":
-      if (state.familyMembers.includes(action.name)) return state;
-      return { ...state, familyMembers: [...state.familyMembers, action.name] };
+      if (state.familyMembers.some((m) => m.id === action.member.id)) return state;
+      return { ...state, familyMembers: [...state.familyMembers, action.member] };
 
     case "REMOVE_FAMILY_MEMBER":
-      return { ...state, familyMembers: state.familyMembers.filter((n) => n !== action.name) };
+      return { ...state, familyMembers: state.familyMembers.filter((m) => m.id !== action.id) };
 
     case "ADD_TIP":
       return { ...state, tips: [...state.tips, action.tip] };
@@ -299,22 +299,45 @@ describe("reducer — custom recipes", () => {
   });
 });
 
+function makeMember(overrides: Partial<FamilyMember> = {}): FamilyMember {
+  return {
+    id: crypto.randomUUID(),
+    name: "Elizabeth",
+    inviteToken: crypto.randomUUID(),
+    ...overrides,
+  };
+}
+
 describe("reducer — family members", () => {
   it("adds a family member", () => {
-    const state = reducer(initialState, { type: "ADD_FAMILY_MEMBER", name: "Elizabeth" });
-    expect(state.familyMembers).toContain("Elizabeth");
+    const member = makeMember();
+    const state = reducer(initialState, { type: "ADD_FAMILY_MEMBER", member });
+    expect(state.familyMembers).toHaveLength(1);
+    expect(state.familyMembers[0].name).toBe("Elizabeth");
   });
 
-  it("does not add duplicate family members", () => {
-    let state = reducer(initialState, { type: "ADD_FAMILY_MEMBER", name: "Elizabeth" });
-    state = reducer(state, { type: "ADD_FAMILY_MEMBER", name: "Elizabeth" });
-    expect(state.familyMembers.filter((n) => n === "Elizabeth")).toHaveLength(1);
+  it("does not add duplicate family members (same id)", () => {
+    const member = makeMember({ id: "fixed-id" });
+    let state = reducer(initialState, { type: "ADD_FAMILY_MEMBER", member });
+    state = reducer(state, { type: "ADD_FAMILY_MEMBER", member });
+    expect(state.familyMembers.filter((m) => m.id === "fixed-id")).toHaveLength(1);
   });
 
-  it("removes a family member", () => {
-    let state = reducer(initialState, { type: "ADD_FAMILY_MEMBER", name: "Elizabeth" });
-    state = reducer(state, { type: "REMOVE_FAMILY_MEMBER", name: "Elizabeth" });
-    expect(state.familyMembers).not.toContain("Elizabeth");
+  it("removes a family member by id", () => {
+    const member = makeMember();
+    let state = reducer(initialState, { type: "ADD_FAMILY_MEMBER", member });
+    state = reducer(state, { type: "REMOVE_FAMILY_MEMBER", id: member.id });
+    expect(state.familyMembers).toHaveLength(0);
+  });
+
+  it("does not remove other family members", () => {
+    const a = makeMember({ id: "id-a", name: "Alice" });
+    const b = makeMember({ id: "id-b", name: "Bob" });
+    let state = reducer(initialState, { type: "ADD_FAMILY_MEMBER", member: a });
+    state = reducer(state, { type: "ADD_FAMILY_MEMBER", member: b });
+    state = reducer(state, { type: "REMOVE_FAMILY_MEMBER", id: "id-a" });
+    expect(state.familyMembers).toHaveLength(1);
+    expect(state.familyMembers[0].name).toBe("Bob");
   });
 });
 
@@ -385,13 +408,13 @@ describe("reducer — hydrate", () => {
         customRecipes: [],
         manualGroceryItems: [],
         groceryChecked: {},
-        familyMembers: ["Karen"],
+        familyMembers: [{ id: "m1", name: "Karen", inviteToken: "tok-1" }],
         tips: [],
       },
     });
     expect(state.hydrated).toBe(true);
     expect(state.favorites).toContain("recipe_1");
-    expect(state.familyMembers).toContain("Karen");
+    expect(state.familyMembers[0].name).toBe("Karen");
     expect(state.recipeCache).toEqual({});
   });
 });

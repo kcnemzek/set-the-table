@@ -102,6 +102,23 @@ SavedMenu {
 }
 ```
 
+### Family Types
+
+```typescript
+FamilyMember {
+  id: string              // uuid
+  name: string
+  inviteToken: string     // uuid — used as the token in /view/[token]
+}
+
+FamilyGroceryItem {
+  id: string
+  name: string
+  addedBy: string         // member name
+  addedAt: string         // ISO timestamp
+}
+```
+
 ### Tip Types
 
 ```typescript
@@ -149,9 +166,17 @@ GroceryListByAisle = Record<string, AggregatedIngredient[]>
   customRecipes: CustomRecipe[]
   manualGroceryItems: ManualGroceryItem[]
   groceryChecked: Record<string, boolean>
-  familyMembers: string[]
+  familyMembers: FamilyMember[]
   savedMenus: SavedMenu[]
   tips: Tip[]
+}
+```
+
+Family grocery items are stored separately, keyed by owner userId (not inside the main user data blob):
+
+```typescript
+// KV key: "family-groceries:{userId}" → FamilyGroceryItem[]
+// Local fallback: ./data/family-groceries-{userId}.json
 }
 ```
 
@@ -169,7 +194,7 @@ AppState
 ├── customRecipes         CustomRecipe[]
 ├── manualGroceryItems    ManualGroceryItem[]
 ├── groceryChecked        Record<string, boolean>
-├── familyMembers         string[]
+├── familyMembers         FamilyMember[]
 ├── savedMenus            SavedMenu[]
 ├── tips                  Tip[]
 ├── recipeCache           Record<string, RecipeDetail>   ← in-memory only, not persisted
@@ -184,7 +209,7 @@ AppState
 | Favorites | `TOGGLE_FAVORITE`, `TOGGLE_DISLIKED` |
 | Custom Recipes | `ADD_CUSTOM_RECIPE`, `UPDATE_CUSTOM_RECIPE`, `REMOVE_CUSTOM_RECIPE`, `CACHE_RECIPE` |
 | Groceries | `ADD_MANUAL_GROCERY`, `REMOVE_MANUAL_GROCERY`, `TOGGLE_MANUAL_GROCERY_CHECKED`, `TOGGLE_GROCERY_CHECKED` |
-| Family | `ADD_FAMILY_MEMBER`, `REMOVE_FAMILY_MEMBER` |
+| Family | `ADD_FAMILY_MEMBER` (takes `member: FamilyMember`), `REMOVE_FAMILY_MEMBER` (takes `id: string`) |
 | Saved Menus | `SAVE_DAY_AS_MENU`, `DELETE_SAVED_MENU`, `RENAME_SAVED_MENU`, `ADD_ENTRY_TO_SAVED_MENU` |
 | Tips | `ADD_TIP`, `UPDATE_TIP`, `DELETE_TIP` |
 | Lifecycle | `HYDRATE` |
@@ -254,16 +279,26 @@ User visits protected route
 | `/api/recipes/generate` | GET | No | 10 random recipes (excludes disliked) |
 | `/api/recipes/[id]` | GET | No | Full recipe detail (1h ISR cache) |
 | `/api/recipes/[id]/image` | GET | No | Proxied recipe image (24h cache) |
-| `/api/share-token` | GET | Yes | Get or create user's share token |
-| `/api/share-token` | DELETE | Yes | Regenerate share token |
-| `/api/shared/[token]` | GET | No | Public menu data for family view |
+| `/api/share-token` | GET | Yes | Get or create user's read-only share token |
+| `/api/share-token` | DELETE | Yes | Regenerate read-only share token |
+| `/api/family-members` | POST | Yes | Create a family member + generate invite token |
+| `/api/family-members/[id]` | DELETE | Yes | Remove a family member + revoke invite token |
+| `/api/shared/[token]` | GET | No | Public menu data — resolves invite tokens (per-member) or share tokens (read-only) |
+| `/api/shared/[token]/grocery` | GET | No | Family member fetches current grocery request list |
+| `/api/shared/[token]/grocery` | POST | No | Family member adds a grocery request (token = identity) |
+| `/api/shared/[token]/grocery/[id]` | DELETE | No | Family member removes their own grocery request |
+| `/api/groceries/family` | GET | Yes | Owner fetches all family grocery requests |
+| `/api/groceries/family` | DELETE | Yes | Owner clears all family grocery requests |
+| `/api/groceries/family/[id]` | DELETE | Yes | Owner removes a single family grocery request |
 | `/api/feedback` | POST | No | Create GitHub issue from in-app feedback |
 
 ### Notable Behaviors
 
 - **`/api/recipes/[id]/image`** — proxies Edamam S3 images to work around CORS and signed URL expiry. Used as `onError` fallback in `DayEntryItem` and as primary source in `MenuShareCard`.
 - **`/api/recipes/generate`** — fetches 20 internally, filters disliked recipes, returns 10.
-- **`/api/shared/[token]`** — public, no auth. Returns `{ menu, customRecipes, familyMembers }`.
+- **`/api/shared/[token]`** — public, no auth. Tries invite-token lookup first (`type: "invite"`, returns `memberName`); falls back to share-token lookup (`type: "shared"`, returns `familyMembers` name list).
+- **`/api/shared/[token]/grocery`** — the invite token acts as the family member's credential. Server resolves `invite-token:{token}` → `{ userId, memberName }` before accepting writes.
+- **`/api/data` GET** — auto-migrates `familyMembers: string[]` to `FamilyMember[]` on first load, generating invite tokens for any legacy string members.
 
 ---
 
@@ -301,6 +336,32 @@ Fallback:
   ./data/share-tokens.json
 ```
 
+### Invite Token Storage (per-member)
+
+```
+KV keys:
+  "invite-token:{token}"  → { userId, memberName }
+
+Fallback:
+  ./data/invite-tokens.json
+
+Helpers: src/lib/invite-tokens.ts
+  storeInviteToken(), deleteInviteToken(), resolveInviteToken()
+```
+
+### Family Grocery Storage
+
+```
+KV keys:
+  "family-groceries:{userId}"  → FamilyGroceryItem[]
+
+Fallback:
+  ./data/family-groceries-{userId}.json
+
+Helpers: src/lib/invite-tokens.ts
+  readFamilyGroceries(), writeFamilyGroceries()
+```
+
 ### Storage Decision
 
 ```
@@ -311,7 +372,7 @@ KV_REST_API_URL set?
 
 ### Local Storage
 
-- `/view/[token]` — stores selected family member name (`localStorage.setItem("family-name")`)
+- `/view/[token]` (shared/legacy links only) — stores selected family member name (`localStorage.setItem("family-name")`). Not used for invite-token links (identity comes from the token itself).
 
 ### Recipe Cache
 
@@ -331,7 +392,7 @@ KV_REST_API_URL set?
 
 ### Vercel KV (Redis)
 
-- **Keys**: `app-data:{userId}`, `share-token:{token}`, `share-user:{userId}`
+- **Keys**: `app-data:{userId}`, `share-token:{token}`, `share-user:{userId}`, `invite-token:{token}`, `family-groceries:{userId}`
 - **Env**: `KV_REST_API_URL`, `KV_REST_API_TOKEN`
 - **Fallback**: Local JSON files in `./data/`
 
@@ -384,11 +445,14 @@ layout.tsx
 │       │       └── TipSheet + tip list (sorted by title)
 │       │
 │       ├── /groceries → GroceriesPage
-│       │   ├── GrocerySection × n    (grouped by store aisle)
+│       │   ├── Tab: All / Recipes / Family
+│       │   ├── GrocerySection × n    (recipe ingredients, grouped by aisle)
+│       │   ├── Family requests section (grouped by member name, owner can remove)
 │       │   └── ManualAddSheet        (add custom grocery item)
 │       │
-│       ├── /view/[token] → FamilyViewPage (no auth, read-only)
-│       │   └── ReadOnlyDayCard × n
+│       ├── /view/[token] → FamilyViewPage (no auth)
+│       │   ├── Invite-token path: shows member name, ReadOnlyDayCard × n, grocery request input
+│       │   └── Shared-token path: name picker → ReadOnlyDayCard × n (read-only)
 │       │
 │       └── BottomNav (mobile)
 │           └── Menu / My Kitchen / Groceries tabs

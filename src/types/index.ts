@@ -98,6 +98,22 @@ export interface ManualGroceryItem {
 
 export type GroceryListByAisle = Record<string, AggregatedIngredient[]>;
 
+// ─── Family ───────────────────────────────────────────────────────────────────
+
+export interface FamilyMember {
+  id: string;          // uuid
+  name: string;
+  inviteToken: string; // uuid — used as the token in /view/[token]
+}
+
+export interface FamilyGroceryItem {
+  id: string;
+  name: string;
+  addedBy: string;  // member name
+  addedAt: string;  // ISO date string
+  checked: boolean;
+}
+
 // ─── Tips ─────────────────────────────────────────────────────────────────────
 
 export interface Tip {

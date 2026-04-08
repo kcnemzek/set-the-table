@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Plus, ShoppingCart, Trash2, EyeOff, Eye, Users } from "lucide-react";
 import GrocerySection from "@/components/groceries/GrocerySection";
 import ManualAddSheet from "@/components/groceries/ManualAddSheet";
@@ -22,6 +22,21 @@ export default function GroceriesPage() {
   const [familyLoading, setFamilyLoading] = useState(true);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [hideChecked, setHideChecked] = useState(false);
+  const [selectedStore, setSelectedStore] = useState<string | null>(null);
+
+  // All unique store names from manual items
+  const stores = useMemo(() =>
+    Array.from(new Set(
+      state.manualGroceryItems.map((i) => i.store).filter(Boolean) as string[]
+    )).sort(),
+    [state.manualGroceryItems]
+  );
+
+  // Manual items visible under the current store filter
+  const filteredManualItems = useMemo(() => {
+    if (!selectedStore) return state.manualGroceryItems;
+    return state.manualGroceryItems.filter((i) => !i.store || i.store === selectedStore);
+  }, [state.manualGroceryItems, selectedStore]);
 
   const buildRecipeList = useCallback(async () => {
     if (!state.hydrated) return;
@@ -72,9 +87,9 @@ export default function GroceriesPage() {
       }
     }
 
-    setGroceryList(aggregateIngredients(recipes, state.manualGroceryItems));
+    setGroceryList(aggregateIngredients(recipes, filteredManualItems));
     setRecipeLoading(false);
-  }, [state.hydrated, state.menu, state.customRecipes, state.manualGroceryItems, state.recipeCache, dispatch]);
+  }, [state.hydrated, state.menu, state.customRecipes, filteredManualItems, state.recipeCache, dispatch]);
 
   useEffect(() => { buildRecipeList(); }, [buildRecipeList]);
 
@@ -193,6 +208,35 @@ export default function GroceriesPage() {
             </button>
           ))}
         </div>
+
+        {/* Store filter chips */}
+        {stores.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pt-2 pb-0.5 -mx-1 px-1 no-scrollbar">
+            <button
+              onClick={() => setSelectedStore(null)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                selectedStore === null
+                  ? "bg-brand-500 text-white"
+                  : "bg-gray-100 text-gray-600"
+              }`}
+            >
+              All stores
+            </button>
+            {stores.map((s) => (
+              <button
+                key={s}
+                onClick={() => setSelectedStore(selectedStore === s ? null : s)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  selectedStore === s
+                    ? "bg-brand-500 text-white"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -218,19 +262,35 @@ export default function GroceriesPage() {
                       hideChecked={hideChecked}
                     />
                   ))}
-                  {state.manualGroceryItems.length > 0 && (
-                    <div className="px-4 mt-4">
-                      <button
-                        onClick={() =>
-                          state.manualGroceryItems.forEach((item) =>
-                            dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.id })
-                          )
-                        }
-                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-400 py-2"
-                      >
-                        <Trash2 size={14} />
-                        Clear manually added items
-                      </button>
+                  {(state.manualGroceryItems.some((i) => !i.store) || selectedStore) && (
+                    <div className="px-4 mt-4 flex flex-col gap-1">
+                      {state.manualGroceryItems.some((i) => !i.store) && (
+                        <button
+                          onClick={() =>
+                            state.manualGroceryItems
+                              .filter((i) => !i.store)
+                              .forEach((item) =>
+                                dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.id })
+                              )
+                          }
+                          className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-400 py-2"
+                        >
+                          <Trash2 size={14} />
+                          Clear one-time items
+                        </button>
+                      )}
+                      {selectedStore && (
+                        <button
+                          onClick={() => dispatch({ type: "RESET_STORE_ITEMS", store: selectedStore })}
+                          className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-500 py-2"
+                        >
+                          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1.5 8A6.5 6.5 0 1 0 3 3.5" />
+                            <path d="M1.5 3.5v4h4" />
+                          </svg>
+                          Reset {selectedStore} list
+                        </button>
+                      )}
                     </div>
                   )}
                 </>
@@ -267,10 +327,10 @@ export default function GroceriesPage() {
                       </h3>
                       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mx-4">
                         {items.map((item, i) => (
-                          <button
+                          <div
                             key={item.id}
                             onClick={() => handleToggleFamilyItem(item.id, !item.checked)}
-                            className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${i > 0 ? "border-t border-gray-50" : ""} ${item.checked ? "bg-gray-100" : "hover:bg-gray-50 active:bg-gray-100"}`}
+                            className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors cursor-pointer ${i > 0 ? "border-t border-gray-50" : ""} ${item.checked ? "bg-gray-100" : "hover:bg-gray-50 active:bg-gray-100"}`}
                           >
                             <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${item.checked ? "bg-brand-500 border-brand-500" : "border-gray-300"}`}>
                               {item.checked && (
@@ -288,7 +348,7 @@ export default function GroceriesPage() {
                             >
                               <Trash2 size={14} />
                             </button>
-                          </button>
+                          </div>
                         ))}
                       </div>
                     </div>

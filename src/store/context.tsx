@@ -80,7 +80,8 @@ type Action =
   | { type: "ADD_ENTRY_TO_SAVED_MENU"; savedMenuId: string; entry: DayEntry }
   | { type: "ADD_TIP"; tip: Tip }
   | { type: "UPDATE_TIP"; tip: Tip }
-  | { type: "DELETE_TIP"; id: string };
+  | { type: "DELETE_TIP"; id: string }
+  | { type: "RESET_STORE_ITEMS"; store: string };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -244,6 +245,14 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "DELETE_TIP":
       return { ...state, tips: state.tips.filter((t) => t.id !== action.id) };
+
+    case "RESET_STORE_ITEMS":
+      return {
+        ...state,
+        manualGroceryItems: state.manualGroceryItems.map((i) =>
+          i.store === action.store ? { ...i, checked: false } : i
+        ),
+      };
 
     default:
       return state;

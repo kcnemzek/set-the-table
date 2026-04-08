@@ -26,11 +26,16 @@ interface ManualAddSheetProps {
 }
 
 export default function ManualAddSheet({ open, onClose }: ManualAddSheetProps) {
-  const { dispatch } = useAppContext();
+  const { dispatch, state } = useAppContext();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [unit, setUnit] = useState("");
   const [aisle, setAisle] = useState("Miscellaneous");
+  const [store, setStore] = useState("");
+
+  const existingStores = Array.from(
+    new Set(state.manualGroceryItems.map((i) => i.store).filter(Boolean) as string[])
+  ).sort();
 
   const handleAdd = () => {
     if (!name.trim()) return;
@@ -41,12 +46,14 @@ export default function ManualAddSheet({ open, onClose }: ManualAddSheetProps) {
       unit: unit.trim(),
       aisle,
       checked: false,
+      store: store.trim() || undefined,
     };
     dispatch({ type: "ADD_MANUAL_GROCERY", item });
     setName("");
     setAmount("");
     setUnit("");
     setAisle("Miscellaneous");
+    setStore("");
     onClose();
   };
 
@@ -110,6 +117,27 @@ export default function ManualAddSheet({ open, onClose }: ManualAddSheetProps) {
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Store <span className="font-normal normal-case text-gray-400">(optional — makes it a staple)</span>
+          </label>
+          <input
+            type="text"
+            list="store-suggestions"
+            value={store}
+            onChange={(e) => setStore(e.target.value)}
+            placeholder="e.g. Aldi"
+            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          />
+          {existingStores.length > 0 && (
+            <datalist id="store-suggestions">
+              {existingStores.map((s) => (
+                <option key={s} value={s} />
+              ))}
+            </datalist>
+          )}
         </div>
 
         <button

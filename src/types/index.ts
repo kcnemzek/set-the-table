@@ -94,6 +94,7 @@ export interface ManualGroceryItem {
   unit: string;
   aisle: string;
   checked: boolean;
+  store?: string;
 }
 
 export type GroceryListByAisle = Record<string, AggregatedIngredient[]>;

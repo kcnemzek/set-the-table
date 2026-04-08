@@ -3,6 +3,7 @@
 import { useState } from "react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
+import { STORES } from "@/lib/stores";
 import type { ManualGroceryItem } from "@/types";
 
 const AISLES = [
@@ -26,16 +27,12 @@ interface ManualAddSheetProps {
 }
 
 export default function ManualAddSheet({ open, onClose }: ManualAddSheetProps) {
-  const { dispatch, state } = useAppContext();
+  const { dispatch } = useAppContext();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [unit, setUnit] = useState("");
   const [aisle, setAisle] = useState("Miscellaneous");
   const [store, setStore] = useState("");
-
-  const existingStores = Array.from(
-    new Set(state.manualGroceryItems.map((i) => i.store).filter(Boolean) as string[])
-  ).sort();
 
   const handleAdd = () => {
     if (!name.trim()) return;
@@ -123,21 +120,16 @@ export default function ManualAddSheet({ open, onClose }: ManualAddSheetProps) {
           <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Store <span className="font-normal normal-case text-gray-400">(optional — makes it a staple)</span>
           </label>
-          <input
-            type="text"
-            list="store-suggestions"
+          <select
             value={store}
             onChange={(e) => setStore(e.target.value)}
-            placeholder="e.g. Aldi"
-            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-          />
-          {existingStores.length > 0 && (
-            <datalist id="store-suggestions">
-              {existingStores.map((s) => (
-                <option key={s} value={s} />
-              ))}
-            </datalist>
-          )}
+            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+          >
+            <option value="">No store (one-time item)</option>
+            {STORES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
         </div>
 
         <button

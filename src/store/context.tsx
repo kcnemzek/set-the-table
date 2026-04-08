@@ -81,7 +81,8 @@ type Action =
   | { type: "ADD_TIP"; tip: Tip }
   | { type: "UPDATE_TIP"; tip: Tip }
   | { type: "DELETE_TIP"; id: string }
-  | { type: "RESET_STORE_ITEMS"; store: string };
+  | { type: "RESET_STORE_ITEMS"; store: string }
+  | { type: "SET_STORE_FOR_ALL_UNASSIGNED"; store: string };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -251,6 +252,14 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         manualGroceryItems: state.manualGroceryItems.map((i) =>
           i.store === action.store ? { ...i, checked: false } : i
+        ),
+      };
+
+    case "SET_STORE_FOR_ALL_UNASSIGNED":
+      return {
+        ...state,
+        manualGroceryItems: state.manualGroceryItems.map((i) =>
+          !i.store ? { ...i, store: action.store } : i
         ),
       };
 

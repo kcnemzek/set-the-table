@@ -9,6 +9,7 @@ import EmptyState from "@/components/shared/EmptyState";
 import { useAppContext } from "@/store/context";
 import { aggregateIngredients, groceryItemKey } from "@/lib/ingredient-utils";
 import { getNext10Days } from "@/lib/dates";
+import { STORES } from "@/lib/stores";
 import type { RecipeDetail, GroceryListByAisle, FamilyGroceryItem } from "@/types";
 
 type Tab = "recipes" | "family" | "all";
@@ -265,19 +266,39 @@ export default function GroceriesPage() {
                   {(state.manualGroceryItems.some((i) => !i.store) || selectedStore) && (
                     <div className="px-4 mt-4 flex flex-col gap-1">
                       {state.manualGroceryItems.some((i) => !i.store) && (
-                        <button
-                          onClick={() =>
-                            state.manualGroceryItems
-                              .filter((i) => !i.store)
-                              .forEach((item) =>
-                                dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.id })
-                              )
-                          }
-                          className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-400 py-2"
-                        >
-                          <Trash2 size={14} />
-                          Clear one-time items
-                        </button>
+                        <>
+                          <div className="flex items-center gap-2 py-1">
+                            <label className="text-sm text-gray-500 flex-shrink-0">Assign all to:</label>
+                            <select
+                              defaultValue=""
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  dispatch({ type: "SET_STORE_FOR_ALL_UNASSIGNED", store: e.target.value });
+                                  e.target.value = "";
+                                }
+                              }}
+                              className="flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
+                            >
+                              <option value="">Pick a store…</option>
+                              {STORES.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <button
+                            onClick={() =>
+                              state.manualGroceryItems
+                                .filter((i) => !i.store)
+                                .forEach((item) =>
+                                  dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.id })
+                                )
+                            }
+                            className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-400 py-2"
+                          >
+                            <Trash2 size={14} />
+                            Clear one-time items
+                          </button>
+                        </>
                       )}
                       {selectedStore && (
                         <button

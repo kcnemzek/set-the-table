@@ -22,8 +22,23 @@ export default function GroceriesPage() {
   const [familyItems, setFamilyItems] = useState<FamilyGroceryItem[]>([]);
   const [familyLoading, setFamilyLoading] = useState(true);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
-  const [hideChecked, setHideChecked] = useState(false);
-  const [selectedStore, setSelectedStore] = useState<string | null>(null);
+  const [hideChecked, setHideChecked] = useState<boolean>(() => {
+    try { return localStorage.getItem("grocery-hide-checked") === "true"; } catch { return false; }
+  });
+  const [selectedStore, setSelectedStore] = useState<string | null>(() => {
+    try { return localStorage.getItem("grocery-selected-store") ?? null; } catch { return null; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem("grocery-hide-checked", String(hideChecked)); } catch { /* ignore */ }
+  }, [hideChecked]);
+
+  useEffect(() => {
+    try {
+      if (selectedStore) localStorage.setItem("grocery-selected-store", selectedStore);
+      else localStorage.removeItem("grocery-selected-store");
+    } catch { /* ignore */ }
+  }, [selectedStore]);
 
   const UNASSIGNED = "__unassigned__";
 

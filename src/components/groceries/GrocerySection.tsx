@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Store, Trash2 } from "lucide-react";
+import { Tag, Trash2 } from "lucide-react";
 import { useAppContext } from "@/store/context";
 import { groceryItemKey } from "@/lib/ingredient-utils";
 import { STORES } from "@/lib/stores";
@@ -106,7 +106,7 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
                     ? "bg-brand-50 text-brand-600 border-brand-200"
                     : "bg-gray-50 text-gray-400 border-gray-200"
                 )}>
-                  <Store size={11} />
+                  <Tag size={11} />
                   {item.store && <span className="max-w-[60px] truncate">{item.store}</span>}
                 </div>
                 <select

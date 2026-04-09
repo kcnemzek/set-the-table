@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Plus, ShoppingCart, Store, Trash2, EyeOff, Eye, Users } from "lucide-react";
+import { Plus, ShoppingCart, Tag, Trash2, EyeOff, Eye, Users } from "lucide-react";
 import GrocerySection from "@/components/groceries/GrocerySection";
 import ManualAddSheet from "@/components/groceries/ManualAddSheet";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
@@ -234,10 +234,10 @@ export default function GroceriesPage() {
 
         {/* Store filter chips */}
         {(stores.length > 0 || hasUnassigned) && (
-          <div className="flex gap-2 overflow-x-auto pt-2 pb-0.5 -mx-1 px-1 no-scrollbar">
+          <div className="flex flex-wrap gap-2 pt-2">
             <button
               onClick={() => setSelectedStore(null)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 selectedStore === null
                   ? "bg-brand-500 text-white"
                   : "bg-gray-100 text-gray-600"
@@ -248,7 +248,7 @@ export default function GroceriesPage() {
             {hasUnassigned && (
               <button
                 onClick={() => setSelectedStore(selectedStore === UNASSIGNED ? null : UNASSIGNED)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   selectedStore === UNASSIGNED
                     ? "bg-gray-600 text-white"
                     : "bg-gray-100 text-gray-600"
@@ -261,7 +261,7 @@ export default function GroceriesPage() {
               <button
                 key={s}
                 onClick={() => setSelectedStore(selectedStore === s ? null : s)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   selectedStore === s
                     ? "bg-brand-500 text-white"
                     : "bg-gray-100 text-gray-600"
@@ -399,7 +399,7 @@ export default function GroceriesPage() {
                             </span>
                             <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 border text-xs pointer-events-none ${item.store ? "bg-brand-50 text-brand-600 border-brand-200" : "bg-gray-50 text-gray-400 border-gray-200"}`}>
-                                <Store size={11} />
+                                <Tag size={11} />
                                 {item.store && <span className="max-w-[60px] truncate">{item.store}</span>}
                               </div>
                               <select

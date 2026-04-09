@@ -68,6 +68,15 @@ export default function GroceriesPage() {
       }
     }
 
+    // Include dishes from event plans that have been added to groceries
+    for (const plan of state.eventPlans) {
+      if (!plan.addedToGroceries) continue;
+      for (const dish of plan.dishes) {
+        if (dish.recipeId) recipeIds.add(dish.recipeId);
+        else if (dish.customRecipeId) customRecipeIds.add(dish.customRecipeId);
+      }
+    }
+
     const recipes: RecipeDetail[] = [];
 
     for (const id of recipeIds) {
@@ -101,7 +110,7 @@ export default function GroceriesPage() {
 
     setGroceryList(aggregateIngredients(recipes, state.manualGroceryItems, state.groceryItemStores));
     setRecipeLoading(false);
-  }, [state.hydrated, state.menu, state.customRecipes, state.manualGroceryItems, state.groceryItemStores, state.recipeCache, dispatch]);
+  }, [state.hydrated, state.menu, state.customRecipes, state.manualGroceryItems, state.groceryItemStores, state.recipeCache, state.eventPlans, dispatch]);
 
   useEffect(() => { buildRecipeList(); }, [buildRecipeList]);
 

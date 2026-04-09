@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ChefHat, ShoppingCart } from "lucide-react";
+import { CalendarDays, CalendarCheck, ChefHat, ShoppingCart } from "lucide-react";
 import clsx from "clsx";
 
 const TABS = [
   { href: "/menu", label: "Menu", Icon: CalendarDays },
   { href: "/recipes", label: "My Kitchen", Icon: ChefHat },
   { href: "/groceries", label: "Groceries", Icon: ShoppingCart },
+  { href: "/event-planning", label: "Events", Icon: CalendarCheck },
 ];
 
 export default function BottomNav() {
@@ -32,10 +33,7 @@ export default function BottomNav() {
                   : "text-gray-500 hover:text-gray-600 active:text-brand-400"
               )}
             >
-              <Icon
-                size={24}
-                strokeWidth={active ? 2.5 : 1.75}
-              />
+              <Icon size={24} strokeWidth={active ? 2.5 : 1.75} />
               {label}
             </Link>
           );

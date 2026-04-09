@@ -16,12 +16,13 @@ import { usePathname } from "next/navigation";
 const mockPathname = vi.mocked(usePathname);
 
 describe("BottomNav", () => {
-  it("renders all three tabs", () => {
+  it("renders all four tabs", () => {
     mockPathname.mockReturnValue("/menu");
     render(<BottomNav />);
     expect(screen.getByText("Menu")).toBeInTheDocument();
     expect(screen.getByText("My Kitchen")).toBeInTheDocument();
     expect(screen.getByText("Groceries")).toBeInTheDocument();
+    expect(screen.getByText("Events")).toBeInTheDocument();
   });
 
   it("returns null on /view routes", () => {
@@ -51,10 +52,17 @@ describe("BottomNav", () => {
     expect(groceriesLink?.className).toContain("text-brand-500");
   });
 
+  it("marks Events tab as active on /event-planning", () => {
+    mockPathname.mockReturnValue("/event-planning");
+    render(<BottomNav />);
+    const eventsLink = screen.getByText("Events").closest("a");
+    expect(eventsLink?.className).toContain("text-brand-500");
+  });
+
   it("marks no tab as active on an unrelated route", () => {
     mockPathname.mockReturnValue("/login");
     render(<BottomNav />);
-    ["Menu", "My Kitchen", "Groceries"].forEach((label) => {
+    ["Menu", "My Kitchen", "Groceries", "Events"].forEach((label) => {
       const link = screen.getByText(label).closest("a");
       expect(link?.className).not.toContain("text-brand-500");
     });
@@ -66,5 +74,6 @@ describe("BottomNav", () => {
     expect(screen.getByText("Menu").closest("a")).toHaveAttribute("href", "/menu");
     expect(screen.getByText("My Kitchen").closest("a")).toHaveAttribute("href", "/recipes");
     expect(screen.getByText("Groceries").closest("a")).toHaveAttribute("href", "/groceries");
+    expect(screen.getByText("Events").closest("a")).toHaveAttribute("href", "/event-planning");
   });
 });

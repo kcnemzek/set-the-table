@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChefHat, CalendarDays, BookOpen, ShoppingCart, LogOut, Menu, HelpCircle } from "lucide-react";
+import { ChefHat, CalendarDays, CalendarCheck, BookOpen, ShoppingCart, LogOut, Menu, HelpCircle } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import clsx from "clsx";
@@ -15,6 +15,7 @@ const TABS = [
   { href: "/menu", label: "Menu", Icon: CalendarDays },
   { href: "/recipes", label: "Recipes", Icon: BookOpen },
   { href: "/groceries", label: "Groceries", Icon: ShoppingCart },
+  { href: "/event-planning", label: "Events", Icon: CalendarCheck },
 ];
 
 export default function TopNav() {

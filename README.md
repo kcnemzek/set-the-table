@@ -9,7 +9,9 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 - **Favorites** — save recipes you love for quick access
 - **My Recipes** — add your own custom recipes with ingredients
 - **Tips** — save cooking tips you look up often (techniques, timing, substitutions)
-- **Grocery list** — auto-generated from the week's planned meals, with tabbed views for Recipes, Family requests, and All
+- **Grocery list** — auto-generated from the week's planned meals, with store assignment, store filter chips, and tabbed views for Recipes, Family requests, and All
+- **Event planning** — plan holiday dinners and special occasions with a dish list, prep timeline, and automatic grocery list integration
+- **Saved Menus** — save and reuse sets of day entries as named menu templates
 - **Family sharing** — each family member gets their own invite link; they can view the menu and add grocery requests attributed to them
 - **PWA** — installable on iPhone/Android home screen
 
@@ -32,6 +34,7 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 src/
 ├── app/                  # Next.js app router pages & API routes
 │   ├── api/              # API routes (recipes, data, share)
+│   ├── event-planning/   # Event planning list page + [id] detail page
 │   ├── groceries/        # Grocery list page
 │   ├── menu/             # Menu planning page
 │   ├── recipes/          # Recipe discovery page

@@ -17,6 +17,9 @@ import type {
   SavedMenu,
   Tip,
   FamilyMember,
+  EventPlan,
+  EventDish,
+  EventTask,
 } from "@/types";
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -34,6 +37,7 @@ interface AppState {
   familyMembers: FamilyMember[];
   savedMenus: SavedMenu[];
   tips: Tip[];
+  eventPlans: EventPlan[];
   /** cache of full recipe details fetched for grocery aggregation */
   recipeCache: Record<string, RecipeDetail>;
   hydrated: boolean;
@@ -50,6 +54,7 @@ const initialState: AppState = {
   familyMembers: [],
   savedMenus: [],
   tips: [],
+  eventPlans: [],
   recipeCache: {},
   hydrated: false,
 };
@@ -87,7 +92,16 @@ type Action =
   | { type: "RESET_STORE_ITEMS"; store: string }
   | { type: "SET_STORE_FOR_ALL_UNASSIGNED"; store: string }
   | { type: "SET_ITEM_STORE"; key: string; store: string | undefined }
-  | { type: "SET_MANUAL_GROCERY_STORE"; id: string; store: string | undefined };
+  | { type: "SET_MANUAL_GROCERY_STORE"; id: string; store: string | undefined }
+  | { type: "ADD_EVENT_PLAN"; plan: EventPlan }
+  | { type: "UPDATE_EVENT_PLAN"; plan: EventPlan }
+  | { type: "DELETE_EVENT_PLAN"; id: string }
+  | { type: "ADD_EVENT_DISH"; planId: string; dish: EventDish }
+  | { type: "REMOVE_EVENT_DISH"; planId: string; dishId: string }
+  | { type: "ADD_EVENT_TASK"; planId: string; task: EventTask }
+  | { type: "UPDATE_EVENT_TASK"; planId: string; task: EventTask }
+  | { type: "REMOVE_EVENT_TASK"; planId: string; taskId: string }
+  | { type: "TOGGLE_EVENT_GROCERIES"; planId: string };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -288,6 +302,33 @@ function reducer(state: AppState, action: Action): AppState {
         ),
       };
 
+    case "ADD_EVENT_PLAN":
+      return { ...state, eventPlans: [...state.eventPlans, action.plan] };
+
+    case "UPDATE_EVENT_PLAN":
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.plan.id ? action.plan : p) };
+
+    case "DELETE_EVENT_PLAN":
+      return { ...state, eventPlans: state.eventPlans.filter((p) => p.id !== action.id) };
+
+    case "ADD_EVENT_DISH":
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, dishes: [...p.dishes, action.dish] } : p) };
+
+    case "REMOVE_EVENT_DISH":
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, dishes: p.dishes.filter((d) => d.id !== action.dishId) } : p) };
+
+    case "ADD_EVENT_TASK":
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, tasks: [...p.tasks, action.task] } : p) };
+
+    case "UPDATE_EVENT_TASK":
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, tasks: p.tasks.map((t) => t.id === action.task.id ? action.task : t) } : p) };
+
+    case "REMOVE_EVENT_TASK":
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, tasks: p.tasks.filter((t) => t.id !== action.taskId) } : p) };
+
+    case "TOGGLE_EVENT_GROCERIES":
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, addedToGroceries: !p.addedToGroceries } : p) };
+
     default:
       return state;
   }
@@ -336,6 +377,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             familyMembers: data.familyMembers ?? [],
             savedMenus: data.savedMenus ?? [],
             tips: data.tips ?? [],
+            eventPlans: data.eventPlans ?? [],
           },
         });
       })
@@ -363,6 +405,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           familyMembers: state.familyMembers,
           savedMenus: state.savedMenus,
           tips: state.tips,
+          eventPlans: state.eventPlans,
         }),
       });
     }, 500);
@@ -378,6 +421,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.familyMembers,
     state.savedMenus,
     state.tips,
+    state.eventPlans,
     state.hydrated,
   ]);
 
@@ -451,6 +495,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.familyMembers,
     state.savedMenus,
     state.tips,
+    state.eventPlans,
   ]);
 
   return (

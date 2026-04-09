@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Sparkles, Plus, Heart, BookOpen, Trash2, Loader2, Bookmark, ChevronRight, Pencil, Check, ChevronsDown, ScrollText, Lightbulb, Share2 } from "lucide-react";
+import { Sparkles, Plus, Heart, BookOpen, Trash2, Loader2, ChevronRight, Pencil, Check, Lightbulb, Share2 } from "lucide-react";
 import clsx from "clsx";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import SearchBar from "@/components/recipes/SearchBar";
@@ -12,13 +12,11 @@ import TipSheet from "@/components/recipes/TipSheet";
 import { shareRecipe } from "@/lib/share-recipe";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import EmptyState from "@/components/shared/EmptyState";
-import AddEntrySheet from "@/components/menu/AddEntrySheet";
-import SaveMenuSheet from "@/components/menu/SaveMenuSheet";
 import { useAppContext } from "@/store/context";
 import { getRecipeEmoji, getRecipeCategory } from "@/lib/recipe-emoji";
-import type { RecipeSummary, CustomRecipe, DayEntry, Tip } from "@/types";
+import type { RecipeSummary, CustomRecipe, Tip } from "@/types";
 
-type Tab = "discover" | "favorites" | "custom" | "menus" | "tips";
+type Tab = "discover" | "favorites" | "custom" | "tips";
 
 const TIP_CATEGORY_EMOJI: Record<string, string> = {
   Technique: "🔪",
@@ -54,17 +52,7 @@ export default function RecipesPage() {
   // Day picker for custom recipes
   const [dayPickerRecipe, setDayPickerRecipe] = useState<RecipeSummary | null>(null);
 
-  // My Menus state
-  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
-  const [pickerEntry, setPickerEntry] = useState<DayEntry | null>(null);
-  const [addAllMenuId, setAddAllMenuId] = useState<string | null>(null);
-  const [addingToMenuId, setAddingToMenuId] = useState<string | null>(null);
-  const [renamingMenuId, setRenamingMenuId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState("");
-  const [newMenuOpen, setNewMenuOpen] = useState(false);
-  const [viewingMenuRecipe, setViewingMenuRecipe] = useState<RecipeSummary | null>(null);
-  const [viewingMenuCustom, setViewingMenuCustom] = useState<CustomRecipe | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: "recipe" | "menu"; name: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
 
   // Share state for list view
   const [sharedRecipeId, setSharedRecipeId] = useState<string | null>(null);
@@ -153,24 +141,6 @@ export default function RecipesPage() {
     if (t === "favorites") loadFavorites();
   };
 
-  const handleViewMenuEntry = (entry: DayEntry) => {
-    if (entry.type === "recipe" && entry.recipeId) {
-      setViewingMenuRecipe({
-        id: entry.recipeId,
-        title: entry.recipeTitle ?? "",
-        image: entry.recipeImage ?? "",
-        readyInMinutes: 0,
-        servings: 0,
-        sourceUrl: entry.recipeUrl,
-      });
-    } else if (entry.type === "custom-recipe" && entry.customRecipeId) {
-      const cr = state.customRecipes.find((r) => r.id === entry.customRecipeId);
-      if (cr) setViewingMenuCustom(cr);
-    } else if (entry.type === "text" && entry.url) {
-      window.open(entry.url, "_blank", "noopener,noreferrer");
-    }
-  };
-
   const customToSummary = (cr: CustomRecipe): RecipeSummary => ({
     id: cr.id,
     title: cr.title,
@@ -183,7 +153,7 @@ export default function RecipesPage() {
     <div className="flex flex-col min-h-full">
       {/* Tabs */}
       <div className="flex border-b border-gray-200 bg-white sticky top-0 z-10">
-        {(["discover", "favorites", "custom", "menus", "tips"] as Tab[]).map((t) => (
+        {(["discover", "favorites", "custom", "tips"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => handleTabChange(t)}
@@ -197,7 +167,6 @@ export default function RecipesPage() {
             {t === "discover" && "Discover"}
             {t === "favorites" && "Favorites"}
             {t === "custom" && "My Recipes"}
-            {t === "menus" && "My Menus"}
             {t === "tips" && "Tips"}
           </button>
         ))}
@@ -427,7 +396,7 @@ export default function RecipesPage() {
                               <Share2 size={16} />
                             </button>
                             <button
-                              onClick={() => setConfirmDelete({ id: cr.id, type: "recipe", name: cr.title })}
+                              onClick={() => setConfirmDelete({ id: cr.id, name: cr.title })}
                               className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-50 rounded-xl"
                               title="Delete"
                             >
@@ -440,167 +409,6 @@ export default function RecipesPage() {
                   </div>
                 ))}
             </div>
-          )}
-        </div>
-      )}
-
-      {/* My Menus Tab */}
-      {tab === "menus" && (
-        <div className="p-4 space-y-3">
-          {/* New Menu button */}
-          <button
-            onClick={() => setNewMenuOpen(true)}
-            className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-brand-200 text-brand-500 rounded-xl text-sm font-medium hover:bg-brand-50 active:bg-brand-100"
-          >
-            <Plus size={18} />
-            New Menu
-          </button>
-
-          {state.savedMenus.length === 0 ? (
-            <EmptyState
-              icon={<Bookmark size={48} />}
-              title="No saved menus yet"
-              description="Tap the bookmark icon on any day to save it, or create a new one above"
-            />
-          ) : (
-            state.savedMenus.map((savedMenu) => (
-              <div key={savedMenu.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                {/* Header */}
-                <div
-                  className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none"
-                  onClick={() => setExpandedMenu(expandedMenu === savedMenu.id ? null : savedMenu.id)}
-                >
-                  <ScrollText size={16} className="text-brand-500 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    {renamingMenuId === savedMenu.id ? (
-                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          autoFocus
-                          value={renameValue}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && renameValue.trim()) {
-                              dispatch({ type: "RENAME_SAVED_MENU", id: savedMenu.id, name: renameValue.trim() });
-                              setRenamingMenuId(null);
-                            }
-                            if (e.key === "Escape") setRenamingMenuId(null);
-                          }}
-                          className="flex-1 text-sm font-semibold rounded-lg border border-brand-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-400"
-                        />
-                        <button
-                          onClick={() => {
-                            if (renameValue.trim()) {
-                              dispatch({ type: "RENAME_SAVED_MENU", id: savedMenu.id, name: renameValue.trim() });
-                            }
-                            setRenamingMenuId(null);
-                          }}
-                          className="p-1 text-brand-500 hover:text-brand-700"
-                        >
-                          <Check size={16} />
-                        </button>
-                      </div>
-                    ) : (
-                      <p className="text-sm font-semibold text-gray-800 truncate">{savedMenu.name}</p>
-                    )}
-                    <p className="text-xs text-gray-500">
-                      {savedMenu.entries.length} item{savedMenu.entries.length !== 1 ? "s" : ""} · {new Date(savedMenu.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {/* Rename */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setRenamingMenuId(savedMenu.id); setRenameValue(savedMenu.name); }}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
-                      title="Rename"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    {/* Add all to a day */}
-                    {savedMenu.entries.length > 0 && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setAddAllMenuId(savedMenu.id); }}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-brand-500 hover:bg-brand-50 transition-colors"
-                        title="Add all to a day"
-                      >
-                        <ChevronsDown size={15} />
-                      </button>
-                    )}
-                    {/* Delete */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setConfirmDelete({ id: savedMenu.id, type: "menu", name: savedMenu.name });
-                      }}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-50 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                    {/* Expand indicator */}
-                    <div className="p-1.5">
-                      <ChevronRight size={16} className={clsx("transition-transform text-gray-500", expandedMenu === savedMenu.id && "rotate-90")} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Entries */}
-                {expandedMenu === savedMenu.id && (
-                  <div className="border-t border-gray-100 divide-y divide-gray-50">
-                    {savedMenu.entries.map((entry) => {
-                      const canView = entry.type === "recipe" || entry.type === "custom-recipe" || (entry.type === "text" && !!entry.url);
-                      return (
-                        <div key={entry.id} className="flex items-center gap-2 hover:bg-brand-50 active:bg-brand-100">
-                          <button
-                            onClick={() => canView ? handleViewMenuEntry(entry) : undefined}
-                            className="flex items-center gap-3 flex-1 min-w-0 px-4 py-3 text-left"
-                          >
-                            {(entry.type === "recipe" || entry.type === "custom-recipe") && entry.recipeImage ? (
-                              <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={entry.recipeImage}
-                                  alt={entry.recipeTitle ?? ""}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    if (entry.recipeId) (e.target as HTMLImageElement).src = `/api/recipes/${entry.recipeId}/image`;
-                                  }}
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
-                                {entry.type === "event" ? "🎉" : entry.type === "text" ? "📝" : (() => {
-                                  const cr = entry.type === "custom-recipe" ? state.customRecipes.find((r) => r.id === entry.customRecipeId) : undefined;
-                                  return getRecipeEmoji(entry.recipeTitle ?? "", cr?.category, cr?.emoji);
-                                })()}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-800 line-clamp-2">{entry.recipeTitle ?? entry.text ?? ""}</p>
-                              <p className="text-xs text-gray-500 capitalize">{entry.type === "custom-recipe" ? "my recipe" : entry.type}</p>
-                            </div>
-                          </button>
-                          <button
-                            onClick={() => setPickerEntry(entry)}
-                            className="flex-shrink-0 p-2 mr-2 rounded-xl text-brand-500 hover:bg-brand-100"
-                            aria-label="Add to day"
-                          >
-                            <Plus size={18} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                    {/* Add items to this saved menu */}
-                    <button
-                      onClick={() => setAddingToMenuId(savedMenu.id)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm text-brand-500 hover:bg-brand-50 active:bg-brand-100"
-                    >
-                      <Plus size={15} />
-                      Add items
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))
           )}
         </div>
       )}
@@ -670,69 +478,11 @@ export default function RecipesPage() {
         />
       )}
 
-      {pickerEntry && (
-        <DayPickerSheet
-          open={!!pickerEntry}
-          onClose={() => setPickerEntry(null)}
-          recipe={{ id: "", title: pickerEntry.recipeTitle ?? pickerEntry.text ?? "", image: "", readyInMinutes: 0, servings: 0 }}
-          entry={pickerEntry}
-          onAdded={() => setPickerEntry(null)}
-        />
-      )}
-
-      <RecipeDetailSheet
-        recipe={viewingMenuRecipe}
-        onClose={() => setViewingMenuRecipe(null)}
-      />
-
-      <CustomRecipeSheet
-        open={!!viewingMenuCustom}
-        onClose={() => setViewingMenuCustom(null)}
-        existing={viewingMenuCustom ?? undefined}
-        readOnly
-      />
-
-      {/* Add all entries from a saved menu to a day */}
-      {addAllMenuId && (() => {
-        const m = state.savedMenus.find((s) => s.id === addAllMenuId);
-        return m ? (
-          <DayPickerSheet
-            open={!!addAllMenuId}
-            onClose={() => setAddAllMenuId(null)}
-            recipe={{ id: "", title: m.name, image: "", readyInMinutes: 0, servings: 0 }}
-            entries={m.entries}
-            onAdded={() => setAddAllMenuId(null)}
-          />
-        ) : null;
-      })()}
-
-      {/* Add items to a saved menu */}
-      {addingToMenuId && (
-        <AddEntrySheet
-          open={!!addingToMenuId}
-          onClose={() => setAddingToMenuId(null)}
-          dateStr=""
-          dateLabel={state.savedMenus.find((m) => m.id === addingToMenuId)?.name ?? "Menu"}
-          onAddEntry={(entry) => {
-            dispatch({ type: "ADD_ENTRY_TO_SAVED_MENU", savedMenuId: addingToMenuId, entry });
-          }}
-        />
-      )}
-
-      {/* New blank menu */}
-      <SaveMenuSheet
-        open={newMenuOpen}
-        onClose={() => setNewMenuOpen(false)}
-        entries={[]}
-      />
-
-      {/* Delete confirmation */}
+      {/* Delete recipe confirmation */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setConfirmDelete(null)}>
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-base font-semibold text-gray-800 mb-1">
-              Delete {confirmDelete.type === "recipe" ? "Recipe" : "Menu"}?
-            </h2>
+            <h2 className="text-base font-semibold text-gray-800 mb-1">Delete Recipe?</h2>
             <p className="text-sm text-gray-500 mb-5">
               &ldquo;{confirmDelete.name}&rdquo; will be permanently deleted.
             </p>
@@ -745,12 +495,7 @@ export default function RecipesPage() {
               </button>
               <button
                 onClick={() => {
-                  if (confirmDelete.type === "recipe") {
-                    dispatch({ type: "REMOVE_CUSTOM_RECIPE", id: confirmDelete.id });
-                  } else {
-                    dispatch({ type: "DELETE_SAVED_MENU", id: confirmDelete.id });
-                    if (expandedMenu === confirmDelete.id) setExpandedMenu(null);
-                  }
+                  dispatch({ type: "REMOVE_CUSTOM_RECIPE", id: confirmDelete.id });
                   setConfirmDelete(null);
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-red-500 text-sm font-medium text-white hover:bg-red-600"

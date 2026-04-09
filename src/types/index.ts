@@ -75,6 +75,33 @@ export interface SavedMenu {
   createdAt: string; // ISO date string
 }
 
+// ─── Event Planning ───────────────────────────────────────────────────────────
+
+export interface EventDish {
+  id: string;
+  title: string;
+  recipeId?: string;
+  customRecipeId?: string;
+}
+
+export interface EventTask {
+  id: string;
+  text: string;
+  date: string;   // ISO date "YYYY-MM-DD"
+  time?: string;  // "HH:MM" 24h
+  completed: boolean;
+}
+
+export interface EventPlan {
+  id: string;
+  name: string;
+  date: string;   // ISO date of the event
+  dishes: EventDish[];
+  tasks: EventTask[];
+  addedToGroceries: boolean;
+  createdAt: string;
+}
+
 // ─── Grocery ──────────────────────────────────────────────────────────────────
 
 export interface AggregatedIngredient {

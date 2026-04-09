@@ -131,6 +131,35 @@ Tip {
 }
 ```
 
+### Event Planning Types
+
+```typescript
+EventDish {
+  id: string
+  title: string
+  recipeId?: string             // links to Edamam/API recipe for grocery integration
+  customRecipeId?: string       // links to CustomRecipe for grocery integration
+}
+
+EventTask {
+  id: string
+  text: string
+  date: string                  // "YYYY-MM-DD"
+  time?: string                 // "HH:MM" 24h
+  completed: boolean
+}
+
+EventPlan {
+  id: string
+  name: string
+  date: string                  // ISO date of the event
+  dishes: EventDish[]
+  tasks: EventTask[]
+  addedToGroceries: boolean     // when true, linked recipe ingredients feed into grocery list
+  createdAt: string             // ISO timestamp
+}
+```
+
 ### Grocery Types
 
 ```typescript
@@ -142,6 +171,8 @@ AggregatedIngredient {
   originalLines: string[]
   checked: boolean
   recipes: string[]
+  manualId?: string             // set when item originates from a ManualGroceryItem
+  store?: string                // assigned store name
 }
 
 ManualGroceryItem {
@@ -151,6 +182,16 @@ ManualGroceryItem {
   unit?: string
   aisle: string
   checked: boolean
+  store?: string
+}
+
+FamilyGroceryItem {
+  id: string
+  name: string
+  addedBy: string
+  addedAt: string
+  checked: boolean
+  store?: string
 }
 
 GroceryListByAisle = Record<string, AggregatedIngredient[]>
@@ -166,9 +207,11 @@ GroceryListByAisle = Record<string, AggregatedIngredient[]>
   customRecipes: CustomRecipe[]
   manualGroceryItems: ManualGroceryItem[]
   groceryChecked: Record<string, boolean>
+  groceryItemStores: Record<string, string>  // key: "aisle|name|unit" → store name
   familyMembers: FamilyMember[]
   savedMenus: SavedMenu[]
   tips: Tip[]
+  eventPlans: EventPlan[]
 }
 ```
 
@@ -194,9 +237,11 @@ AppState
 ├── customRecipes         CustomRecipe[]
 ├── manualGroceryItems    ManualGroceryItem[]
 ├── groceryChecked        Record<string, boolean>
+├── groceryItemStores     Record<string, string>         ← key: "aisle|name|unit" → store
 ├── familyMembers         FamilyMember[]
 ├── savedMenus            SavedMenu[]
 ├── tips                  Tip[]
+├── eventPlans            EventPlan[]
 ├── recipeCache           Record<string, RecipeDetail>   ← in-memory only, not persisted
 └── hydrated              boolean
 ```
@@ -208,10 +253,11 @@ AppState
 | Menu | `ADD_DAY_ENTRY`, `REMOVE_DAY_ENTRY`, `REORDER_DAY_ENTRIES`, `UPDATE_DAY_ENTRY` |
 | Favorites | `TOGGLE_FAVORITE`, `TOGGLE_DISLIKED` |
 | Custom Recipes | `ADD_CUSTOM_RECIPE`, `UPDATE_CUSTOM_RECIPE`, `REMOVE_CUSTOM_RECIPE`, `CACHE_RECIPE` |
-| Groceries | `ADD_MANUAL_GROCERY`, `REMOVE_MANUAL_GROCERY`, `TOGGLE_MANUAL_GROCERY_CHECKED`, `TOGGLE_GROCERY_CHECKED` |
-| Family | `ADD_FAMILY_MEMBER` (takes `member: FamilyMember`), `REMOVE_FAMILY_MEMBER` (takes `id: string`) |
+| Groceries | `ADD_MANUAL_GROCERY`, `REMOVE_MANUAL_GROCERY`, `TOGGLE_MANUAL_GROCERY_CHECKED`, `TOGGLE_GROCERY_CHECKED`, `SET_ITEM_STORE`, `SET_MANUAL_GROCERY_STORE`, `RESET_STORE_ITEMS`, `SET_STORE_FOR_ALL_UNASSIGNED` |
+| Family | `ADD_FAMILY_MEMBER`, `REMOVE_FAMILY_MEMBER` |
 | Saved Menus | `SAVE_DAY_AS_MENU`, `DELETE_SAVED_MENU`, `RENAME_SAVED_MENU`, `ADD_ENTRY_TO_SAVED_MENU` |
 | Tips | `ADD_TIP`, `UPDATE_TIP`, `DELETE_TIP` |
+| Event Plans | `ADD_EVENT_PLAN`, `UPDATE_EVENT_PLAN`, `DELETE_EVENT_PLAN`, `ADD_EVENT_DISH`, `REMOVE_EVENT_DISH`, `ADD_EVENT_TASK`, `UPDATE_EVENT_TASK`, `REMOVE_EVENT_TASK`, `TOGGLE_EVENT_GROCERIES` |
 | Lifecycle | `HYDRATE` |
 
 ### Context Helper Methods
@@ -229,15 +275,17 @@ AppState
 | `/` | No | Redirects to `/menu` |
 | `/login` | No | Google OAuth sign-in |
 | `/menu` | Yes | 10-day meal plan |
-| `/recipes` | Yes | My Kitchen — Discovery, Favorites, My Recipes, My Menus, Tips tabs |
-| `/groceries` | Yes | Aggregated shopping list from 10-day menu |
+| `/recipes` | Yes | My Kitchen — Discovery, Favorites, My Recipes, Tips tabs |
+| `/groceries` | Yes | Aggregated shopping list from 10-day menu + event plans; store filter chips |
+| `/event-planning` | Yes | Event list (Events tab) + Saved Menus tab |
+| `/event-planning/[id]` | Yes | Event detail — dishes, prep timeline, grocery toggle |
 | `/view/[token]` | No | Read-only family view via share token |
 
 ### Navigation Components
 
-- **Desktop**: `TopNav` — logo, 3 tabs, user avatar, sign out
-- **Mobile**: `MobileHeader` (top) + `BottomNav` (3-tab: Menu, My Kitchen, Groceries)
-- **Route protection**: `src/middleware.ts` intercepts `/menu/*`, `/recipes/*`, `/groceries/*` and redirects unauthenticated users to `/login`
+- **Desktop**: `TopNav` — logo, 4 tabs (Menu, Recipes, Groceries, Events), user avatar, sign out
+- **Mobile**: `MobileHeader` (top) + `BottomNav` (4-tab: Menu, My Kitchen, Groceries, Events)
+- **Route protection**: `src/middleware.ts` intercepts `/menu/*`, `/recipes/*`, `/groceries/*`, `/event-planning/*` and redirects unauthenticated users to `/login`
 
 ---
 
@@ -439,23 +487,34 @@ layout.tsx
 │       │   │   └── RecipeCard[] grouped by category
 │       │   ├── My Recipes tab
 │       │   │   └── CustomRecipeSheet + custom recipe list
-│       │   ├── My Menus tab
-│       │   │   └── SavedMenu[] (expand / rename / delete)
 │       │   └── Tips tab
 │       │       └── TipSheet + tip list (sorted by title)
 │       │
 │       ├── /groceries → GroceriesPage
+│       │   ├── Store filter chips (All, Unassigned, per-store)
 │       │   ├── Tab: All / Recipes / Family
-│       │   ├── GrocerySection × n    (recipe ingredients, grouped by aisle)
+│       │   ├── GrocerySection × n    (recipe + event ingredients, grouped by aisle)
 │       │   ├── Family requests section (grouped by member name, owner can remove)
 │       │   └── ManualAddSheet        (add custom grocery item)
+│       │
+│       ├── /event-planning → EventPlanningPage
+│       │   ├── Events tab
+│       │   │   └── EventPlan[] sorted by date → navigates to detail
+│       │   └── Saved Menus tab
+│       │       └── SavedMenu[] (expand / rename / delete / add-to-day)
+│       │
+│       ├── /event-planning/[id] → EventDetailPage
+│       │   ├── Editable name + date header
+│       │   ├── Grocery toggle (TOGGLE_EVENT_GROCERIES)
+│       │   ├── Dishes section  (AddDishSheet — freeform + optional custom recipe link)
+│       │   └── Timeline section (TaskSheet — text, date, time; grouped by date)
 │       │
 │       ├── /view/[token] → FamilyViewPage (no auth)
 │       │   ├── Invite-token path: shows member name, ReadOnlyDayCard × n, grocery request input
 │       │   └── Shared-token path: name picker → ReadOnlyDayCard × n (read-only)
 │       │
 │       └── BottomNav (mobile)
-│           └── Menu / My Kitchen / Groceries tabs
+│           └── Menu / My Kitchen / Groceries / Events tabs
 │
 └── Analytics
 ```

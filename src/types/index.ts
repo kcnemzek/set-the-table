@@ -85,6 +85,8 @@ export interface AggregatedIngredient {
   originalLines: string[];
   checked: boolean;
   recipes: string[];
+  manualId?: string;
+  store?: string;
 }
 
 export interface ManualGroceryItem {

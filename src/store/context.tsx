@@ -29,6 +29,8 @@ interface AppState {
   manualGroceryItems: ManualGroceryItem[];
   /** key: aisle|name|unit → checked for auto-generated grocery items */
   groceryChecked: Record<string, boolean>;
+  /** key: aisle|name|unit → store for recipe ingredients */
+  groceryItemStores: Record<string, string>;
   familyMembers: FamilyMember[];
   savedMenus: SavedMenu[];
   tips: Tip[];
@@ -44,6 +46,7 @@ const initialState: AppState = {
   customRecipes: [],
   manualGroceryItems: [],
   groceryChecked: {},
+  groceryItemStores: {},
   familyMembers: [],
   savedMenus: [],
   tips: [],
@@ -82,7 +85,9 @@ type Action =
   | { type: "UPDATE_TIP"; tip: Tip }
   | { type: "DELETE_TIP"; id: string }
   | { type: "RESET_STORE_ITEMS"; store: string }
-  | { type: "SET_STORE_FOR_ALL_UNASSIGNED"; store: string };
+  | { type: "SET_STORE_FOR_ALL_UNASSIGNED"; store: string }
+  | { type: "SET_ITEM_STORE"; key: string; store: string | undefined }
+  | { type: "SET_MANUAL_GROCERY_STORE"; id: string; store: string | undefined };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -247,19 +252,39 @@ function reducer(state: AppState, action: Action): AppState {
     case "DELETE_TIP":
       return { ...state, tips: state.tips.filter((t) => t.id !== action.id) };
 
-    case "RESET_STORE_ITEMS":
-      return {
-        ...state,
-        manualGroceryItems: state.manualGroceryItems.map((i) =>
-          i.store === action.store ? { ...i, checked: false } : i
-        ),
-      };
+    case "RESET_STORE_ITEMS": {
+      // Uncheck manual items for this store
+      const updatedManual = state.manualGroceryItems.map((i) =>
+        i.store === action.store ? { ...i, checked: false } : i
+      );
+      // Uncheck recipe ingredients assigned to this store
+      const updatedChecked = { ...state.groceryChecked };
+      for (const [key, store] of Object.entries(state.groceryItemStores)) {
+        if (store === action.store) updatedChecked[key] = false;
+      }
+      return { ...state, manualGroceryItems: updatedManual, groceryChecked: updatedChecked };
+    }
 
     case "SET_STORE_FOR_ALL_UNASSIGNED":
       return {
         ...state,
         manualGroceryItems: state.manualGroceryItems.map((i) =>
           !i.store ? { ...i, store: action.store } : i
+        ),
+      };
+
+    case "SET_ITEM_STORE": {
+      const updated = { ...state.groceryItemStores };
+      if (action.store) updated[action.key] = action.store;
+      else delete updated[action.key];
+      return { ...state, groceryItemStores: updated };
+    }
+
+    case "SET_MANUAL_GROCERY_STORE":
+      return {
+        ...state,
+        manualGroceryItems: state.manualGroceryItems.map((i) =>
+          i.id === action.id ? { ...i, store: action.store } : i
         ),
       };
 
@@ -307,6 +332,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             customRecipes: data.customRecipes ?? [],
             manualGroceryItems: data.manualGroceryItems ?? [],
             groceryChecked: data.groceryChecked ?? {},
+            groceryItemStores: data.groceryItemStores ?? {},
             familyMembers: data.familyMembers ?? [],
             savedMenus: data.savedMenus ?? [],
             tips: data.tips ?? [],
@@ -333,6 +359,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           customRecipes: state.customRecipes,
           manualGroceryItems: state.manualGroceryItems,
           groceryChecked: state.groceryChecked,
+          groceryItemStores: state.groceryItemStores,
           familyMembers: state.familyMembers,
           savedMenus: state.savedMenus,
           tips: state.tips,
@@ -347,6 +374,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.customRecipes,
     state.manualGroceryItems,
     state.groceryChecked,
+    state.groceryItemStores,
     state.familyMembers,
     state.savedMenus,
     state.tips,
@@ -406,6 +434,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         customRecipes: state.customRecipes,
         manualGroceryItems: state.manualGroceryItems,
         groceryChecked: state.groceryChecked,
+        groceryItemStores: state.groceryItemStores,
         familyMembers: state.familyMembers,
         savedMenus: state.savedMenus,
         tips: state.tips,
@@ -418,6 +447,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.customRecipes,
     state.manualGroceryItems,
     state.groceryChecked,
+    state.groceryItemStores,
     state.familyMembers,
     state.savedMenus,
     state.tips,

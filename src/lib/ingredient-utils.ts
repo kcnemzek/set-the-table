@@ -8,7 +8,8 @@ import type {
 
 export function aggregateIngredients(
   recipes: RecipeDetail[],
-  manualItems: ManualGroceryItem[]
+  manualItems: ManualGroceryItem[],
+  groceryItemStores: Record<string, string> = {}
 ): GroceryListByAisle {
   const allIngredients: { ing: ExtendedIngredient; recipeTitle: string }[] = recipes.flatMap(
     (r) => (r.extendedIngredients ?? []).map((ing) => ({ ing, recipeTitle: r.title }))
@@ -40,14 +41,18 @@ export function aggregateIngredients(
     }
 
     for (const [unit, { amount, originals, recipes }] of byUnit) {
+      const itemAisle = normalizeAisle(aisle);
+      const itemName = first.nameClean ?? first.name;
+      const key = `${itemAisle}|${itemName.toLowerCase()}|${unit.toLowerCase()}`;
       aggregated.push({
-        name: first.nameClean ?? first.name,
+        name: itemName,
         totalAmount: parseFloat(amount.toFixed(2)),
         unit,
-        aisle: normalizeAisle(aisle),
+        aisle: itemAisle,
         originalLines: originals,
         checked: false,
         recipes: Array.from(recipes),
+        store: groceryItemStores[key],
       });
     }
   }
@@ -71,6 +76,8 @@ export function aggregateIngredients(
       originalLines: [],
       checked: item.checked,
       recipes: [],
+      manualId: item.id,
+      store: item.store,
     });
   }
 

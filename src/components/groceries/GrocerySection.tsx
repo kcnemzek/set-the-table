@@ -1,8 +1,10 @@
 "use client";
 
 import clsx from "clsx";
+import { Trash2 } from "lucide-react";
 import { useAppContext } from "@/store/context";
 import { groceryItemKey } from "@/lib/ingredient-utils";
+import { STORES } from "@/lib/stores";
 import type { AggregatedIngredient } from "@/types";
 
 interface GrocerySectionProps {
@@ -34,11 +36,11 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
           const checked = state.groceryChecked[key] ?? false;
 
           return (
-            <button
+            <div
               key={key}
               onClick={() => dispatch({ type: "TOGGLE_GROCERY_CHECKED", key })}
               className={clsx(
-                "w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors",
+                "w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors cursor-pointer",
                 i > 0 && "border-t border-gray-50",
                 checked ? "bg-gray-100" : "hover:bg-gray-100 active:bg-gray-200"
               )}
@@ -95,7 +97,46 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
                   {item.unit}
                 </span>
               )}
-            </button>
+
+              {/* Store picker */}
+              <select
+                value={item.store ?? ""}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  const store = e.target.value || undefined;
+                  if (item.manualId) {
+                    dispatch({ type: "SET_MANUAL_GROCERY_STORE", id: item.manualId, store });
+                  } else {
+                    dispatch({ type: "SET_ITEM_STORE", key: groceryItemKey(item.aisle, item.name, item.unit), store });
+                  }
+                }}
+                className={clsx(
+                  "flex-shrink-0 text-xs rounded-full px-2 py-0.5 border cursor-pointer appearance-none focus:outline-none focus:ring-1 focus:ring-brand-400 max-w-[80px] truncate",
+                  item.store
+                    ? "bg-brand-50 text-brand-600 border-brand-200"
+                    : "bg-gray-50 text-gray-400 border-gray-200"
+                )}
+              >
+                <option value="">+ Store</option>
+                {STORES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+
+              {/* Delete — manual items only */}
+              {item.manualId && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.manualId! });
+                  }}
+                  className="text-gray-300 hover:text-red-400 transition-colors p-1 flex-shrink-0"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </div>
           );
         })}
       </div>

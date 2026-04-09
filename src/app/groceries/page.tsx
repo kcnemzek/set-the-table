@@ -25,19 +25,14 @@ export default function GroceriesPage() {
   const [hideChecked, setHideChecked] = useState(false);
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
 
-  // All unique store names from manual items
-  const stores = useMemo(() =>
-    Array.from(new Set(
-      state.manualGroceryItems.map((i) => i.store).filter(Boolean) as string[]
-    )).sort(),
-    [state.manualGroceryItems]
-  );
+  const UNASSIGNED = "__unassigned__";
 
-  // Manual items visible under the current store filter
-  const filteredManualItems = useMemo(() => {
-    if (!selectedStore) return state.manualGroceryItems;
-    return state.manualGroceryItems.filter((i) => !i.store || i.store === selectedStore);
-  }, [state.manualGroceryItems, selectedStore]);
+  // All unique store names across manual items and recipe ingredient store assignments
+  const stores = useMemo(() => {
+    const fromManual = state.manualGroceryItems.map((i) => i.store).filter(Boolean) as string[];
+    const fromRecipes = Object.values(state.groceryItemStores);
+    return Array.from(new Set([...fromManual, ...fromRecipes])).sort();
+  }, [state.manualGroceryItems, state.groceryItemStores]);
 
   const buildRecipeList = useCallback(async () => {
     if (!state.hydrated) return;
@@ -88,9 +83,9 @@ export default function GroceriesPage() {
       }
     }
 
-    setGroceryList(aggregateIngredients(recipes, filteredManualItems));
+    setGroceryList(aggregateIngredients(recipes, state.manualGroceryItems, state.groceryItemStores));
     setRecipeLoading(false);
-  }, [state.hydrated, state.menu, state.customRecipes, filteredManualItems, state.recipeCache, dispatch]);
+  }, [state.hydrated, state.menu, state.customRecipes, state.manualGroceryItems, state.groceryItemStores, state.recipeCache, dispatch]);
 
   useEffect(() => { buildRecipeList(); }, [buildRecipeList]);
 
@@ -122,11 +117,29 @@ export default function GroceriesPage() {
     });
   }
 
-  const aisles = Object.keys(groceryList);
-  const totalRecipeItems = aisles.reduce((n, a) => n + groceryList[a].length, 0);
+  // Post-filter by selected store
+  const filteredGroceryList = useMemo((): GroceryListByAisle => {
+    if (!selectedStore) return groceryList;
+    const result: GroceryListByAisle = {};
+    for (const [aisle, items] of Object.entries(groceryList)) {
+      const filtered = items.filter((item) =>
+        selectedStore === UNASSIGNED ? !item.store : item.store === selectedStore
+      );
+      if (filtered.length > 0) result[aisle] = filtered;
+    }
+    return result;
+  }, [groceryList, selectedStore]);
+
+  const hasUnassigned = useMemo(
+    () => Object.values(groceryList).some((items) => items.some((item) => !item.store)),
+    [groceryList]
+  );
+
+  const aisles = Object.keys(filteredGroceryList);
+  const totalRecipeItems = aisles.reduce((n, a) => n + filteredGroceryList[a].length, 0);
   const checkedCount = aisles.reduce((n, a) =>
-    n + groceryList[a].filter((item) =>
-      state.groceryChecked[groceryItemKey(item.aisle, item.name, item.unit)] ?? false
+    n + filteredGroceryList[a].filter((item) =>
+      item.manualId ? item.checked : (state.groceryChecked[groceryItemKey(item.aisle, item.name, item.unit)] ?? false)
     ).length, 0
   );
 
@@ -211,7 +224,7 @@ export default function GroceriesPage() {
         </div>
 
         {/* Store filter chips */}
-        {stores.length > 0 && (
+        {(stores.length > 0 || hasUnassigned) && (
           <div className="flex gap-2 overflow-x-auto pt-2 pb-0.5 -mx-1 px-1 no-scrollbar">
             <button
               onClick={() => setSelectedStore(null)}
@@ -221,8 +234,20 @@ export default function GroceriesPage() {
                   : "bg-gray-100 text-gray-600"
               }`}
             >
-              All stores
+              All
             </button>
+            {hasUnassigned && (
+              <button
+                onClick={() => setSelectedStore(selectedStore === UNASSIGNED ? null : UNASSIGNED)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  selectedStore === UNASSIGNED
+                    ? "bg-gray-600 text-white"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                Unassigned
+              </button>
+            )}
             {stores.map((s) => (
               <button
                 key={s}
@@ -259,7 +284,7 @@ export default function GroceriesPage() {
                     <GrocerySection
                       key={aisle}
                       aisle={aisle}
-                      items={groceryList[aisle]}
+                      items={filteredGroceryList[aisle]}
                       hideChecked={hideChecked}
                     />
                   ))}
@@ -300,7 +325,7 @@ export default function GroceriesPage() {
                           </button>
                         </>
                       )}
-                      {selectedStore && (
+                      {selectedStore && selectedStore !== UNASSIGNED && (
                         <button
                           onClick={() => dispatch({ type: "RESET_STORE_ITEMS", store: selectedStore })}
                           className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-500 py-2"

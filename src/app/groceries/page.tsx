@@ -317,55 +317,18 @@ export default function GroceriesPage() {
                       hideChecked={hideChecked}
                     />
                   ))}
-                  {(state.manualGroceryItems.some((i) => !i.store) || selectedStore) && (
-                    <div className="px-4 mt-4 flex flex-col gap-1">
-                      {state.manualGroceryItems.some((i) => !i.store) && (
-                        <>
-                          <div className="flex items-center gap-2 py-1">
-                            <label className="text-sm text-gray-500 flex-shrink-0">Assign all to:</label>
-                            <select
-                              defaultValue=""
-                              onChange={(e) => {
-                                if (e.target.value) {
-                                  dispatch({ type: "SET_STORE_FOR_ALL_UNASSIGNED", store: e.target.value });
-                                  e.target.value = "";
-                                }
-                              }}
-                              className="flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
-                            >
-                              <option value="">Pick a store…</option>
-                              {STORES.map((s) => (
-                                <option key={s} value={s}>{s}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <button
-                            onClick={() =>
-                              state.manualGroceryItems
-                                .filter((i) => !i.store)
-                                .forEach((item) =>
-                                  dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.id })
-                                )
-                            }
-                            className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-400 py-2"
-                          >
-                            <Trash2 size={14} />
-                            Clear one-time items
-                          </button>
-                        </>
-                      )}
-                      {selectedStore && selectedStore !== UNASSIGNED && (
-                        <button
-                          onClick={() => dispatch({ type: "RESET_STORE_ITEMS", store: selectedStore })}
-                          className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-500 py-2"
-                        >
-                          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M1.5 8A6.5 6.5 0 1 0 3 3.5" />
-                            <path d="M1.5 3.5v4h4" />
-                          </svg>
-                          Reset {selectedStore} list
-                        </button>
-                      )}
+                  {selectedStore && selectedStore !== UNASSIGNED && (
+                    <div className="px-4 mt-4">
+                      <button
+                        onClick={() => dispatch({ type: "RESET_STORE_ITEMS", store: selectedStore })}
+                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-500 py-2"
+                      >
+                        <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1.5 8A6.5 6.5 0 1 0 3 3.5" />
+                          <path d="M1.5 3.5v4h4" />
+                        </svg>
+                        Reset {selectedStore} list
+                      </button>
                     </div>
                   )}
                 </>
@@ -449,15 +412,17 @@ export default function GroceriesPage() {
                     </p>
                   )}
 
-                  <div className="px-4 mt-4">
-                    <button
-                      onClick={handleClearFamilyItems}
-                      className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-400 py-2"
-                    >
-                      <Trash2 size={14} />
-                      Clear all family requests
-                    </button>
-                  </div>
+                  {tab === "family" && (
+                    <div className="px-4 mt-4">
+                      <button
+                        onClick={handleClearFamilyItems}
+                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-400 py-2"
+                      >
+                        <Trash2 size={14} />
+                        Clear all family requests
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>

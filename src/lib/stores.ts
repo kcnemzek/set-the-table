@@ -4,6 +4,7 @@ export const STORES = [
   "Harris Teeter",
   "Lowes Food",
   "Publix",
+  "Walmart"
 ] as const;
 
 export type StoreName = (typeof STORES)[number];

@@ -13,11 +13,17 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { id } = await params;
-  const { checked } = await request.json();
+  const body = await request.json();
   const items = await readFamilyGroceries(session.user.id);
   await writeFamilyGroceries(
     session.user.id,
-    items.map((i) => (i.id === id ? { ...i, checked: Boolean(checked) } : i))
+    items.map((i) => {
+      if (i.id !== id) return i;
+      const updated = { ...i };
+      if ("checked" in body) updated.checked = Boolean(body.checked);
+      if ("store" in body) updated.store = body.store ?? undefined;
+      return updated;
+    })
   );
   return NextResponse.json({ ok: true });
 }

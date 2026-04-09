@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Trash2 } from "lucide-react";
+import { Store, Trash2 } from "lucide-react";
 import { useAppContext } from "@/store/context";
 import { groceryItemKey } from "@/lib/ingredient-utils";
 import { STORES } from "@/lib/stores";
@@ -99,30 +99,34 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
               )}
 
               {/* Store picker */}
-              <select
-                value={item.store ?? ""}
-                onClick={(e) => e.stopPropagation()}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  const store = e.target.value || undefined;
-                  if (item.manualId) {
-                    dispatch({ type: "SET_MANUAL_GROCERY_STORE", id: item.manualId, store });
-                  } else {
-                    dispatch({ type: "SET_ITEM_STORE", key: groceryItemKey(item.aisle, item.name, item.unit), store });
-                  }
-                }}
-                className={clsx(
-                  "flex-shrink-0 text-xs rounded-full px-2 py-0.5 border cursor-pointer appearance-none focus:outline-none focus:ring-1 focus:ring-brand-400 max-w-[80px] truncate",
+              <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                <div className={clsx(
+                  "flex items-center gap-1 rounded-full px-2 py-0.5 border text-xs pointer-events-none",
                   item.store
                     ? "bg-brand-50 text-brand-600 border-brand-200"
                     : "bg-gray-50 text-gray-400 border-gray-200"
-                )}
-              >
-                <option value="">+ Store</option>
-                {STORES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+                )}>
+                  <Store size={11} />
+                  {item.store && <span className="max-w-[60px] truncate">{item.store}</span>}
+                </div>
+                <select
+                  value={item.store ?? ""}
+                  onChange={(e) => {
+                    const store = e.target.value || undefined;
+                    if (item.manualId) {
+                      dispatch({ type: "SET_MANUAL_GROCERY_STORE", id: item.manualId, store });
+                    } else {
+                      dispatch({ type: "SET_ITEM_STORE", key: groceryItemKey(item.aisle, item.name, item.unit), store });
+                    }
+                  }}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                >
+                  <option value="">No store</option>
+                  {STORES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
 
               {/* Delete — manual items only */}
               {item.manualId && (

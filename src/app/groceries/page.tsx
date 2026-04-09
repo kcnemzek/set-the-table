@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Plus, ShoppingCart, Trash2, EyeOff, Eye, Users } from "lucide-react";
+import { Plus, ShoppingCart, Store, Trash2, EyeOff, Eye, Users } from "lucide-react";
 import GrocerySection from "@/components/groceries/GrocerySection";
 import ManualAddSheet from "@/components/groceries/ManualAddSheet";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
@@ -114,6 +114,15 @@ export default function GroceriesPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ checked }),
+    });
+  }
+
+  async function handleSetFamilyItemStore(id: string, store: string | undefined) {
+    setFamilyItems((prev) => prev.map((i) => (i.id === id ? { ...i, store } : i)));
+    await fetch(`/api/groceries/family/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ store: store ?? null }),
     });
   }
 
@@ -388,6 +397,20 @@ export default function GroceriesPage() {
                             <span className={`flex-1 text-sm ${item.checked ? "text-gray-400 line-through" : "text-gray-800"}`}>
                               {item.name}
                             </span>
+                            <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 border text-xs pointer-events-none ${item.store ? "bg-brand-50 text-brand-600 border-brand-200" : "bg-gray-50 text-gray-400 border-gray-200"}`}>
+                                <Store size={11} />
+                                {item.store && <span className="max-w-[60px] truncate">{item.store}</span>}
+                              </div>
+                              <select
+                                value={item.store ?? ""}
+                                onChange={(e) => handleSetFamilyItemStore(item.id, e.target.value || undefined)}
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                              >
+                                <option value="">No store</option>
+                                {STORES.map((s) => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                            </div>
                             <button
                               onClick={(e) => { e.stopPropagation(); handleRemoveFamilyItem(item.id); }}
                               className="text-gray-300 hover:text-red-400 transition-colors p-1"

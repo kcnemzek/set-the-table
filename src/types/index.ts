@@ -115,6 +115,7 @@ export interface FamilyGroceryItem {
   addedBy: string;  // member name
   addedAt: string;  // ISO date string
   checked: boolean;
+  store?: string;
 }
 
 // ─── Tips ─────────────────────────────────────────────────────────────────────

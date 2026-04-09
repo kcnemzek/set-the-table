@@ -42,12 +42,13 @@ export default function GroceriesPage() {
 
   const UNASSIGNED = "__unassigned__";
 
-  // All unique store names across manual items and recipe ingredient store assignments
+  // All unique store names — derived from the aggregated list (already correct since tags update)
+  // plus family items which aren't in groceryList
   const stores = useMemo(() => {
-    const fromManual = state.manualGroceryItems.map((i) => i.store).filter(Boolean) as string[];
-    const fromRecipes = Object.values(state.groceryItemStores);
-    return Array.from(new Set([...fromManual, ...fromRecipes])).sort();
-  }, [state.manualGroceryItems, state.groceryItemStores]);
+    const fromList = Object.values(groceryList).flat().map((i) => i.store).filter(Boolean) as string[];
+    const fromFamily = familyItems.map((i) => i.store).filter(Boolean) as string[];
+    return Array.from(new Set([...fromList, ...fromFamily])).sort();
+  }, [groceryList, familyItems]);
 
   const buildRecipeList = useCallback(async () => {
     if (!state.hydrated) return;
@@ -170,7 +171,11 @@ export default function GroceriesPage() {
   const loading = tab === "family" ? familyLoading : recipeLoading;
 
   const familyCheckedCount = familyItems.filter((i) => i.checked).length;
-  const visibleFamilyItems = hideChecked ? familyItems.filter((i) => !i.checked) : familyItems;
+  const visibleFamilyItems = familyItems
+    .filter((i) => !selectedStore || (
+      selectedStore === UNASSIGNED ? !i.store : i.store === selectedStore
+    ))
+    .filter((i) => !hideChecked || !i.checked);
 
   // Group visible family items by who added them
   const familyByMember = visibleFamilyItems.reduce<Record<string, FamilyGroceryItem[]>>((acc, item) => {

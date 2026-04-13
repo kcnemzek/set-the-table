@@ -300,7 +300,6 @@ export default function AddEntrySheet({
       open={!!viewingCustomRecipe}
       onClose={() => setViewingCustomRecipe(null)}
       existing={viewingCustomRecipe ?? undefined}
-      readOnly
     />
 
     <RecipeDetailSheet

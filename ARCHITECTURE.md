@@ -436,6 +436,7 @@ KV_REST_API_URL set?
 - **Custom header**: `Edamam-Account-User: mwfd-user`
 - **Wrapper**: `src/lib/edamam-fetch.ts`
 - **Transform**: `src/lib/edamam-transform.ts` — maps Edamam response to internal types, assigns aisles from food categories
+- **Ingredient parser**: `src/lib/parse-ingredient.ts` — parses free-text ingredient strings (e.g. "2 cups flour") into structured `{ amount, unit, name }` fields for custom recipes
 - **Env**: `EDAMAM_APP_ID`, `EDAMAM_APP_KEY`
 
 ### Vercel KV (Redis)
@@ -486,7 +487,8 @@ layout.tsx
 │       │   ├── Favorites tab
 │       │   │   └── RecipeCard[] grouped by category
 │       │   ├── My Recipes tab
-│       │   │   └── CustomRecipeSheet + custom recipe list
+│       │   │   └── CustomRecipeSheet (view mode by default → Edit button switches to edit mode)
+│       │   │       custom recipe list; ingredients entered as free text, parsed on save
 │       │   └── Tips tab
 │       │       └── TipSheet + tip list (sorted by title)
 │       │

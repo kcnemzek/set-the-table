@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   }
 
   const rawClient = new Anthropic();
-  const client = wrapSDK(rawClient, { projectName: "whats-for-dinner" });
+  const client = wrapSDK(rawClient, { project_name: "whats-for-dinner" });
 
   const userContent: Anthropic.MessageParam["content"] = [];
 

@@ -346,7 +346,7 @@ export default function EventPlanningPage() {
         />
       )}
       <RecipeDetailSheet recipe={viewingMenuRecipe} onClose={() => setViewingMenuRecipe(null)} />
-      <CustomRecipeSheet open={!!viewingMenuCustom} onClose={() => setViewingMenuCustom(null)} existing={viewingMenuCustom ?? undefined} readOnly />
+      <CustomRecipeSheet open={!!viewingMenuCustom} onClose={() => setViewingMenuCustom(null)} existing={viewingMenuCustom ?? undefined} />
       {addAllMenuId && (() => {
         const m = state.savedMenus.find((s) => s.id === addAllMenuId);
         return m ? (

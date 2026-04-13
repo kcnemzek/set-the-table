@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, X, Share2 } from "lucide-react";
+import { Plus, Trash2, X, Share2, Pencil } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
 import { CATEGORIES, getRecipeEmoji } from "@/lib/recipe-emoji";
-import { parseAmount } from "@/lib/parse-amount";
+import { parseIngredientText } from "@/lib/parse-ingredient";
 import { shareRecipe } from "@/lib/share-recipe";
 import type { CustomRecipe, ExtendedIngredient } from "@/types";
 
@@ -25,35 +25,34 @@ const AISLES = [
 ];
 
 interface IngredientRow {
-  name: string;
-  amount: string;
-  unit: string;
+  text: string;
   aisle: string;
 }
 
-const emptyRow = (): IngredientRow => ({
-  name: "",
-  amount: "",
-  unit: "",
-  aisle: "Miscellaneous",
-});
+const emptyRow = (): IngredientRow => ({ text: "", aisle: "Miscellaneous" });
 
-
+function ingredientToRow(i: ExtendedIngredient): IngredientRow {
+  const text =
+    i.original?.trim() ||
+    [i.amountDisplay ?? (i.amount ? String(i.amount) : ""), i.unit, i.name]
+      .filter(Boolean)
+      .join(" ");
+  return { text, aisle: i.aisle };
+}
 
 interface CustomRecipeSheetProps {
   open: boolean;
   onClose: () => void;
   existing?: CustomRecipe;
-  readOnly?: boolean;
 }
 
 export default function CustomRecipeSheet({
   open,
   onClose,
   existing,
-  readOnly,
 }: CustomRecipeSheetProps) {
   const { dispatch } = useAppContext();
+  const [isEditing, setIsEditing] = useState(!existing);
   const [title, setTitle] = useState(existing?.title ?? "");
   const [category, setCategory] = useState(existing?.category ?? "");
   const [servings, setServings] = useState(String(existing?.servings || ""));
@@ -61,12 +60,7 @@ export default function CustomRecipeSheet({
   const [url, setUrl] = useState(existing?.url ?? "");
   const [emoji, setEmoji] = useState(existing?.emoji ?? "");
   const [rows, setRows] = useState<IngredientRow[]>(
-    existing?.extendedIngredients.map((i) => ({
-      name: i.name,
-      amount: i.amountDisplay ?? String(i.amount),
-      unit: i.unit,
-      aisle: i.aisle,
-    })) ?? [emptyRow()]
+    existing?.extendedIngredients.map(ingredientToRow) ?? [emptyRow()]
   );
   const [showConfirm, setShowConfirm] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -81,26 +75,22 @@ export default function CustomRecipeSheet({
 
   useEffect(() => {
     if (open) {
+      setIsEditing(!existing);
       setTitle(existing?.title ?? "");
       setCategory(existing?.category ?? "");
       setServings(String(existing?.servings || ""));
       setDirections(existing?.directions ?? "");
       setUrl(existing?.url ?? "");
       setEmoji(existing?.emoji ?? "");
-      setRows(
-        existing?.extendedIngredients.map((i) => ({
-          name: i.name,
-          amount: i.amountDisplay ?? String(i.amount),
-          unit: i.unit,
-          aisle: i.aisle,
-        })) ?? [emptyRow()]
-      );
+      setRows(existing?.extendedIngredients.map(ingredientToRow) ?? [emptyRow()]);
       setShowConfirm(false);
     }
   }, [open, existing]);
 
   function isDirty() {
+    if (!isEditing) return false;
     if (existing) {
+      const origRows = existing.extendedIngredients.map(ingredientToRow);
       return (
         title !== existing.title ||
         category !== (existing.category ?? "") ||
@@ -108,10 +98,10 @@ export default function CustomRecipeSheet({
         directions !== (existing.directions ?? "") ||
         url !== (existing.url ?? "") ||
         emoji !== (existing.emoji ?? "") ||
-        rows.length !== existing.extendedIngredients.length ||
+        rows.length !== origRows.length ||
         rows.some((r, i) => {
-          const orig = existing.extendedIngredients[i];
-          return !orig || r.name !== orig.name || r.amount !== String(orig.amount) || r.unit !== orig.unit || r.aisle !== orig.aisle;
+          const orig = origRows[i];
+          return !orig || r.text !== orig.text || r.aisle !== orig.aisle;
         })
       );
     }
@@ -119,7 +109,7 @@ export default function CustomRecipeSheet({
       title.trim() !== "" ||
       directions.trim() !== "" ||
       url.trim() !== "" ||
-      rows.some((r) => r.name.trim() !== "")
+      rows.some((r) => r.text.trim() !== "")
     );
   }
 
@@ -131,30 +121,30 @@ export default function CustomRecipeSheet({
     }
   }
 
-  const updateRow = (idx: number, field: keyof IngredientRow, value: string) => {
+  const updateRow = (idx: number, field: keyof IngredientRow, value: string) =>
     setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
-  };
 
   const addRow = () => setRows((prev) => [...prev, emptyRow()]);
-
-  const removeRow = (idx: number) =>
-    setRows((prev) => prev.filter((_, i) => i !== idx));
+  const removeRow = (idx: number) => setRows((prev) => prev.filter((_, i) => i !== idx));
 
   const handleSave = () => {
     if (!title.trim()) return;
 
     const extendedIngredients: ExtendedIngredient[] = rows
-      .filter((r) => r.name.trim())
-      .map((r, idx) => ({
-        id: idx,
-        name: r.name.trim(),
-        nameClean: r.name.trim().toLowerCase(),
-        original: `${r.amount} ${r.unit} ${r.name}`.trim(),
-        amount: parseAmount(r.amount),
-        amountDisplay: r.amount.trim() || undefined,
-        unit: r.unit.trim(),
-        aisle: r.aisle,
-      }));
+      .filter((r) => r.text.trim())
+      .map((r, idx) => {
+        const parsed = parseIngredientText(r.text);
+        return {
+          id: idx,
+          name: parsed.name,
+          nameClean: parsed.name.toLowerCase(),
+          original: parsed.original,
+          amount: parsed.amount,
+          amountDisplay: parsed.amountDisplay || undefined,
+          unit: parsed.unit,
+          aisle: r.aisle,
+        };
+      });
 
     const recipe: CustomRecipe = {
       id: existing?.id ?? `custom_${crypto.randomUUID()}`,
@@ -175,7 +165,8 @@ export default function CustomRecipeSheet({
     onClose();
   };
 
-  if (readOnly && existing) {
+  // ── View mode ────────────────────────────────────────────────────────────────
+  if (!isEditing && existing) {
     return (
       <BottomSheet open={open} onClose={onClose} title={existing.title}>
         <div className="p-4 space-y-4 pb-8">
@@ -184,11 +175,13 @@ export default function CustomRecipeSheet({
           )}
           {existing.extendedIngredients.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ingredients</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Ingredients
+              </p>
               <ul className="space-y-1">
                 {existing.extendedIngredients.map((ing, i) => (
                   <li key={i} className="text-sm text-gray-700 flex gap-2">
-                    <span className="text-gray-500 flex-shrink-0">·</span>
+                    <span className="text-gray-400 flex-shrink-0">·</span>
                     <span>{ing.original}</span>
                   </li>
                 ))}
@@ -197,7 +190,9 @@ export default function CustomRecipeSheet({
           )}
           {existing.directions && (
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Directions</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Directions
+              </p>
               <p className="text-sm text-gray-700 whitespace-pre-line">{existing.directions}</p>
             </div>
           )}
@@ -211,18 +206,28 @@ export default function CustomRecipeSheet({
               View full recipe
             </a>
           )}
-          <button
-            onClick={() => handleShare(existing)}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
-          >
-            <Share2 size={15} />
-            {shareCopied ? "Copied!" : "Share Recipe"}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleShare(existing)}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+            >
+              <Share2 size={15} />
+              {shareCopied ? "Copied!" : "Share"}
+            </button>
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-500 text-white text-sm font-semibold active:bg-brand-600"
+            >
+              <Pencil size={15} />
+              Edit
+            </button>
+          </div>
         </div>
       </BottomSheet>
     );
   }
 
+  // ── Edit mode ────────────────────────────────────────────────────────────────
   return (
     <BottomSheet
       open={open}
@@ -318,52 +323,33 @@ export default function CustomRecipeSheet({
           </label>
           <div className="mt-2 space-y-2">
             {rows.map((row, idx) => (
-              <div key={idx} className="flex gap-2 items-start">
-                <div className="flex-1 space-y-1.5">
-                  <input
-                    type="text"
-                    value={row.name}
-                    onChange={(e) => updateRow(idx, "name", e.target.value)}
-                    placeholder="Ingredient"
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-                  />
-                  <div className="flex gap-1.5">
-                    <input
-                      type="text"
-                      value={row.amount}
-                      onChange={(e) => updateRow(idx, "amount", e.target.value)}
-                      placeholder="Amt"
-                      className="w-16 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-                    />
-                    <input
-                      type="text"
-                      value={row.unit}
-                      onChange={(e) => updateRow(idx, "unit", e.target.value)}
-                      placeholder="Unit"
-                      className="w-20 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-                    />
-                    <select
-                      value={row.aisle}
-                      onChange={(e) => updateRow(idx, "aisle", e.target.value)}
-                      className="flex-1 rounded-xl border border-gray-200 px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
-                    >
-                      {AISLES.map((a) => (
-                        <option key={a} value={a}>
-                          {a}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              <div key={idx} className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  value={row.text}
+                  onChange={(e) => updateRow(idx, "text", e.target.value)}
+                  placeholder="e.g. 2 cups flour"
+                  className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                />
+                <select
+                  value={row.aisle}
+                  onChange={(e) => updateRow(idx, "aisle", e.target.value)}
+                  className="w-28 rounded-xl border border-gray-200 px-2 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+                >
+                  {AISLES.map((a) => (
+                    <option key={a} value={a}>
+                      {a}
+                    </option>
+                  ))}
+                </select>
                 <button
                   onClick={() => removeRow(idx)}
-                  className="mt-2 p-2 text-gray-500 hover:text-red-400 active:text-red-500"
+                  className="p-2 text-gray-400 hover:text-red-400 flex-shrink-0"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={15} />
                 </button>
               </div>
             ))}
-
             <button
               onClick={addRow}
               className="flex items-center gap-2 text-sm text-brand-500 hover:text-brand-600 py-1"
@@ -382,7 +368,7 @@ export default function CustomRecipeSheet({
           <textarea
             value={directions}
             onChange={(e) => setDirections(e.target.value)}
-            placeholder="Step 1: Preheat oven to 375°F&#10;Step 2: ..."
+            placeholder={"Step 1: Preheat oven to 375°F\nStep 2: ..."}
             rows={5}
             className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
           />
@@ -403,7 +389,10 @@ export default function CustomRecipeSheet({
               >
                 {url.trim()}
               </a>
-              <button onClick={() => setUrl("")} className="text-gray-500 hover:text-gray-600 flex-shrink-0">
+              <button
+                onClick={() => setUrl("")}
+                className="text-gray-500 hover:text-gray-600 flex-shrink-0"
+              >
                 <X size={15} />
               </button>
             </div>
@@ -422,7 +411,9 @@ export default function CustomRecipeSheet({
         <div className="flex gap-3">
           {existing && (
             <button
-              onClick={() => handleShare({ ...existing, title, category, emoji: emoji || undefined })}
+              onClick={() =>
+                handleShare({ ...existing, title, category, emoji: emoji || undefined })
+              }
               className="flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100"
             >
               <Share2 size={16} />

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Trash2, X, Share2, Pencil } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Trash2, X, Share2, Pencil, ClipboardPaste, Camera, Loader2 } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
 import { CATEGORIES, getRecipeEmoji } from "@/lib/recipe-emoji";
@@ -40,6 +40,30 @@ function ingredientToRow(i: ExtendedIngredient): IngredientRow {
   return { text, aisle: i.aisle };
 }
 
+async function resizeImageToBase64(
+  file: File,
+  maxSize = 1120
+): Promise<{ base64: string; mimeType: string }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      resolve({ base64: dataUrl.split(",")[1], mimeType: "image/jpeg" });
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
 interface CustomRecipeSheetProps {
   open: boolean;
   onClose: () => void;
@@ -53,6 +77,8 @@ export default function CustomRecipeSheet({
 }: CustomRecipeSheetProps) {
   const { dispatch } = useAppContext();
   const [isEditing, setIsEditing] = useState(!existing);
+
+  // Form fields
   const [title, setTitle] = useState(existing?.title ?? "");
   const [category, setCategory] = useState(existing?.category ?? "");
   const [servings, setServings] = useState(String(existing?.servings || ""));
@@ -64,6 +90,13 @@ export default function CustomRecipeSheet({
   );
   const [showConfirm, setShowConfirm] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+
+  // Import state
+  const [importMode, setImportMode] = useState<"none" | "text">("none");
+  const [importText, setImportText] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleShare = async (recipe: CustomRecipe) => {
     const copied = await shareRecipe(recipe);
@@ -84,8 +117,72 @@ export default function CustomRecipeSheet({
       setEmoji(existing?.emoji ?? "");
       setRows(existing?.extendedIngredients.map(ingredientToRow) ?? [emptyRow()]);
       setShowConfirm(false);
+      setImportMode("none");
+      setImportText("");
+      setImportError(null);
     }
   }, [open, existing]);
+
+  function applyParsedRecipe(parsed: {
+    title?: string;
+    servings?: number;
+    ingredients?: { text: string; aisle: string }[];
+    directions?: string;
+  }) {
+    if (parsed.title) setTitle(parsed.title);
+    if (parsed.servings) setServings(String(parsed.servings));
+    if (parsed.directions) setDirections(parsed.directions);
+    if (parsed.ingredients?.length) {
+      setRows(parsed.ingredients.map((i) => ({ text: i.text, aisle: i.aisle || "Miscellaneous" })));
+    }
+    setImportMode("none");
+    setImportText("");
+    setImportError(null);
+  }
+
+  async function handleImportText() {
+    if (!importText.trim()) return;
+    setImporting(true);
+    setImportError(null);
+    try {
+      const res = await fetch("/api/recipes/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: importText }),
+      });
+      if (!res.ok) throw new Error("Parse failed");
+      const parsed = await res.json();
+      applyParsedRecipe(parsed);
+    } catch {
+      setImportError("Couldn't parse the recipe. Try cleaning up the text and trying again.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Reset so same file can be selected again
+    e.target.value = "";
+    setImporting(true);
+    setImportError(null);
+    try {
+      const { base64, mimeType } = await resizeImageToBase64(file);
+      const res = await fetch("/api/recipes/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64, mimeType }),
+      });
+      if (!res.ok) throw new Error("Parse failed");
+      const parsed = await res.json();
+      applyParsedRecipe(parsed);
+    } catch {
+      setImportError("Couldn't read the recipe from that image. Try a clearer photo.");
+    } finally {
+      setImporting(false);
+    }
+  }
 
   function isDirty() {
     if (!isEditing) return false;
@@ -234,6 +331,14 @@ export default function CustomRecipeSheet({
       onClose={handleClose}
       title={existing ? "Edit Recipe" : "New Custom Recipe"}
     >
+      {/* Loading overlay while AI parses */}
+      {importing && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 rounded-t-2xl gap-3">
+          <Loader2 size={32} className="animate-spin text-brand-500" />
+          <p className="text-sm text-gray-600 font-medium">Reading recipe…</p>
+        </div>
+      )}
+
       {showConfirm && (
         <div className="absolute inset-0 z-10 flex items-end justify-center bg-black/20 rounded-t-2xl">
           <div className="w-full bg-white rounded-t-2xl p-6 space-y-3 shadow-xl">
@@ -254,7 +359,65 @@ export default function CustomRecipeSheet({
           </div>
         </div>
       )}
+
       <div className="p-4 space-y-4 pb-8">
+
+        {/* ── Import section (new recipes only) ── */}
+        {!existing && (
+          <div className="rounded-xl bg-brand-50 border border-brand-100 p-3 space-y-3">
+            <p className="text-xs font-semibold text-brand-700 uppercase tracking-wide">
+              Import a recipe
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setImportMode(importMode === "text" ? "none" : "text")}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
+              >
+                <ClipboardPaste size={15} />
+                Paste text
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
+              >
+                <Camera size={15} />
+                Snap a photo
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleImageChange}
+              />
+            </div>
+
+            {importMode === "text" && (
+              <div className="space-y-2">
+                <textarea
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  placeholder="Paste recipe text here — ingredients, directions, anything you have…"
+                  rows={5}
+                  className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
+                />
+                <button
+                  onClick={handleImportText}
+                  disabled={!importText.trim()}
+                  className="w-full py-2.5 rounded-xl bg-brand-500 text-white text-sm font-semibold disabled:opacity-40 active:bg-brand-600"
+                >
+                  Import
+                </button>
+              </div>
+            )}
+
+            {importError && (
+              <p className="text-xs text-red-500">{importError}</p>
+            )}
+          </div>
+        )}
+
         {/* Title */}
         <div>
           <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">

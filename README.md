@@ -7,7 +7,7 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 - **Menu planning** — plan meals for the next 10 days
 - **Recipe discovery** — search recipes or generate random suggestions
 - **Favorites** — save recipes you love for quick access
-- **My Recipes** — add your own custom recipes with ingredients
+- **My Recipes** — add your own custom recipes with ingredients; import by pasting text or snapping a photo (AI-powered)
 - **Tips** — save cooking tips you look up often (techniques, timing, substitutions)
 - **Grocery list** — auto-generated from the week's planned meals, with store assignment, store filter chips, and tabbed views for Recipes, Family requests, and All
 - **Event planning** — plan holiday dinners and special occasions with a dish list, prep timeline, and automatic grocery list integration
@@ -27,6 +27,8 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 | Database | Upstash Redis (via `@vercel/kv`) |
 | Deployment | Vercel |
 | Recipe API | Edamam |
+| AI | Anthropic Claude (Haiku) |
+| Observability | LangSmith |
 
 ## Project Structure
 
@@ -64,6 +66,10 @@ src/
 | `EDAMAM_APP_ID` | Edamam recipe API app ID |
 | `EDAMAM_APP_KEY` | Edamam recipe API app key |
 | `NEXT_PUBLIC_VERSION` | App version shown in header |
+| `ANTHROPIC_API_KEY` | Claude API key (recipe import) |
+| `LANGSMITH_API_KEY` | LangSmith tracing key |
+| `LANGSMITH_TRACING_V2` | Set to `true` to enable tracing |
+| `LANGSMITH_PROJECT` | Set to `whats-for-dinner` |
 
 ## Getting Started
 

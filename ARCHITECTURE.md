@@ -28,6 +28,8 @@
 | Drag & Drop | dnd-kit |
 | Icons | lucide-react |
 | Analytics | Vercel Analytics |
+| AI | Anthropic Claude Haiku 4.5 |
+| Observability | LangSmith (via `langsmith/wrappers`) |
 | Testing | Vitest + Testing Library |
 | Hosting | Vercel |
 
@@ -339,6 +341,7 @@ User visits protected route
 | `/api/groceries/family` | DELETE | Yes | Owner clears all family grocery requests |
 | `/api/groceries/family/[id]` | DELETE | Yes | Owner removes a single family grocery request |
 | `/api/feedback` | POST | No | Create GitHub issue from in-app feedback |
+| `/api/recipes/parse` | POST | No | Parse recipe from pasted text or image via Claude Haiku; traced via LangSmith |
 
 ### Notable Behaviors
 
@@ -454,6 +457,19 @@ KV_REST_API_URL set?
 
 - **Package**: `@vercel/analytics/next`
 - **Setup**: Zero-config on Vercel, silent no-op elsewhere
+
+### Anthropic Claude
+
+- **Model**: `claude-haiku-4-5-20251001`
+- **Usage**: Recipe import — parses pasted text or photos into structured `CustomRecipe` JSON
+- **Route**: `POST /api/recipes/parse`
+- **Env**: `ANTHROPIC_API_KEY`
+- **Tracing**: All calls wrapped with `wrapSDK` from `langsmith/wrappers`; traces appear in the `whats-for-dinner` LangSmith project
+
+### LangSmith
+
+- **Usage**: Observability for Claude API calls in `/api/recipes/parse`
+- **Env**: `LANGSMITH_API_KEY`, `LANGSMITH_TRACING_V2=true`, `LANGSMITH_PROJECT=whats-for-dinner`
 
 ### GitHub API (optional)
 

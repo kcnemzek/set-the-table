@@ -34,6 +34,13 @@ export default function DayPickerSheet({
     } else {
       const toAdd: DayEntry = entry
         ? { ...entry, id: crypto.randomUUID() }
+        : recipe.id.startsWith("custom_")
+        ? {
+            id: crypto.randomUUID(),
+            type: "custom-recipe",
+            customRecipeId: recipe.id,
+            recipeTitle: recipe.title,
+          }
         : {
             id: crypto.randomUUID(),
             type: "recipe",

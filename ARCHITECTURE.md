@@ -505,6 +505,7 @@ layout.tsx
 │       │   ├── My Recipes tab
 │       │   │   └── CustomRecipeSheet (view mode by default → Edit button switches to edit mode)
 │       │   │       custom recipe list; ingredients entered as free text, parsed on save
+│       │   │       import options: paste text, or queue 1–2 photos (snap/upload) then send together
 │       │   └── Tips tab
 │       │       └── TipSheet + tip list (sorted by title)
 │       │

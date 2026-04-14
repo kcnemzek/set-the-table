@@ -33,7 +33,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
   }
 
-  let body: { text?: string; imageBase64?: string; mimeType?: string };
+  let body: {
+    text?: string;
+    imageBase64?: string;
+    mimeType?: string;
+    images?: { base64: string; mimeType: string }[];
+  };
   try {
     body = await request.json();
   } catch {
@@ -41,9 +46,12 @@ export async function POST(request: NextRequest) {
   }
 
   const { text, imageBase64, mimeType } = body;
+  // Normalise to an images array; support legacy single-image fields too
+  const images: { base64: string; mimeType: string }[] =
+    body.images ?? (imageBase64 ? [{ base64: imageBase64, mimeType: mimeType ?? "image/jpeg" }] : []);
 
-  if (!text && !imageBase64) {
-    return NextResponse.json({ error: "text or imageBase64 required" }, { status: 400 });
+  if (!text && images.length === 0) {
+    return NextResponse.json({ error: "text or images required" }, { status: 400 });
   }
 
   const rawClient = new Anthropic();
@@ -53,15 +61,20 @@ export async function POST(request: NextRequest) {
 
   const userContent: Anthropic.MessageParam["content"] = [];
 
-  if (imageBase64) {
-    const validMime = (mimeType === "image/png" || mimeType === "image/gif" || mimeType === "image/webp")
-      ? mimeType
-      : "image/jpeg";
-    userContent.push({
-      type: "image",
-      source: { type: "base64", media_type: validMime, data: imageBase64 },
-    });
-    userContent.push({ type: "text", text: "Extract the recipe from this image." });
+  if (images.length > 0) {
+    for (const img of images) {
+      const validMime = (img.mimeType === "image/png" || img.mimeType === "image/gif" || img.mimeType === "image/webp")
+        ? img.mimeType
+        : "image/jpeg";
+      userContent.push({
+        type: "image",
+        source: { type: "base64", media_type: validMime, data: img.base64 },
+      });
+    }
+    const prompt = images.length > 1
+      ? "Extract the recipe from these images. They show different pages of the same recipe — combine them into one complete recipe."
+      : "Extract the recipe from this image.";
+    userContent.push({ type: "text", text: prompt });
   } else {
     userContent.push({ type: "text", text: `Extract the recipe from this text:\n\n${text}` });
   }

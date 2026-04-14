@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, X, Share2, Pencil, ClipboardPaste, Camera, Loader2 } from "lucide-react";
+import { Plus, Trash2, X, Share2, Pencil, ClipboardPaste, Camera, ImagePlus, Loader2 } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
 import { CATEGORIES, getRecipeEmoji } from "@/lib/recipe-emoji";
@@ -27,6 +27,12 @@ const AISLES = [
 interface IngredientRow {
   text: string;
   aisle: string;
+}
+
+interface PendingImage {
+  base64: string;
+  mimeType: string;
+  previewUrl: string;
 }
 
 const emptyRow = (): IngredientRow => ({ text: "", aisle: "Miscellaneous" });
@@ -96,7 +102,9 @@ export default function CustomRecipeSheet({
   const [importText, setImportText] = useState("");
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleShare = async (recipe: CustomRecipe) => {
     const copied = await shareRecipe(recipe);
@@ -120,6 +128,7 @@ export default function CustomRecipeSheet({
       setImportMode("none");
       setImportText("");
       setImportError(null);
+      setPendingImages([]);
     }
   }, [open, existing]);
 
@@ -166,21 +175,38 @@ export default function CustomRecipeSheet({
     if (!file) return;
     // Reset so same file can be selected again
     e.target.value = "";
-    setImporting(true);
+    if (pendingImages.length >= 2) return;
     setImportError(null);
     try {
       const { base64, mimeType } = await resizeImageToBase64(file);
+      setPendingImages((prev) => [
+        ...prev,
+        { base64, mimeType, previewUrl: `data:${mimeType};base64,${base64}` },
+      ]);
+    } catch {
+      setImportError("Couldn't read that image. Try another file.");
+    }
+  }
+
+  async function handleImportImages() {
+    if (pendingImages.length === 0) return;
+    setImporting(true);
+    setImportError(null);
+    try {
       const res = await fetch("/api/recipes/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64, mimeType }),
+        body: JSON.stringify({
+          images: pendingImages.map(({ base64, mimeType }) => ({ base64, mimeType })),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? data.error ?? "Parse failed");
+      setPendingImages([]);
       applyParsedRecipe(data);
     } catch (err) {
       console.error("[recipe import]", err);
-      setImportError("Couldn't read the recipe from that image. Try a clearer photo.");
+      setImportError("Couldn't read the recipe from those images. Try clearer photos.");
     } finally {
       setImporting(false);
     }
@@ -337,7 +363,9 @@ export default function CustomRecipeSheet({
       {importing && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 rounded-t-2xl gap-3">
           <Loader2 size={32} className="animate-spin text-brand-500" />
-          <p className="text-sm text-gray-600 font-medium">Reading recipe…</p>
+          <p className="text-sm text-gray-600 font-medium">
+            {pendingImages.length > 1 ? "Reading recipe pages…" : "Reading recipe…"}
+          </p>
         </div>
       )}
 
@@ -370,30 +398,83 @@ export default function CustomRecipeSheet({
             <p className="text-xs font-semibold text-brand-700 uppercase tracking-wide">
               Import a recipe
             </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setImportMode(importMode === "text" ? "none" : "text")}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
-              >
-                <ClipboardPaste size={15} />
-                Paste text
-              </button>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
-              >
-                <Camera size={15} />
-                Snap a photo
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleImageChange}
-              />
-            </div>
+            {pendingImages.length < 2 && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setImportMode(importMode === "text" ? "none" : "text")}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
+                >
+                  <ClipboardPaste size={15} />
+                  Paste text
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
+                >
+                  <Camera size={15} />
+                  Snap a photo
+                </button>
+                <button
+                  onClick={() => uploadFileInputRef.current?.click()}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
+                >
+                  <ImagePlus size={15} />
+                  Upload photo
+                </button>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+            <input
+              ref={uploadFileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+
+            {pendingImages.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  {pendingImages.map((img, i) => (
+                    <div key={i} className="relative">
+                      <img
+                        src={img.previewUrl}
+                        alt={`Page ${i + 1}`}
+                        className="w-20 h-20 object-cover rounded-lg border border-brand-200"
+                      />
+                      <button
+                        onClick={() => setPendingImages((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
+                  {pendingImages.length === 1 && (
+                    <button
+                      onClick={() => uploadFileInputRef.current?.click()}
+                      className="w-20 h-20 rounded-lg border-2 border-dashed border-brand-300 flex flex-col items-center justify-center gap-1 text-brand-400 hover:bg-brand-50"
+                    >
+                      <Plus size={16} />
+                      <span className="text-xs font-medium">Page 2</span>
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={handleImportImages}
+                  className="w-full py-2.5 rounded-xl bg-brand-500 text-white text-sm font-semibold active:bg-brand-600"
+                >
+                  {pendingImages.length > 1 ? "Import both pages" : "Import recipe"}
+                </button>
+              </div>
+            )}
 
             {importMode === "text" && (
               <div className="space-y-2">

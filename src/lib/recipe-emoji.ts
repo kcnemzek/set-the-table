@@ -26,7 +26,7 @@ const CATEGORY_MAP: [string[], string, string][] = [
   [["bean", "lentil", "hummus", "falafel", "chickpea", "black bean", "edamame"], "🫘", "Beans & Legumes"],
   [["cake", "cupcake", "cheesecake", "tiramisu", "mousse", "cookie", "brownie", "biscotti", "macaroon", "pie", "tart", "cobbler", "crisp", "ice cream", "gelato", "sorbet", "sundae", "chocolate", "truffle", "fudge", "donut", "doughnut"], "🍪", "Desserts"],
   [["smoothie", "shake", "juice", "lemonade"], "🥤", "Drinks"],
-  [["guacamole", "avocado toast", "bruschetta", "crostini"], "🥑", "Dips & Spreads"],
+  [["guacamole", "avocado toast", "bruschetta", "crostini", "cheese ball"], "🫙", "Dips & Spreads"],
   [["rice"], "🍚", "Rice Dishes"],
 ];
 
@@ -101,7 +101,7 @@ const EMOJI_MAP: [string[], string][] = [
   // Smoothie / drinks
   [["smoothie", "shake", "juice", "lemonade"], "🥤"],
   // Dips & Spreads
-  [["guacamole", "avocado toast", "bruschetta", "crostini"], "🥑"],
+  [["guacamole", "avocado toast", "bruschetta", "crostini"], "🫙"],
   // Rice (standalone)
   [["rice"], "🍚"],
   // General fallback

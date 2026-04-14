@@ -101,7 +101,7 @@ const EMOJI_MAP: [string[], string][] = [
   // Smoothie / drinks
   [["smoothie", "shake", "juice", "lemonade"], "🥤"],
   // Dips & Spreads
-  [["guacamole", "avocado toast", "bruschetta", "crostini"], "🫙"],
+  [["guacamole", "avocado toast", "bruschetta", "crostini", "cheese ball"], "🫙"],
   // Rice (standalone)
   [["rice"], "🍚"],
   // General fallback

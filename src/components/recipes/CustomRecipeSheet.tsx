@@ -399,28 +399,30 @@ export default function CustomRecipeSheet({
               Import a recipe
             </p>
             {pendingImages.length < 2 && (
-              <div className="flex gap-2">
+              <div className="space-y-2">
                 <button
                   onClick={() => setImportMode(importMode === "text" ? "none" : "text")}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
                 >
                   <ClipboardPaste size={15} />
                   Paste text
                 </button>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
-                >
-                  <Camera size={15} />
-                  Snap a photo
-                </button>
-                <button
-                  onClick={() => uploadFileInputRef.current?.click()}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
-                >
-                  <ImagePlus size={15} />
-                  Upload photo
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
+                  >
+                    <Camera size={15} />
+                    Snap a photo
+                  </button>
+                  <button
+                    onClick={() => uploadFileInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
+                  >
+                    <ImagePlus size={15} />
+                    Upload photo
+                  </button>
+                </div>
               </div>
             )}
             <input

@@ -21,7 +21,8 @@ const CATEGORY_MAP: [string[], string, string][] = [
   [["egg", "omelette", "omelet", "frittata", "quiche", "scrambled", "benedict", "shakshuka", "pancake", "waffle", "crepe", "french toast"], "🍳", "Breakfast"],
   [["bread", "baguette", "focaccia", "biscuit", "roll", "loaf", "brioche", "sourdough"], "🍞", "Bread & Baked"],
   [["pot pie", "empanada", "pasty", "samosa", "dumpling", "pierogi"], "🥟", "Savory Pastry"],
-  [["vegetable", "veggie", "stir fry", "stir-fry", "ratatouille", "roasted veg", "corn", "elote", "mushroom", "portobello", "potato", "mashed", "hash", "latke", "gratin", "sweet potato", "yam"], "🥦", "Vegetables"],
+  [["potato", "fries", "french fry", "hash brown", "mashed", "hash", "latke", "gratin", "scalloped", "tater", "twice baked", "potato salad", "potato soup", "potato skin", "potato wedge"], "🥔", "Potatoes"],
+  [["vegetable", "veggie", "stir fry", "stir-fry", "ratatouille", "roasted veg", "corn", "elote", "mushroom", "portobello", "sweet potato", "yam"], "🥦", "Vegetables"],
   [["mac and cheese", "macaroni and cheese", "grilled cheese", "fondue"], "🧀", "Cheese"],
   [["bean", "lentil", "hummus", "falafel", "chickpea", "black bean", "edamame"], "🫘", "Beans & Legumes"],
   [["cake", "cupcake", "cheesecake", "tiramisu", "mousse", "cookie", "brownie", "biscotti", "macaroon", "pie", "tart", "cobbler", "crisp", "ice cream", "gelato", "sorbet", "sundae", "chocolate", "truffle", "fudge", "donut", "doughnut"], "🍪", "Desserts"],
@@ -84,7 +85,7 @@ const EMOJI_MAP: [string[], string][] = [
   // Mushroom
   [["mushroom", "portobello", "risotto"], "🍄"],
   // Potato
-  [["potato", "mashed", "hash", "latke", "gratin"], "🥔"],
+  [["potato", "fries", "french fry", "hash brown", "mashed", "hash", "latke", "gratin", "scalloped", "tater", "twice baked", "potato salad", "potato soup", "potato skin", "potato wedge"], "🥔"],
   // Sweet potato
   [["sweet potato", "yam"], "🍠"],
   // Cheese

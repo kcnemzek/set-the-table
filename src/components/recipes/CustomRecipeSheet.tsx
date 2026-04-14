@@ -150,10 +150,11 @@ export default function CustomRecipeSheet({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: importText }),
       });
-      if (!res.ok) throw new Error("Parse failed");
-      const parsed = await res.json();
-      applyParsedRecipe(parsed);
-    } catch {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail ?? data.error ?? "Parse failed");
+      applyParsedRecipe(data);
+    } catch (err) {
+      console.error("[recipe import]", err);
       setImportError("Couldn't parse the recipe. Try cleaning up the text and trying again.");
     } finally {
       setImporting(false);
@@ -174,10 +175,11 @@ export default function CustomRecipeSheet({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageBase64: base64, mimeType }),
       });
-      if (!res.ok) throw new Error("Parse failed");
-      const parsed = await res.json();
-      applyParsedRecipe(parsed);
-    } catch {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail ?? data.error ?? "Parse failed");
+      applyParsedRecipe(data);
+    } catch (err) {
+      console.error("[recipe import]", err);
       setImportError("Couldn't read the recipe from that image. Try a clearer photo.");
     } finally {
       setImporting(false);

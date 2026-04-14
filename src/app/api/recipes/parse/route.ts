@@ -47,7 +47,9 @@ export async function POST(request: NextRequest) {
   }
 
   const rawClient = new Anthropic();
-  const client = wrapSDK(rawClient, { project_name: "whats-for-dinner" });
+  const client = process.env.LANGSMITH_TRACING_V2 === "true"
+    ? wrapSDK(rawClient, { project_name: "whats-for-dinner" })
+    : rawClient;
 
   const userContent: Anthropic.MessageParam["content"] = [];
 
@@ -79,6 +81,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(parsed);
   } catch (err) {
+    console.error("[/api/recipes/parse]", err);
     return NextResponse.json(
       { error: "Failed to parse recipe", detail: String(err) },
       { status: 500 }

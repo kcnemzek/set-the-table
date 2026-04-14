@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { wrapSDK } from "langsmith/wrappers";
+import { traceable } from "langsmith/traceable";
 
 const AISLES = [
   "Produce", "Meat & Seafood", "Dairy", "Grains & Pasta",
@@ -54,10 +54,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "text or images required" }, { status: 400 });
   }
 
-  const rawClient = new Anthropic();
-  const client = process.env.LANGSMITH_TRACING_V2 === "true"
-    ? wrapSDK(rawClient, { project_name: "whats-for-dinner" })
-    : rawClient;
+  const anthropic = new Anthropic();
+  const MODEL = "claude-haiku-4-5-20251001";
+
+  const callClaude = traceable(
+    (messages: Anthropic.MessageParam[]) =>
+      anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        messages,
+      }),
+    {
+      name: "parse-recipe",
+      run_type: "llm",
+      metadata: {
+        ls_model_name: MODEL,
+        ls_provider: "anthropic",
+        ls_model_type: "chat",
+      },
+    }
+  );
 
   const userContent: Anthropic.MessageParam["content"] = [];
 
@@ -80,12 +97,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const message = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userContent }],
-    });
+    const message = await callClaude([{ role: "user", content: userContent }]);
 
     const raw = message.content[0].type === "text" ? message.content[0].text : "";
     // Strip markdown code fences if the model wraps its output

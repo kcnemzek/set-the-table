@@ -44,6 +44,7 @@ export default function RecipesPage() {
   // Favorites state
   const [favRecipes, setFavRecipes] = useState<RecipeSummary[]>([]);
   const [favLoading, setFavLoading] = useState(false);
+  const [viewingRecipe, setViewingRecipe] = useState<RecipeSummary | null>(null);
 
   // Custom sheet
   const [customSheetOpen, setCustomSheetOpen] = useState(false);
@@ -140,6 +141,12 @@ export default function RecipesPage() {
     }
   }, [state.favorites]);
 
+  // Load favorites on mount so library search works immediately from any tab
+  useEffect(() => {
+    loadFavorites();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleTabChange = (t: Tab) => {
     setTab(t);
     if (t === "favorites") loadFavorites();
@@ -161,19 +168,18 @@ export default function RecipesPage() {
   const filteredFavs = libCategory
     ? favTextFiltered.filter((r) => getRecipeCategory(r.title).label === libCategory)
     : favTextFiltered;
-  const favChipCategories = [...new Map(
-    favTextFiltered.map((r) => { const c = getRecipeCategory(r.title); return [c.label, c]; })
-  ).values()].sort((a, b) => a.label === "Other" ? 1 : b.label === "Other" ? -1 : a.label.localeCompare(b.label));
-
   const customTextFiltered = libQuery.trim()
     ? state.customRecipes.filter((r) => r.title.toLowerCase().includes(libQuery.toLowerCase()))
     : state.customRecipes;
   const filteredCustom = libCategory
     ? customTextFiltered.filter((r) => getRecipeCategory(r.title, r.category).label === libCategory)
     : customTextFiltered;
-  const customChipCategories = [...new Map(
-    customTextFiltered.map((r) => { const c = getRecipeCategory(r.title, r.category); return [c.label, c]; })
-  ).values()].sort((a, b) => a.label === "Other" ? 1 : b.label === "Other" ? -1 : a.label.localeCompare(b.label));
+
+  // Combined chips derived from both text-filtered sets
+  const allChipCategories = [...new Map([
+    ...favTextFiltered.map((r) => { const c = getRecipeCategory(r.title); return [c.label, c] as [string, typeof c]; }),
+    ...customTextFiltered.map((r) => { const c = getRecipeCategory(r.title, r.category); return [c.label, c] as [string, typeof c]; }),
+  ]).values()].sort((a, b) => a.label === "Other" ? 1 : b.label === "Other" ? -1 : a.label.localeCompare(b.label));
 
   return (
     <div className="flex flex-col min-h-full">
@@ -198,16 +204,166 @@ export default function RecipesPage() {
         ))}
       </div>
 
+      {/* Library search bar — always visible, searches Favorites + My Recipes */}
+      <div className="sticky top-[45px] z-10 bg-white border-b border-gray-100 px-4 py-3 space-y-2">
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={libQuery}
+              onChange={(e) => { setLibQuery(e.target.value); setLibCategory(null); }}
+              placeholder="Search my library…"
+              className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+            />
+            {libQuery && (
+              <button
+                onClick={() => { setLibQuery(""); setLibCategory(null); }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          {tab === "custom" && (
+            <button
+              onClick={() => { setEditingRecipe(undefined); setCustomSheetOpen(true); }}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-brand-500 text-white flex-shrink-0 active:bg-brand-600"
+              title="New custom recipe"
+            >
+              <Plus size={20} />
+            </button>
+          )}
+        </div>
+        {tab !== "discover" && allChipCategories.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto scrollbar-none py-0.5">
+            <button
+              onClick={() => setLibCategory(null)}
+              className={clsx(
+                "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                !libCategory ? "bg-brand-500 text-white border-brand-500" : "bg-white text-gray-600 border-gray-200"
+              )}
+            >
+              All
+            </button>
+            {allChipCategories.map(({ emoji, label }) => (
+              <button
+                key={label}
+                onClick={() => setLibCategory(libCategory === label ? null : label)}
+                className={clsx(
+                  "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition-colors",
+                  libCategory === label ? "bg-brand-500 text-white border-brand-500" : "bg-white text-gray-600 border-gray-200"
+                )}
+              >
+                {emoji} {label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Combined search results — shown instead of tab content when filtering */}
+      {isLibFiltering && (
+        <div className="p-4 space-y-5">
+          {filteredCustom.length === 0 && filteredFavs.length === 0 ? (
+            <EmptyState title="No matches" description="Try a different search or category" />
+          ) : (
+            <>
+              {filteredCustom.length > 0 && (
+                <div>
+                  <h3 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest px-1 pb-2">
+                    <BookOpen size={12} />
+                    My Recipes
+                    <span className="font-normal normal-case tracking-normal text-gray-400">({filteredCustom.length})</span>
+                  </h3>
+                  <div className="space-y-2">
+                    {filteredCustom.map((cr) => (
+                      <div key={cr.id} className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3">
+                        <button
+                          onClick={() => { setEditingRecipe(cr); setCustomSheetOpen(true); }}
+                          className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
+                            {getRecipeEmoji(cr.title, cr.category, cr.emoji)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 truncate">{cr.title}</p>
+                            {(cr.extendedIngredients.length > 0 || cr.servings > 0) && (
+                              <p className="text-xs text-gray-500">
+                                {[
+                                  cr.extendedIngredients.length > 0 && `${cr.extendedIngredients.length} ingredient${cr.extendedIngredients.length !== 1 ? "s" : ""}`,
+                                  cr.servings > 0 && `${cr.servings} servings`,
+                                ].filter(Boolean).join(" · ")}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                        <div className="flex gap-1">
+                          <button onClick={() => setDayPickerRecipe(customToSummary(cr))} className="p-2 text-gray-500 hover:text-brand-500 hover:bg-brand-50 rounded-xl" title="Add to menu">
+                            <Plus size={18} />
+                          </button>
+                          <button
+                            onClick={async () => { const copied = await shareRecipe(cr); if (copied) { setSharedRecipeId(cr.id); setTimeout(() => setSharedRecipeId(null), 2000); } }}
+                            className="p-2 text-gray-500 hover:text-brand-500 hover:bg-brand-50 rounded-xl"
+                            title={sharedRecipeId === cr.id ? "Copied!" : "Share"}
+                          >
+                            <Share2 size={16} />
+                          </button>
+                          <button onClick={() => setConfirmDelete({ id: cr.id, name: cr.title })} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-50 rounded-xl" title="Delete">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {filteredFavs.length > 0 && (
+                <div>
+                  <h3 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest px-1 pb-2">
+                    <Heart size={12} className="text-red-400" />
+                    Favorites
+                    <span className="font-normal normal-case tracking-normal text-gray-400">({filteredFavs.length})</span>
+                  </h3>
+                  <div className="space-y-2">
+                    {filteredFavs.map((recipe) => (
+                      <div key={recipe.id} className="bg-white rounded-2xl border border-gray-200 p-3 flex items-center gap-3">
+                        <button onClick={() => setViewingRecipe(recipe)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                            {recipe.image
+                              ? <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
+                              : <span className="text-xl">{getRecipeEmoji(recipe.title)}</span>
+                            }
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 truncate">{recipe.title}</p>
+                            {recipe.readyInMinutes > 0 && <p className="text-xs text-gray-500">{recipe.readyInMinutes} min</p>}
+                          </div>
+                        </button>
+                        <button onClick={() => setDayPickerRecipe(recipe)} className="p-2 text-gray-500 hover:text-brand-500 hover:bg-brand-50 rounded-xl" title="Add to menu">
+                          <Plus size={18} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {/* Discover Tab */}
       {tab === "discover" && (
         <div className="flex flex-col flex-1 p-4 gap-4">
-          <div className="sticky top-[45px] z-20 bg-white -mx-4 px-4 pb-2 pt-3 space-y-2">
+          <div className="sticky top-[112px] z-20 bg-white -mx-4 px-4 pb-2 pt-3 space-y-2">
             <div className="flex gap-2">
               <div className="flex-1">
                 <SearchBar
                   value={query}
                   onChange={(v) => { setQuery(v); if (v) setResultsFromGenerate(false); }}
                   onSubmit={() => handleSearch()}
+                  placeholder="Discover new recipes…"
                 />
               </div>
               <button
@@ -293,94 +449,35 @@ export default function RecipesPage() {
       )}
 
       {/* Favorites Tab */}
-      {tab === "favorites" && (
+      {tab === "favorites" && !isLibFiltering && (
         <div className="p-4">
-          {favRecipes.length > 0 && (
-            <div className="sticky top-[45px] z-10 bg-white -mx-4 px-4 pb-3 pt-3 space-y-2">
-              <div className="relative">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                <input
-                  type="text"
-                  value={libQuery}
-                  onChange={(e) => { setLibQuery(e.target.value); setLibCategory(null); }}
-                  placeholder="Search favorites…"
-                  className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
-                />
-                {libQuery && (
-                  <button
-                    onClick={() => { setLibQuery(""); setLibCategory(null); }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-              {favChipCategories.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto scrollbar-none py-0.5">
-                  <button
-                    onClick={() => setLibCategory(null)}
-                    className={clsx(
-                      "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
-                      !libCategory ? "bg-brand-500 text-white border-brand-500" : "bg-white text-gray-600 border-gray-200"
-                    )}
-                  >
-                    All
-                  </button>
-                  {favChipCategories.map(({ emoji, label }) => (
-                    <button
-                      key={label}
-                      onClick={() => setLibCategory(libCategory === label ? null : label)}
-                      className={clsx(
-                        "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition-colors",
-                        libCategory === label ? "bg-brand-500 text-white border-brand-500" : "bg-white text-gray-600 border-gray-200"
-                      )}
-                    >
-                      {emoji} {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
           {favLoading ? (
             <LoadingSpinner className="py-16" />
           ) : favRecipes.length > 0 ? (
-            isLibFiltering ? (
-              filteredFavs.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-2">
-                  {filteredFavs.map((recipe) => (
-                    <RecipeCard key={recipe.id} recipe={recipe} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState title="No matches" description="Try a different search or category" />
+            <div className="space-y-4">
+              {Object.entries(
+                favRecipes.reduce<Record<string, { emoji: string; recipes: typeof favRecipes }>>((groups, recipe) => {
+                  const { emoji, label } = getRecipeCategory(recipe.title);
+                  if (!groups[label]) groups[label] = { emoji, recipes: [] };
+                  groups[label].recipes.push(recipe);
+                  groups[label].recipes.sort((a, b) => a.title.localeCompare(b.title));
+                  return groups;
+                }, {})
               )
-            ) : (
-              <div className="space-y-4">
-                {Object.entries(
-                  favRecipes.reduce<Record<string, { emoji: string; recipes: typeof favRecipes }>>((groups, recipe) => {
-                    const { emoji, label } = getRecipeCategory(recipe.title);
-                    if (!groups[label]) groups[label] = { emoji, recipes: [] };
-                    groups[label].recipes.push(recipe);
-                    groups[label].recipes.sort((a, b) => a.title.localeCompare(b.title));
-                    return groups;
-                  }, {})
-                )
-                  .sort(([a], [b]) => a === "Other" ? 1 : b === "Other" ? -1 : a.localeCompare(b))
-                  .map(([label, { emoji, recipes }]) => (
-                    <div key={label}>
-                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1 pb-2">
-                        {emoji} {label}
-                      </h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {recipes.map((recipe) => (
-                          <RecipeCard key={recipe.id} recipe={recipe} />
-                        ))}
-                      </div>
+                .sort(([a], [b]) => a === "Other" ? 1 : b === "Other" ? -1 : a.localeCompare(b))
+                .map(([label, { emoji, recipes }]) => (
+                  <div key={label}>
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1 pb-2">
+                      {emoji} {label}
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {recipes.map((recipe) => (
+                        <RecipeCard key={recipe.id} recipe={recipe} />
+                      ))}
                     </div>
-                  ))}
-              </div>
-            )
+                  </div>
+                ))}
+            </div>
           ) : (
             <EmptyState
               icon={<Heart size={48} />}
@@ -392,63 +489,8 @@ export default function RecipesPage() {
       )}
 
       {/* Custom Recipes Tab */}
-      {tab === "custom" && (
+      {tab === "custom" && !isLibFiltering && (
         <div className="p-4">
-          <div className="sticky top-[45px] z-10 bg-white -mx-4 px-4 pb-3 pt-3 space-y-2">
-            <div className="flex gap-2 items-center">
-              <div className="relative flex-1">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                <input
-                  type="text"
-                  value={libQuery}
-                  onChange={(e) => { setLibQuery(e.target.value); setLibCategory(null); }}
-                  placeholder="Search my recipes…"
-                  className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
-                />
-                {libQuery && (
-                  <button
-                    onClick={() => { setLibQuery(""); setLibCategory(null); }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={() => { setEditingRecipe(undefined); setCustomSheetOpen(true); }}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-brand-500 text-white flex-shrink-0 active:bg-brand-600"
-                title="New custom recipe"
-              >
-                <Plus size={20} />
-              </button>
-            </div>
-            {customChipCategories.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto scrollbar-none py-0.5">
-                <button
-                  onClick={() => setLibCategory(null)}
-                  className={clsx(
-                    "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
-                    !libCategory ? "bg-brand-500 text-white border-brand-500" : "bg-white text-gray-600 border-gray-200"
-                  )}
-                >
-                  All
-                </button>
-                {customChipCategories.map(({ emoji, label }) => (
-                  <button
-                    key={label}
-                    onClick={() => setLibCategory(libCategory === label ? null : label)}
-                    className={clsx(
-                      "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition-colors",
-                      libCategory === label ? "bg-brand-500 text-white border-brand-500" : "bg-white text-gray-600 border-gray-200"
-                    )}
-                  >
-                    {emoji} {label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
           {state.customRecipes.length === 0 ? (
             <div className="mt-4">
               <EmptyState
@@ -457,71 +499,6 @@ export default function RecipesPage() {
                 description="Add your own recipes with ingredients for the grocery list"
               />
             </div>
-          ) : isLibFiltering ? (
-            filteredCustom.length > 0 ? (
-              <div className="space-y-2 mt-2">
-                {filteredCustom.map((cr) => (
-                  <div
-                    key={cr.id}
-                    className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3"
-                  >
-                    <button
-                      onClick={() => { setEditingRecipe(cr); setCustomSheetOpen(true); }}
-                      className="flex items-center gap-3 flex-1 min-w-0 text-left"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
-                        {getRecipeEmoji(cr.title, cr.category, cr.emoji)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">{cr.title}</p>
-                        {(cr.extendedIngredients.length > 0 || cr.servings > 0) && (
-                          <p className="text-xs text-gray-500">
-                            {[
-                              cr.extendedIngredients.length > 0 &&
-                                `${cr.extendedIngredients.length} ingredient${cr.extendedIngredients.length !== 1 ? "s" : ""}`,
-                              cr.servings > 0 && `${cr.servings} servings`,
-                            ]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </p>
-                        )}
-                      </div>
-                    </button>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => setDayPickerRecipe(customToSummary(cr))}
-                        className="p-2 text-gray-500 hover:text-brand-500 hover:bg-brand-50 rounded-xl"
-                        title="Add to menu"
-                      >
-                        <Plus size={18} />
-                      </button>
-                      <button
-                        onClick={async () => {
-                          const copied = await shareRecipe(cr);
-                          if (copied) {
-                            setSharedRecipeId(cr.id);
-                            setTimeout(() => setSharedRecipeId(null), 2000);
-                          }
-                        }}
-                        className="p-2 text-gray-500 hover:text-brand-500 hover:bg-brand-50 rounded-xl"
-                        title={sharedRecipeId === cr.id ? "Copied!" : "Share"}
-                      >
-                        <Share2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => setConfirmDelete({ id: cr.id, name: cr.title })}
-                        className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-50 rounded-xl"
-                        title="Delete"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState title="No matches" description="Try a different search or category" />
-            )
           ) : (
             <div className="space-y-4 mt-4">
               {Object.entries(
@@ -660,6 +637,11 @@ export default function RecipesPage() {
         open={customSheetOpen}
         onClose={() => setCustomSheetOpen(false)}
         existing={editingRecipe}
+      />
+
+      <RecipeDetailSheet
+        recipe={viewingRecipe}
+        onClose={() => setViewingRecipe(null)}
       />
 
       {dayPickerRecipe && (

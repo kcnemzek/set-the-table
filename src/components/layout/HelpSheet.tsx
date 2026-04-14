@@ -17,12 +17,12 @@ const SECTIONS = [
       { label: "Fluid Organization", body: "Plans change, so your menu should too. Easily move meals from one night to another." },
       { label: "Events First", body: "Birthdays and holidays automatically take center stage at the top of your day, so you never miss a celebration." },
       { label: "Share the Vibe", body: "Use the Share icon to beam your daily menu to friends, family, or anyone who keeps asking \"What's for dinner?\"" },
-      { label: "Save Your Greatest Hits", body: "Hosting Thanksviging, but you forgot what awesome pie you made last year? Save special menus, so you can look back and replicate those good times." },
     ],
   },
   {
     title: "📖 Your Digital Cookbook - My Kitchen",
     tips: [
+      { label: "Intelligent Creation", body: "Stop manual typing. Use 'Smart Copy-Paste' for web recipes or 'Snap a Pic' to instantly digitize handwritten cards and cookbooks with AI." },
       { label: "Smart Discovery", body: "Find exactly what you’re craving in the Discover tab by filtering for specific diets, cuisines, or the ingredients already in your pantry." },
       { label: "The ✨ Sparkle Effect", body: "Feeling uninspired? Tap the Sparkle to let our AI generate a fresh group of surprise recipes that are sperfect for shaking up your entire 10-day plan." },
       { label: "The \"Heart\" Factor", body: "Spot something delicious in the Discover tab? Hit the heart to save it to your Favorites for instant access later." },
@@ -37,6 +37,14 @@ const SECTIONS = [
       { label: "Auto-Magic Lists", body: "Your grocery list builds itself. As you plan your meals, the ingredients populate in real-time. No more double-checking the pantry at 6:00 PM." },
       { label: "Aisle-by-Aisle", body: "We group your items by grocery aisle, so you can zip through the store in record time." },
       { label: "Quick-Add", body: "Need milk or paper towels? Use the + button to toss manual items onto your list in seconds." },
+    ],
+  },
+  {
+    title: "📅 Stress-Free Hosting - Event Planning",
+    tips: [
+      { label: "The Big Day", body: "Whether it's Easter Brunch or a birthday party, create a dedicated space for your event with linked recipes and tips." },
+      { label: "To-Do Trackers", body: "Keep the chaos at bay with integrated checklists. Track everything from 'Buy flowers' to 'Pre-heat oven' directly inside your event." },
+      { label: "Future Templates", body: "Don't reinvent the wheel. Save this year's Thanksgiving as a template to make next year’s planning a one-click breeze." },
     ],
   },
   {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Loader2, Heart, BookOpen, Plus } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { Loader2, Heart, BookOpen, Plus, Search, X } from "lucide-react";
 import clsx from "clsx";
 import BottomSheet from "@/components/shared/BottomSheet";
 import type { DayEntry, RecipeSummary, CustomRecipe } from "@/types";
@@ -42,6 +42,7 @@ export default function AddEntrySheet({
     [onAddEntry, addDayEntry, dateStr, onClose]
   );
   const [tab, setTab] = useState<Tab>("my-recipes");
+  const [query, setQuery] = useState("");
   const [textEntry, setTextEntry] = useState("");
   const [urlEntry, setUrlEntry] = useState("");
   const [favRecipes, setFavRecipes] = useState<RecipeSummary[]>([]);
@@ -112,14 +113,21 @@ export default function AddEntrySheet({
     }
   }, [state.favorites]);
 
+  // Load favorites eagerly when sheet opens so combined search works from any tab
+  useEffect(() => {
+    if (open) loadFavorites();
+  }, [open, loadFavorites]);
+
   const handleTabChange = (t: Tab) => {
     setTab(t);
+    setQuery("");
     setTextEntry("");
     setUrlEntry("");
     if (t === "favorites") loadFavorites();
   };
 
   const handleClose = () => {
+    setQuery("");
     setTextEntry("");
     setUrlEntry("");
     onClose();
@@ -128,6 +136,30 @@ export default function AddEntrySheet({
   return (
     <>
     <BottomSheet open={open} onClose={handleClose} title={`Add to ${dateLabel}`}>
+      {/* Search bar — My Recipes + Favorites */}
+      {(tab === "my-recipes" || tab === "favorites") && (
+        <div className="px-4 pt-3 pb-2 border-b border-gray-100">
+          <div className="relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search all recipes…"
+              className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex border-b border-gray-200 px-2 pt-2">
         {(["my-recipes", "favorites", "text", "event"] as Tab[]).map((t) => (
@@ -151,7 +183,67 @@ export default function AddEntrySheet({
       </div>
 
       <div className="p-4 h-72 overflow-y-auto">
-        {tab === "my-recipes" && (
+        {/* Combined search results */}
+        {query.trim() && (tab === "my-recipes" || tab === "favorites") && (() => {
+          const q = query.toLowerCase();
+          const matchedCustom = state.customRecipes.filter((cr) => cr.title.toLowerCase().includes(q));
+          const matchedFavs = favRecipes.filter((r) => r.title.toLowerCase().includes(q));
+          if (matchedCustom.length === 0 && matchedFavs.length === 0) {
+            return <p className="text-sm text-gray-500 text-center py-8">No matches found</p>;
+          }
+          return (
+            <div className="space-y-4">
+              {matchedCustom.length > 0 && (
+                <div>
+                  <p className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest px-1 mb-2">
+                    <BookOpen size={12} /> My Recipes
+                    <span className="font-normal normal-case tracking-normal text-gray-400">({matchedCustom.length})</span>
+                  </p>
+                  {matchedCustom.map((cr) => (
+                    <div key={cr.id} className="flex items-center gap-2 rounded-xl hover:bg-brand-50 active:bg-brand-100">
+                      <button onClick={() => setViewingCustomRecipe(cr)} className="flex items-center gap-3 flex-1 min-w-0 p-3 text-left">
+                        <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
+                          {getRecipeEmoji(cr.title, cr.category, cr.emoji)}
+                        </div>
+                        <span className="text-sm font-medium text-gray-800 truncate">{cr.title}</span>
+                      </button>
+                      <button onClick={() => addCustomRecipe(cr)} className="flex-shrink-0 p-2 mr-1 rounded-xl text-brand-500 hover:bg-brand-100" aria-label="Add to day">
+                        <Plus size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {matchedFavs.length > 0 && (
+                <div>
+                  <p className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest px-1 mb-2">
+                    <Heart size={12} className="text-red-400" /> Favorites
+                    <span className="font-normal normal-case tracking-normal text-gray-400">({matchedFavs.length})</span>
+                  </p>
+                  {matchedFavs.map((recipe) => (
+                    <div key={recipe.id} className="flex items-center gap-2 rounded-xl hover:bg-brand-50 active:bg-brand-100">
+                      <button onClick={() => setViewingFavRecipe(recipe)} className="flex items-center gap-3 flex-1 min-w-0 p-3 text-left">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
+                          {recipe.image && <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 leading-tight line-clamp-2">{recipe.title}</p>
+                          {recipe.readyInMinutes > 0 && <p className="text-xs text-gray-500 mt-0.5">{recipe.readyInMinutes} min</p>}
+                        </div>
+                      </button>
+                      <button onClick={() => addRecipe(recipe)} className="flex-shrink-0 p-2 mr-1 rounded-xl text-brand-500 hover:bg-brand-100" aria-label="Add to day">
+                        <Plus size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Per-tab content — hidden while searching */}
+        {!query.trim() && tab === "my-recipes" && (
           <div>
             {state.customRecipes.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-8">No custom recipes yet — add them on the Recipes tab</p>
@@ -195,7 +287,7 @@ export default function AddEntrySheet({
           </div>
         )}
 
-        {tab === "favorites" && (
+        {!query.trim() && tab === "favorites" && (
           <div className="space-y-1">
             {favLoading && (
               <div className="flex justify-center py-8">

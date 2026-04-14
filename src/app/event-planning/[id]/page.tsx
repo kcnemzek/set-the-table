@@ -9,110 +9,8 @@ import {
 import clsx from "clsx";
 import { useAppContext } from "@/store/context";
 import BottomSheet from "@/components/shared/BottomSheet";
+import AddEntrySheet from "@/components/menu/AddEntrySheet";
 import type { EventDish, EventTask } from "@/types";
-
-// ─── Add Dish Sheet ────────────────────────────────────────────────────────────
-
-function AddDishSheet({
-  open,
-  onClose,
-  onAdd,
-  customRecipes,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onAdd: (dish: Omit<EventDish, "id">) => void;
-  customRecipes: { id: string; title: string }[];
-}) {
-  const [title, setTitle] = useState("");
-  const [linkType, setLinkType] = useState<"none" | "custom">("none");
-  const [selectedCustomId, setSelectedCustomId] = useState("");
-
-  function handleAdd() {
-    const trimmed = title.trim();
-    if (!trimmed) return;
-    const dish: Omit<EventDish, "id"> = { title: trimmed };
-    if (linkType === "custom" && selectedCustomId) {
-      dish.customRecipeId = selectedCustomId;
-    }
-    onAdd(dish);
-    setTitle("");
-    setLinkType("none");
-    setSelectedCustomId("");
-    onClose();
-  }
-
-  return (
-    <BottomSheet open={open} onClose={onClose} title="Add Dish">
-      <div className="p-4 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Dish name</label>
-          <input
-            autoFocus
-            type="text"
-            placeholder="e.g. Roasted Turkey"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-            className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-          />
-        </div>
-
-        {customRecipes.length > 0 && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Link to a recipe <span className="font-normal text-gray-400">(optional — for grocery list)</span>
-            </label>
-            <div className="flex gap-2 mb-2">
-              <button
-                onClick={() => setLinkType("none")}
-                className={clsx(
-                  "flex-1 py-2 rounded-xl text-sm font-medium border transition-colors",
-                  linkType === "none"
-                    ? "bg-brand-50 text-brand-600 border-brand-200"
-                    : "bg-gray-50 text-gray-500 border-gray-200"
-                )}
-              >
-                No link
-              </button>
-              <button
-                onClick={() => setLinkType("custom")}
-                className={clsx(
-                  "flex-1 py-2 rounded-xl text-sm font-medium border transition-colors",
-                  linkType === "custom"
-                    ? "bg-brand-50 text-brand-600 border-brand-200"
-                    : "bg-gray-50 text-gray-500 border-gray-200"
-                )}
-              >
-                My Recipes
-              </button>
-            </div>
-            {linkType === "custom" && (
-              <select
-                value={selectedCustomId}
-                onChange={(e) => setSelectedCustomId(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-              >
-                <option value="">Choose a recipe…</option>
-                {customRecipes.map((r) => (
-                  <option key={r.id} value={r.id}>{r.title}</option>
-                ))}
-              </select>
-            )}
-          </div>
-        )}
-
-        <button
-          onClick={handleAdd}
-          disabled={!title.trim()}
-          className="w-full py-3 bg-brand-500 text-white rounded-xl text-sm font-semibold disabled:opacity-40"
-        >
-          Add Dish
-        </button>
-      </div>
-    </BottomSheet>
-  );
-}
 
 // ─── Add/Edit Task Sheet ───────────────────────────────────────────────────────
 
@@ -550,11 +448,23 @@ export default function EventDetailPage() {
       </div>
 
       {/* Sheets */}
-      <AddDishSheet
+      <AddEntrySheet
         open={addDishOpen}
         onClose={() => setAddDishOpen(false)}
-        onAdd={handleAddDish}
-        customRecipes={state.customRecipes}
+        dateStr={plan.date}
+        dateLabel={plan.name}
+        onAddEntry={(entry) => {
+          const title =
+            entry.type === "text" || entry.type === "event"
+              ? (entry.text ?? "")
+              : (entry.recipeTitle ?? "");
+          if (!title) return;
+          handleAddDish({
+            title,
+            customRecipeId: entry.type === "custom-recipe" ? entry.customRecipeId : undefined,
+            recipeId: entry.type === "recipe" ? entry.recipeId : undefined,
+          });
+        }}
       />
       <TaskSheet
         open={addTaskOpen}

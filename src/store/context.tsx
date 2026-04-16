@@ -96,6 +96,7 @@ type Action =
   | { type: "ADD_EVENT_PLAN"; plan: EventPlan }
   | { type: "UPDATE_EVENT_PLAN"; plan: EventPlan }
   | { type: "DELETE_EVENT_PLAN"; id: string }
+  | { type: "COPY_EVENT_PLAN"; sourceId: string; newId: string; name: string; date: string }
   | { type: "ADD_EVENT_DISH"; planId: string; dish: EventDish }
   | { type: "REMOVE_EVENT_DISH"; planId: string; dishId: string }
   | { type: "ADD_EVENT_TASK"; planId: string; task: EventTask }
@@ -310,6 +311,30 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "DELETE_EVENT_PLAN":
       return { ...state, eventPlans: state.eventPlans.filter((p) => p.id !== action.id) };
+
+    case "COPY_EVENT_PLAN": {
+      const source = state.eventPlans.find((p) => p.id === action.sourceId);
+      if (!source) return state;
+      const newPlan: EventPlan = {
+        ...source,
+        id: action.newId,
+        name: action.name,
+        date: action.date,
+        createdAt: new Date().toISOString(),
+        dishes: source.dishes.map((d) => ({ ...d, id: crypto.randomUUID() })),
+        tasks: source.tasks.map((t) => {
+          const newTask = { ...t, id: crypto.randomUUID(), completed: false };
+          // Recalculate absolute date for relative tasks using new event date
+          if (t.daysBeforeEvent !== undefined) {
+            const d = new Date(action.date + "T00:00:00");
+            d.setDate(d.getDate() - t.daysBeforeEvent);
+            newTask.date = d.toISOString().slice(0, 10);
+          }
+          return newTask;
+        }),
+      };
+      return { ...state, eventPlans: [...state.eventPlans, newPlan] };
+    }
 
     case "ADD_EVENT_DISH":
       return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, dishes: [...p.dishes, action.dish] } : p) };

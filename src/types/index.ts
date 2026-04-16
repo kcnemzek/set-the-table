@@ -81,15 +81,23 @@ export interface EventDish {
   id: string;
   title: string;
   recipeId?: string;
+  recipeImage?: string;
+  recipeUrl?: string;
   customRecipeId?: string;
 }
 
 export interface EventTask {
   id: string;
   text: string;
-  date: string;   // ISO date "YYYY-MM-DD"
-  time?: string;  // "HH:MM" 24h
+  date?: string;              // ISO date "YYYY-MM-DD" — absolute date
+  daysBeforeEvent?: number;   // relative: X days before the event date (0 = day of event)
+  time?: string;              // "HH:MM" 24h
   completed: boolean;
+  // Optional recipe link
+  customRecipeId?: string;
+  recipeId?: string;
+  recipeTitle?: string;
+  recipeImage?: string;
 }
 
 export interface EventPlan {

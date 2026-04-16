@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, CalendarCheck, Bookmark, ScrollText, ChevronRight, Pencil, Check, Trash2, ChevronsDown } from "lucide-react";
+import { Plus, CalendarCheck, Bookmark, ScrollText, ChevronRight, Pencil, Check, Trash2, ChevronsDown, Copy } from "lucide-react";
 import clsx from "clsx";
 import { useAppContext } from "@/store/context";
 import BottomSheet from "@/components/shared/BottomSheet";
@@ -27,6 +27,11 @@ export default function EventPlanningPage() {
   const [newEventName, setNewEventName] = useState("");
   const [newEventDate, setNewEventDate] = useState("");
 
+  // Copy event sheet
+  const [copySourceId, setCopySourceId] = useState<string | null>(null);
+  const [copyName, setCopyName] = useState("");
+  const [copyDate, setCopyDate] = useState("");
+
   // Saved Menus state
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const [pickerEntry, setPickerEntry] = useState<DayEntry | null>(null);
@@ -40,9 +45,20 @@ export default function EventPlanningPage() {
   const [confirmDeleteMenu, setConfirmDeleteMenu] = useState<{ id: string; name: string } | null>(null);
   const [confirmDeleteEvent, setConfirmDeleteEvent] = useState<{ id: string; name: string } | null>(null);
 
+  const today = new Date(new Date().toDateString());
   const sortedEvents = [...state.eventPlans].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
+  const upcomingEvents = sortedEvents.filter((p) => new Date(p.date + "T00:00:00") >= today);
+  const pastEvents = sortedEvents.filter((p) => new Date(p.date + "T00:00:00") < today);
+
+  function handleCopyEvent() {
+    if (!copySourceId || !copyName.trim() || !copyDate) return;
+    dispatch({ type: "COPY_EVENT_PLAN", sourceId: copySourceId, newId: crypto.randomUUID(), name: copyName.trim(), date: copyDate });
+    setCopySourceId(null);
+    setCopyName("");
+    setCopyDate("");
+  }
 
   function handleCreateEvent() {
     if (!newEventName.trim() || !newEventDate) return;
@@ -132,48 +148,92 @@ export default function EventPlanningPage() {
               }
             />
           ) : (
-            sortedEvents.map((plan) => {
-              const eventDate = new Date(plan.date + "T00:00:00");
-              const isPast = eventDate < new Date(new Date().toDateString());
-              return (
-                <div
-                  key={plan.id}
-                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
-                >
-                  <div
-                    className="flex items-center gap-3 px-4 py-4 cursor-pointer hover:bg-gray-50 active:bg-gray-100"
-                    onClick={() => router.push(`/event-planning/${plan.id}`)}
-                  >
-                    <div className={clsx(
-                      "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-                      isPast ? "bg-gray-100" : "bg-brand-50"
-                    )}>
-                      <CalendarCheck size={20} className={isPast ? "text-gray-400" : "text-brand-500"} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={clsx("text-sm font-semibold truncate", isPast ? "text-gray-400" : "text-gray-800")}>
-                        {plan.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {eventDate.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
-                        {" · "}{plan.dishes.length} dish{plan.dishes.length !== 1 ? "es" : ""}
-                        {" · "}{plan.tasks.length} task{plan.tasks.length !== 1 ? "s" : ""}
-                        {plan.addedToGroceries && " · 🛒"}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteEvent({ id: plan.id, name: plan.name }); }}
-                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                      <ChevronRight size={16} className="text-gray-400" />
+            <>
+              {upcomingEvents.map((plan) => {
+                const eventDate = new Date(plan.date + "T00:00:00");
+                return (
+                  <div key={plan.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                    <div
+                      className="flex items-center gap-3 px-4 py-4 cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+                      onClick={() => router.push(`/event-planning/${plan.id}`)}
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center flex-shrink-0">
+                        <CalendarCheck size={20} className="text-brand-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{plan.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {eventDate.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
+                          {" · "}{plan.dishes.length} dish{plan.dishes.length !== 1 ? "es" : ""}
+                          {" · "}{plan.tasks.length} task{plan.tasks.length !== 1 ? "s" : ""}
+                          {plan.addedToGroceries && " · 🛒"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setCopySourceId(plan.id); setCopyName(plan.name + " (copy)"); setCopyDate(""); }}
+                          className="p-1.5 rounded-lg text-gray-300 hover:text-brand-500 hover:bg-brand-50 transition-colors"
+                          title="Copy event"
+                        >
+                          <Copy size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setConfirmDeleteEvent({ id: plan.id, name: plan.name }); }}
+                          className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        <ChevronRight size={16} className="text-gray-400" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+
+              {pastEvents.length > 0 && (
+                <>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1 pt-2">Past Events</p>
+                  {pastEvents.map((plan) => {
+                    const eventDate = new Date(plan.date + "T00:00:00");
+                    return (
+                      <div key={plan.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden opacity-70">
+                        <div
+                          className="flex items-center gap-3 px-4 py-4 cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+                          onClick={() => router.push(`/event-planning/${plan.id}`)}
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <CalendarCheck size={20} className="text-gray-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-500 truncate">{plan.name}</p>
+                            <p className="text-xs text-gray-400">
+                              {eventDate.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
+                              {" · "}{plan.dishes.length} dish{plan.dishes.length !== 1 ? "es" : ""}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setCopySourceId(plan.id); setCopyName(plan.name + " (copy)"); setCopyDate(""); }}
+                              className="p-1.5 rounded-lg text-gray-300 hover:text-brand-500 hover:bg-brand-50 transition-colors"
+                              title="Copy event"
+                            >
+                              <Copy size={14} />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setConfirmDeleteEvent({ id: plan.id, name: plan.name }); }}
+                              className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                            <ChevronRight size={16} className="text-gray-400" />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </>
           )}
         </div>
       )}
@@ -300,6 +360,40 @@ export default function EventPlanningPage() {
           )}
         </div>
       )}
+
+      {/* Copy Event Sheet */}
+      <BottomSheet open={!!copySourceId} onClose={() => setCopySourceId(null)} title="Copy Event">
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">New event name</label>
+            <input
+              autoFocus
+              type="text"
+              value={copyName}
+              onChange={(e) => setCopyName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCopyEvent()}
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">New date</label>
+            <input
+              type="date"
+              value={copyDate}
+              onChange={(e) => setCopyDate(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            />
+          </div>
+          <p className="text-xs text-gray-400">Dishes and tasks will be copied. Relative-date tasks will recalculate automatically.</p>
+          <button
+            onClick={handleCopyEvent}
+            disabled={!copyName.trim() || !copyDate}
+            className="w-full py-3 bg-brand-500 text-white rounded-xl text-sm font-semibold disabled:opacity-40"
+          >
+            Copy Event
+          </button>
+        </div>
+      </BottomSheet>
 
       {/* New Event Sheet */}
       <BottomSheet open={newEventOpen} onClose={() => setNewEventOpen(false)} title="New Event">

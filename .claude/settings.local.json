@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(powershell -Command \"Get-Command node,npm,npx -ErrorAction SilentlyContinue | Select-Object Name, Source\" 2>&1)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(ls *)",
+      "Bash(npm test *)"
     ]
   }
 }

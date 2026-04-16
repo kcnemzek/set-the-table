@@ -1,6 +1,7 @@
 "use client";
 
 import { X, UtensilsCrossed, ArrowRight, GripVertical } from "lucide-react";
+import clsx from "clsx";
 import type { DayEntry } from "@/types";
 import { getRecipeEmoji } from "@/lib/recipe-emoji";
 import { useAppContext } from "@/store/context";
@@ -30,21 +31,21 @@ export default function DayEntryItem({ entry, onRemove, onOpen, onMove, readOnly
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Event banner — special full-width treatment (not sortable)
+  // Headline banner — full-width band, breaks out of the px-4 card padding
   if (entry.type === "event") {
     return (
-      <div className="py-1.5 px-1">
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+      <div className="-mx-4">
+        <div className="flex items-center gap-2 bg-indigo-50 border-y border-indigo-200 px-4 py-3">
           <button
             onClick={onOpen}
-            className="flex-1 text-left text-sm font-semibold text-amber-800 leading-snug"
+            className="flex-1 text-left text-sm font-semibold text-indigo-800 leading-snug whitespace-pre-line"
           >
             {entry.text}
           </button>
           {!readOnly && (
             <button
               onClick={onRemove}
-              className="flex-shrink-0 p-1 rounded-full text-amber-400 hover:text-red-400 hover:bg-red-50 active:bg-red-100 transition-colors"
+              className="flex-shrink-0 p-1 rounded-full text-indigo-400 hover:text-red-400 hover:bg-red-50 active:bg-red-100 transition-colors"
               aria-label="Remove"
             >
               <X size={15} />
@@ -110,12 +111,12 @@ export default function DayEntryItem({ entry, onRemove, onOpen, onMove, readOnly
           className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-75 active:opacity-60 transition-opacity"
         >
           {icon}
-          <span className="flex-1 text-sm text-gray-800 leading-tight line-clamp-2">{label}</span>
+          <span className={clsx("flex-1 text-sm text-gray-800 leading-tight", isText ? "whitespace-pre-line" : "line-clamp-2")}>{label}</span>
         </button>
       ) : (
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {icon}
-          <span className="flex-1 text-sm text-gray-800 leading-tight line-clamp-2">{label}</span>
+          <span className={clsx("flex-1 text-sm text-gray-800 leading-tight", isText ? "whitespace-pre-line" : "line-clamp-2")}>{label}</span>
         </div>
       )}
 

@@ -15,7 +15,7 @@ interface EditNoteSheetProps {
 
 export default function EditNoteSheet({ open, onClose, entry, dateStr }: EditNoteSheetProps) {
   const { dispatch } = useAppContext();
-  const isEvent = entry.type === "event";
+  const isHeadline = entry.type === "event";
   const [text, setText] = useState(entry.text ?? "");
   const [url, setUrl] = useState(entry.url ?? "");
 
@@ -37,18 +37,17 @@ export default function EditNoteSheet({ open, onClose, entry, dateStr }: EditNot
   };
 
   return (
-    <BottomSheet open={open} onClose={onClose} title={isEvent ? "Edit Event" : "Edit Note"}>
+    <BottomSheet open={open} onClose={onClose} title={isHeadline ? "Edit Headline" : "Edit Note"}>
       <div className="p-4 space-y-3 pb-8">
-        <input
-          type="text"
+        <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSave()}
-          placeholder={isEvent ? "e.g. 🎂 Elizabeth's Birthday" : "e.g. Easter Brunch"}
-          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          placeholder={isHeadline ? "e.g. 🎂 Elizabeth's Birthday" : "e.g. Easter Brunch"}
+          rows={3}
+          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
           autoFocus
         />
-        {!isEvent && (
+        {!isHeadline && (
           url.trim() ? (
             <div className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3">
               <a

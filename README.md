@@ -10,8 +10,8 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 - **My Recipes** — add your own custom recipes with ingredients; import by pasting text or uploading up to 2 photos (snap or from library) for multi-page recipes (AI-powered)
 - **Tips** — save cooking tips you look up often (techniques, timing, substitutions)
 - **Grocery list** — auto-generated from the week's planned meals, with store assignment, store filter chips, and tabbed views for Recipes, Family requests, and All
-- **Event planning** — plan holiday dinners and special occasions with a dish list, prep timeline, and automatic grocery list integration
-- **Saved Menus** — save and reuse sets of day entries as named menu templates
+- **Event planning** — plan holiday dinners and special occasions with a dish list, prep timeline, and automatic grocery list integration; events and their tasks auto-surface on the relevant days in the menu view
+- **Templates** — save and reuse sets of day entries as named templates (e.g. Taco Tuesday); pick from the Add to Day sheet with per-entry deselect before stamping
 - **Family sharing** — each family member gets their own invite link; they can view the menu and add grocery requests attributed to them
 - **PWA** — installable on iPhone/Android home screen
 

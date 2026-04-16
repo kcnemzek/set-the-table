@@ -24,6 +24,7 @@ import { getRecipeEmoji } from "@/lib/recipe-emoji";
 import type { CustomRecipe, DayEntry, RecipeSummary } from "@/types";
 import MenuShareCard from "./MenuShareCard";
 import SaveMenuSheet from "./SaveMenuSheet";
+import DayEventSummaries from "./DayEventSummaries";
 
 interface DayCardProps {
   dateStr: string;
@@ -186,7 +187,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
                     ? "text-white/70 hover:text-white hover:bg-white/20 active:bg-white/30"
                     : "text-gray-500 hover:text-gray-600 hover:bg-gray-200 active:bg-gray-300"
                 )}
-                title="Save as menu"
+                title="Save as template"
               >
                 <Bookmark size={15} />
               </button>
@@ -221,6 +222,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
 
       {/* Entries */}
       <div className="px-4 py-1">
+        <DayEventSummaries dateStr={dateStr} />
         {entries.length === 0 ? (
           <button
             onClick={() => setSheetOpen(true)}

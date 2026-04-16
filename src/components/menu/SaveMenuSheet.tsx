@@ -36,15 +36,15 @@ export default function SaveMenuSheet({ open, onClose, entries }: SaveMenuSheetP
   }
 
   return (
-    <BottomSheet open={open} onClose={handleClose} title="Save as menu">
+    <BottomSheet open={open} onClose={handleClose} title="Save as template">
       <div className="p-4 space-y-3">
-        <p className="text-sm text-gray-500">Give this menu a name so you can reuse it later.</p>
+        <p className="text-sm text-gray-500">Give this template a name so you can reuse it later.</p>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSave()}
-          placeholder="e.g. Thanksgiving, Easter, Perfect Thursday"
+          placeholder="e.g. Taco Tuesday, Pasta Night, Sunday Roast"
           className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           autoFocus
         />

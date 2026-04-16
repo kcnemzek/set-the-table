@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { Loader2, Heart, BookOpen, Plus, Search, X } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { Loader2, Heart, BookOpen, Plus, Search, X, LayoutTemplate, ChevronRight } from "lucide-react";
 import clsx from "clsx";
 import BottomSheet from "@/components/shared/BottomSheet";
-import type { DayEntry, RecipeSummary, CustomRecipe } from "@/types";
+import type { DayEntry, RecipeSummary, CustomRecipe, SavedMenu } from "@/types";
+import TemplatePreviewSheet from "@/components/menu/TemplatePreviewSheet";
 import { useAppContext } from "@/store/context";
 import { getRecipeEmoji, getRecipeCategory } from "@/lib/recipe-emoji";
 import CustomRecipeSheet from "@/components/recipes/CustomRecipeSheet";
@@ -19,7 +20,8 @@ interface AddEntrySheetProps {
   onAddEntry?: (entry: DayEntry) => void;
 }
 
-type Tab = "my-recipes" | "favorites" | "event" | "text";
+type Tab = "my-recipes" | "favorites" | "templates";
+type QuickAdd = "note" | "headline" | null;
 
 export default function AddEntrySheet({
   open,
@@ -41,14 +43,17 @@ export default function AddEntrySheet({
     },
     [onAddEntry, addDayEntry, dateStr, onClose]
   );
+
   const [tab, setTab] = useState<Tab>("my-recipes");
+  const [quickAdd, setQuickAdd] = useState<QuickAdd>(null);
   const [query, setQuery] = useState("");
   const [textEntry, setTextEntry] = useState("");
-  const [urlEntry, setUrlEntry] = useState("");
   const [favRecipes, setFavRecipes] = useState<RecipeSummary[]>([]);
   const [favLoading, setFavLoading] = useState(false);
   const [viewingCustomRecipe, setViewingCustomRecipe] = useState<CustomRecipe | null>(null);
   const [viewingFavRecipe, setViewingFavRecipe] = useState<RecipeSummary | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<SavedMenu | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const addRecipe = useCallback(
     (recipe: RecipeSummary) => {
@@ -76,19 +81,18 @@ export default function AddEntrySheet({
     [doAdd]
   );
 
-  const addTextEntry = useCallback(() => {
+  const addNoteEntry = useCallback(() => {
     if (!textEntry.trim()) return;
     doAdd({
       id: crypto.randomUUID(),
       type: "text",
       text: textEntry.trim(),
-      url: urlEntry.trim() || undefined,
     });
     setTextEntry("");
-    setUrlEntry("");
-  }, [doAdd, textEntry, urlEntry]);
+    setQuickAdd(null);
+  }, [doAdd, textEntry]);
 
-  const addEventEntry = useCallback(() => {
+  const addHeadlineEntry = useCallback(() => {
     if (!textEntry.trim()) return;
     doAdd({
       id: crypto.randomUUID(),
@@ -96,6 +100,7 @@ export default function AddEntrySheet({
       text: textEntry.trim(),
     });
     setTextEntry("");
+    setQuickAdd(null);
   }, [doAdd, textEntry]);
 
   const loadFavorites = useCallback(async () => {
@@ -113,31 +118,48 @@ export default function AddEntrySheet({
     }
   }, [state.favorites]);
 
-  // Load favorites eagerly when sheet opens so combined search works from any tab
+  // Load favorites eagerly when sheet opens so combined search works immediately
   useEffect(() => {
     if (open) loadFavorites();
   }, [open, loadFavorites]);
+
+  // Focus textarea when quick-add panel opens
+  useEffect(() => {
+    if (quickAdd) {
+      setTimeout(() => textareaRef.current?.focus(), 50);
+    }
+  }, [quickAdd]);
 
   const handleTabChange = (t: Tab) => {
     setTab(t);
     setQuery("");
     setTextEntry("");
-    setUrlEntry("");
-    if (t === "favorites") loadFavorites();
+    setQuickAdd(null);
+  };
+
+  const handleQuickAdd = (type: NonNullable<QuickAdd>) => {
+    if (quickAdd === type) {
+      setQuickAdd(null);
+      setTextEntry("");
+    } else {
+      setQuickAdd(type);
+      setTextEntry("");
+    }
   };
 
   const handleClose = () => {
     setQuery("");
     setTextEntry("");
-    setUrlEntry("");
+    setQuickAdd(null);
     onClose();
   };
 
   return (
     <>
     <BottomSheet open={open} onClose={handleClose} title={`Add to ${dateLabel}`}>
-      {/* Search bar — My Recipes + Favorites */}
-      {(tab === "my-recipes" || tab === "favorites") && (
+
+      {/* Search bar — visible on My Recipes + Favorites tabs when no quick-add is open */}
+      {(tab === "my-recipes" || tab === "favorites") && !quickAdd && (
         <div className="px-4 pt-3 pb-2 border-b border-gray-100">
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -160,14 +182,14 @@ export default function AddEntrySheet({
         </div>
       )}
 
-      {/* Tabs */}
+      {/* Primary tabs */}
       <div className="flex border-b border-gray-200 px-2 pt-2">
-        {(["my-recipes", "favorites", "text", "event"] as Tab[]).map((t) => (
+        {(["my-recipes", "favorites", "templates"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => handleTabChange(t)}
             className={clsx(
-              "flex-1 flex items-center justify-center gap-1 px-1 py-2.5 text-xs font-medium border-b-2 -mb-px transition-colors",
+              "flex-1 flex items-center justify-center gap-1.5 px-1 py-2.5 text-xs font-medium border-b-2 -mb-px transition-colors",
               tab === t
                 ? "border-brand-500 text-brand-600"
                 : "border-transparent text-gray-500 hover:text-gray-600"
@@ -175,16 +197,106 @@ export default function AddEntrySheet({
           >
             {t === "my-recipes" && <BookOpen size={14} />}
             {t === "favorites" && <Heart size={14} className="text-red-400" />}
-            {t === "event" && <span className="text-sm leading-none">🎉</span>}
-            {t === "text" && <span className="text-sm leading-none">📝</span>}
-            {t === "my-recipes" ? "My Recipes" : t === "favorites" ? "Favorites" : t === "event" ? "Event" : "Note"}
+            {t === "templates" && <LayoutTemplate size={14} />}
+            {t === "my-recipes" ? "My Recipes" : t === "favorites" ? "Favorites" : "Templates"}
           </button>
         ))}
       </div>
 
-      <div className="p-4 h-72 overflow-y-auto">
-        {/* Combined search results */}
-        {query.trim() && (tab === "my-recipes" || tab === "favorites") && (() => {
+      {/* Quick-add action buttons */}
+      <div className="flex gap-2 px-4 py-2.5 border-b border-gray-100">
+        <button
+          onClick={() => handleQuickAdd("note")}
+          className={clsx(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+            quickAdd === "note"
+              ? "bg-brand-100 text-brand-700 ring-1 ring-brand-300"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          )}
+        >
+          <span className="text-sm leading-none">📝</span> Note
+        </button>
+        <button
+          onClick={() => handleQuickAdd("headline")}
+          className={clsx(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+            quickAdd === "headline"
+              ? "bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          )}
+        >
+          <span className="text-sm leading-none">📌</span> Headline
+        </button>
+      </div>
+
+      <div className="p-4 h-60 overflow-y-auto">
+
+        {/* Quick-add: Note form */}
+        {quickAdd === "note" && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500">
+              Add a note like &quot;Takeout&quot;, &quot;Grandma&apos;s coming over&quot;, or &quot;Date night&quot;
+            </p>
+            <textarea
+              ref={textareaRef}
+              value={textEntry}
+              onChange={(e) => setTextEntry(e.target.value)}
+              placeholder="e.g. Easter Brunch"
+              rows={3}
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setQuickAdd(null); setTextEntry(""); }}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 active:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={addNoteEntry}
+                disabled={!textEntry.trim()}
+                className="flex-1 py-3 bg-brand-500 text-white rounded-xl text-sm font-semibold disabled:opacity-50 active:bg-brand-600"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Quick-add: Headline form */}
+        {quickAdd === "headline" && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500">
+              Headline pins to the top of the day — great for occasions or themes. Emojis welcome!
+            </p>
+            <textarea
+              ref={textareaRef}
+              value={textEntry}
+              onChange={(e) => setTextEntry(e.target.value)}
+              placeholder="e.g. 🎂 Elizabeth's Birthday"
+              rows={3}
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setQuickAdd(null); setTextEntry(""); }}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 active:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={addHeadlineEntry}
+                disabled={!textEntry.trim()}
+                className="flex-1 py-3 bg-indigo-500 text-white rounded-xl text-sm font-semibold disabled:opacity-50 active:bg-indigo-600"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Combined search results — shown on My Recipes or Favorites tab when querying */}
+        {!quickAdd && (tab === "my-recipes" || tab === "favorites") && query.trim() && (() => {
           const q = query.toLowerCase();
           const matchedCustom = state.customRecipes.filter((cr) => cr.title.toLowerCase().includes(q));
           const matchedFavs = favRecipes.filter((r) => r.title.toLowerCase().includes(q));
@@ -242,8 +354,8 @@ export default function AddEntrySheet({
           );
         })()}
 
-        {/* Per-tab content — hidden while searching */}
-        {!query.trim() && tab === "my-recipes" && (
+        {/* My Recipes tab */}
+        {!quickAdd && tab === "my-recipes" && !query.trim() && (
           <div>
             {state.customRecipes.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-8">No custom recipes yet — add them on the Recipes tab</p>
@@ -263,20 +375,13 @@ export default function AddEntrySheet({
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-1 mb-1">{emoji} {label}</p>
                     {recipes.map((cr) => (
                       <div key={cr.id} className="flex items-center gap-2 rounded-xl hover:bg-brand-50 active:bg-brand-100">
-                        <button
-                          onClick={() => setViewingCustomRecipe(cr)}
-                          className="flex items-center gap-3 flex-1 min-w-0 p-3 text-left"
-                        >
+                        <button onClick={() => setViewingCustomRecipe(cr)} className="flex items-center gap-3 flex-1 min-w-0 p-3 text-left">
                           <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
                             {getRecipeEmoji(cr.title, cr.category, cr.emoji)}
                           </div>
                           <span className="text-sm font-medium text-gray-800">{cr.title}</span>
                         </button>
-                        <button
-                          onClick={() => addCustomRecipe(cr)}
-                          className="flex-shrink-0 p-2 mr-1 rounded-xl text-brand-500 hover:bg-brand-100"
-                          aria-label="Add to day"
-                        >
+                        <button onClick={() => addCustomRecipe(cr)} className="flex-shrink-0 p-2 mr-1 rounded-xl text-brand-500 hover:bg-brand-100" aria-label="Add to day">
                           <Plus size={18} />
                         </button>
                       </div>
@@ -287,7 +392,8 @@ export default function AddEntrySheet({
           </div>
         )}
 
-        {!query.trim() && tab === "favorites" && (
+        {/* Favorites tab */}
+        {!quickAdd && tab === "favorites" && !query.trim() && (
           <div className="space-y-1">
             {favLoading && (
               <div className="flex justify-center py-8">
@@ -299,10 +405,7 @@ export default function AddEntrySheet({
             )}
             {!favLoading && favRecipes.map((recipe) => (
               <div key={recipe.id} className="flex items-center gap-2 rounded-xl hover:bg-brand-50 active:bg-brand-100">
-                <button
-                  onClick={() => setViewingFavRecipe(recipe)}
-                  className="flex items-center gap-3 flex-1 min-w-0 p-3 text-left"
-                >
+                <button onClick={() => setViewingFavRecipe(recipe)} className="flex items-center gap-3 flex-1 min-w-0 p-3 text-left">
                   <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
                     {recipe.image && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -316,11 +419,7 @@ export default function AddEntrySheet({
                     )}
                   </div>
                 </button>
-                <button
-                  onClick={() => addRecipe(recipe)}
-                  className="flex-shrink-0 p-2 mr-1 rounded-xl text-brand-500 hover:bg-brand-100"
-                  aria-label="Add to day"
-                >
+                <button onClick={() => addRecipe(recipe)} className="flex-shrink-0 p-2 mr-1 rounded-xl text-brand-500 hover:bg-brand-100" aria-label="Add to day">
                   <Plus size={18} />
                 </button>
               </div>
@@ -328,63 +427,38 @@ export default function AddEntrySheet({
           </div>
         )}
 
-{tab === "event" && (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-500">
-              Mark a special occasion — use emojis to make it pop!
-            </p>
-            <input
-              type="text"
-              value={textEntry}
-              onChange={(e) => setTextEntry(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addEventEntry()}
-              placeholder="e.g. 🎂 Elizabeth's Birthday"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-            />
-            {textEntry.trim() && (
-              <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-sm font-semibold text-amber-800">
-                {textEntry}
+        {/* Templates tab */}
+        {!quickAdd && tab === "templates" && (
+          <div>
+            {state.savedMenus.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8">
+                <LayoutTemplate size={32} className="text-gray-300" />
+                <p className="text-sm font-medium text-gray-500">No templates yet</p>
+                <p className="text-xs text-gray-400">Create one in Event Planning — bookmark a day or tap&nbsp;&ldquo;New Template&rdquo;</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {state.savedMenus.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setPreviewTemplate(t)}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-brand-50 active:bg-brand-100 text-left"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0">
+                      <LayoutTemplate size={16} className="text-brand-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">{t.name}</p>
+                      <p className="text-xs text-gray-400">{t.entries.length} item{t.entries.length !== 1 ? "s" : ""}</p>
+                    </div>
+                    <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
+                  </button>
+                ))}
               </div>
             )}
-            <button
-              onClick={addEventEntry}
-              disabled={!textEntry.trim()}
-              className="w-full py-3 bg-brand-500 text-white rounded-xl text-sm font-semibold disabled:opacity-50 active:bg-brand-600"
-            >
-              Add
-            </button>
           </div>
         )}
 
-        {tab === "text" && (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-500">
-              Add a note like &quot;Takeout&quot;, &quot;Grandma&apos;s coming over&quot;, or &quot;Date night&quot;
-            </p>
-            <input
-              type="text"
-              value={textEntry}
-              onChange={(e) => setTextEntry(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addTextEntry()}
-              placeholder="e.g. Easter Brunch"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-            />
-            <input
-              type="url"
-              value={urlEntry}
-              onChange={(e) => setUrlEntry(e.target.value)}
-              placeholder="Link (optional)"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-            />
-            <button
-              onClick={addTextEntry}
-              disabled={!textEntry.trim()}
-              className="w-full py-3 bg-brand-500 text-white rounded-xl text-sm font-semibold disabled:opacity-50 active:bg-brand-600"
-            >
-              Add
-            </button>
-          </div>
-        )}
       </div>
     </BottomSheet>
 
@@ -397,6 +471,16 @@ export default function AddEntrySheet({
     <RecipeDetailSheet
       recipe={viewingFavRecipe}
       onClose={() => setViewingFavRecipe(null)}
+    />
+
+    <TemplatePreviewSheet
+      open={!!previewTemplate}
+      onClose={() => setPreviewTemplate(null)}
+      template={previewTemplate}
+      dateStr={dateStr}
+      dateLabel={dateLabel}
+      onAddEntry={onAddEntry}
+      onStamped={handleClose}
     />
     </>
   );

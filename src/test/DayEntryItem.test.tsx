@@ -87,10 +87,10 @@ describe("DayEntryItem — event entry", () => {
     expect(screen.getByText("🎉 Easter Brunch")).toBeInTheDocument();
   });
 
-  it("shows the amber banner styling", () => {
+  it("shows the indigo banner styling", () => {
     const entry = makeEntry({ type: "event", text: "🎂 Birthday" });
     const { container } = render(<DayEntryItem entry={entry} onRemove={() => {}} />);
-    expect(container.querySelector(".bg-amber-50")).toBeInTheDocument();
+    expect(container.querySelector(".bg-indigo-50")).toBeInTheDocument();
   });
 
   it("shows remove button on event when not readOnly", () => {

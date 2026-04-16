@@ -146,9 +146,13 @@ EventDish {
 EventTask {
   id: string
   text: string
-  date: string                  // "YYYY-MM-DD"
+  date?: string                 // "YYYY-MM-DD" — absolute due date
+  daysBeforeEvent?: number      // relative: X days before the event date (0 = event day)
   time?: string                 // "HH:MM" 24h
   completed: boolean
+  customRecipeId?: string       // optional recipe link
+  recipeId?: string
+  recipeTitle?: string
 }
 
 EventPlan {
@@ -257,7 +261,7 @@ AppState
 | Custom Recipes | `ADD_CUSTOM_RECIPE`, `UPDATE_CUSTOM_RECIPE`, `REMOVE_CUSTOM_RECIPE`, `CACHE_RECIPE` |
 | Groceries | `ADD_MANUAL_GROCERY`, `REMOVE_MANUAL_GROCERY`, `TOGGLE_MANUAL_GROCERY_CHECKED`, `TOGGLE_GROCERY_CHECKED`, `SET_ITEM_STORE`, `SET_MANUAL_GROCERY_STORE`, `RESET_STORE_ITEMS`, `SET_STORE_FOR_ALL_UNASSIGNED` |
 | Family | `ADD_FAMILY_MEMBER`, `REMOVE_FAMILY_MEMBER` |
-| Saved Menus | `SAVE_DAY_AS_MENU`, `DELETE_SAVED_MENU`, `RENAME_SAVED_MENU`, `ADD_ENTRY_TO_SAVED_MENU` |
+| Templates | `SAVE_DAY_AS_MENU`, `DELETE_SAVED_MENU`, `RENAME_SAVED_MENU`, `ADD_ENTRY_TO_SAVED_MENU` |
 | Tips | `ADD_TIP`, `UPDATE_TIP`, `DELETE_TIP` |
 | Event Plans | `ADD_EVENT_PLAN`, `UPDATE_EVENT_PLAN`, `DELETE_EVENT_PLAN`, `ADD_EVENT_DISH`, `REMOVE_EVENT_DISH`, `ADD_EVENT_TASK`, `UPDATE_EVENT_TASK`, `REMOVE_EVENT_TASK`, `TOGGLE_EVENT_GROCERIES` |
 | Lifecycle | `HYDRATE` |
@@ -279,7 +283,7 @@ AppState
 | `/menu` | Yes | 10-day meal plan |
 | `/recipes` | Yes | My Kitchen — Discovery, Favorites, My Recipes, Tips tabs |
 | `/groceries` | Yes | Aggregated shopping list from 10-day menu + event plans; store filter chips |
-| `/event-planning` | Yes | Event list (Events tab) + Saved Menus tab |
+| `/event-planning` | Yes | Event list (Events tab) + Templates tab |
 | `/event-planning/[id]` | Yes | Event detail — dishes, prep timeline, grocery toggle |
 | `/view/[token]` | No | Read-only family view via share token |
 
@@ -490,9 +494,11 @@ layout.tsx
 │       │
 │       ├── /menu → MenuPage
 │       │   └── DayCard × 10
-│       │       ├── DayEntryItem × n  (recipe/text/event rows, drag-to-reorder)
-│       │       ├── AddEntrySheet     (add recipe, note, or event)
-│       │       ├── EditNoteSheet     (edit text/event entry)
+│       │       ├── DayEventSummaries (auto-surfaced event headlines + tasks; read-only, always top)
+│       │       ├── DayEntryItem × n  (recipe/text/headline rows, drag-to-reorder)
+│       │       ├── AddEntrySheet     (3 tabs: My Recipes, Favorites, Templates; + Note/Headline pills)
+│       │       │   └── TemplatePreviewSheet (per-entry deselect before stamping to day)
+│       │       ├── EditNoteSheet     (edit note/headline entry)
 │       │       ├── SaveMenuSheet     (save day as reusable template)
 │       │       ├── MenuShareCard     (off-screen, used for image generation)
 │       │       └── DayPickerSheet    (move entry to another day)
@@ -518,8 +524,8 @@ layout.tsx
 │       │
 │       ├── /event-planning → EventPlanningPage
 │       │   ├── Events tab
-│       │   │   └── EventPlan[] sorted by date → navigates to detail
-│       │   └── Saved Menus tab
+│       │   │   └── EventPlan[] sorted by date (upcoming / past) → navigates to detail
+│       │   └── Templates tab
 │       │       └── SavedMenu[] (expand / rename / delete / add-to-day)
 │       │
 │       ├── /event-planning/[id] → EventDetailPage

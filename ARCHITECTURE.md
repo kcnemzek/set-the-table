@@ -146,12 +146,11 @@ EventDish {
 EventTask {
   id: string
   text: string
-  date?: string                 // "YYYY-MM-DD" — absolute due date
-  daysBeforeEvent?: number      // relative: X days before the event date (0 = event day)
+  daysBeforeEvent?: number      // days relative to event (positive = before, 0 = day of, negative = after)
+  date?: string                 // "YYYY-MM-DD" — computed cache; always derived from daysBeforeEvent when set
   time?: string                 // "HH:MM" 24h
   completed: boolean
   customRecipeId?: string       // optional recipe link
-  recipeId?: string
   recipeTitle?: string
 }
 
@@ -281,7 +280,8 @@ AppState
 | `/` | No | Redirects to `/menu` |
 | `/login` | No | Google OAuth sign-in |
 | `/menu` | Yes | 10-day meal plan |
-| `/recipes` | Yes | My Kitchen — Discovery, Favorites, My Recipes, Tips tabs |
+| `/discover` | Yes | Discover — recipe search + AI generate (Edamam) |
+| `/recipes` | Yes | My Kitchen — Favorites, My Recipes, Cheat Sheets tabs |
 | `/groceries` | Yes | Aggregated shopping list from 10-day menu + event plans; store filter chips |
 | `/event-planning` | Yes | Event list (Events tab) + Templates tab |
 | `/event-planning/[id]` | Yes | Event detail — dishes, prep timeline, grocery toggle |
@@ -289,9 +289,9 @@ AppState
 
 ### Navigation Components
 
-- **Desktop**: `TopNav` — logo, 4 tabs (Menu, Recipes, Groceries, Events), user avatar, sign out
-- **Mobile**: `MobileHeader` (top) + `BottomNav` (4-tab: Menu, My Kitchen, Groceries, Events)
-- **Route protection**: `src/middleware.ts` intercepts `/menu/*`, `/recipes/*`, `/groceries/*`, `/event-planning/*` and redirects unauthenticated users to `/login`
+- **Desktop**: `TopNav` — logo, 5 tabs (Menu, Discover, My Kitchen, Groceries, Events), user avatar, sign out
+- **Mobile**: `MobileHeader` (top) + `BottomNav` (5-tab: Menu, Discover, My Kitchen, Groceries, Events)
+- **Route protection**: `src/middleware.ts` intercepts `/menu/*`, `/discover/*`, `/recipes/*`, `/groceries/*`, `/event-planning/*` and redirects unauthenticated users to `/login`
 
 ---
 
@@ -503,17 +503,18 @@ layout.tsx
 │       │       ├── MenuShareCard     (off-screen, used for image generation)
 │       │       └── DayPickerSheet    (move entry to another day)
 │       │
+│       ├── /discover → DiscoverPage  (nav label: "Discover")
+│       │   └── SearchBar + cuisine/dish/diet filters + RecipeCard[] + AI Generate button
+│       │
 │       ├── /recipes → RecipesPage  (nav label: "My Kitchen")
-│       │   ├── Discover tab
-│       │   │   └── SearchBar + filters + RecipeCard[]
 │       │   ├── Favorites tab
-│       │   │   └── RecipeCard[] grouped by category
+│       │   │   └── RecipeCard[] grouped by category; shared library search bar
 │       │   ├── My Recipes tab
 │       │   │   └── CustomRecipeSheet (view mode by default → Edit button switches to edit mode)
 │       │   │       custom recipe list; ingredients entered as free text, parsed on save
 │       │   │       import options: paste text, or queue 1–2 photos (snap/upload) then send together
-│       │   └── Tips tab
-│       │       └── TipSheet + tip list (sorted by title)
+│       │   └── Cheat Sheets tab
+│       │       └── TipSheet + cheat sheet list (sorted by title)
 │       │
 │       ├── /groceries → GroceriesPage
 │       │   ├── Store filter chips (All, Unassigned, per-store)
@@ -529,17 +530,17 @@ layout.tsx
 │       │       └── SavedMenu[] (expand / rename / delete / add-to-day)
 │       │
 │       ├── /event-planning/[id] → EventDetailPage
-│       │   ├── Editable name + date header
+│       │   ├── Editable name + date header (changing date auto-shifts all relative task dates)
 │       │   ├── Grocery toggle (TOGGLE_EVENT_GROCERIES)
 │       │   ├── Dishes section  (AddDishSheet — freeform + optional custom recipe link)
-│       │   └── Timeline section (TaskSheet — text, date, time; grouped by date)
+│       │   └── Timeline section (TaskSheet — text, days relative to event, time; grouped by date)
 │       │
 │       ├── /view/[token] → FamilyViewPage (no auth)
 │       │   ├── Invite-token path: shows member name, ReadOnlyDayCard × n, grocery request input
 │       │   └── Shared-token path: name picker → ReadOnlyDayCard × n (read-only)
 │       │
 │       └── BottomNav (mobile)
-│           └── Menu / My Kitchen / Groceries / Events tabs
+│           └── Menu / Discover / My Kitchen / Groceries / Events tabs
 │
 └── Analytics
 ```

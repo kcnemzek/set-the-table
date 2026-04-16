@@ -67,7 +67,7 @@ export default function TipSheet({ open, onClose, existing }: TipSheetProps) {
     <BottomSheet
       open={open}
       onClose={handleClose}
-      title={existing ? "Edit Tip" : "New Tip"}
+      title={existing ? "Edit Cheat Sheet" : "New Cheat Sheet"}
     >
       {showConfirm && (
         <div className="absolute inset-0 z-10 flex items-end justify-center bg-black/20 rounded-t-2xl">
@@ -138,7 +138,7 @@ export default function TipSheet({ open, onClose, existing }: TipSheetProps) {
           disabled={!title.trim() || !body.trim()}
           className="w-full py-3.5 bg-brand-500 text-white rounded-xl font-semibold text-sm disabled:opacity-40 active:bg-brand-600"
         >
-          {existing ? "Save Changes" : "Save Tip"}
+          {existing ? "Save Changes" : "Save Cheat Sheet"}
         </button>
       </div>
     </BottomSheet>

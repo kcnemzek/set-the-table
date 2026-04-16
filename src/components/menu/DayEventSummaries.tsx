@@ -4,17 +4,18 @@ import { useRouter } from "next/navigation";
 import { CalendarCheck, ChevronRight, Check } from "lucide-react";
 import clsx from "clsx";
 import { useAppContext } from "@/store/context";
+import { getRecipeEmoji } from "@/lib/recipe-emoji";
 import type { EventTask } from "@/types";
 
-/** Returns the calendar date this task falls on, or null if it has no date. */
+/** Returns the calendar date this task falls on, or null if it has no date.
+ *  daysBeforeEvent takes priority — it's always computed fresh from the event date. */
 function getTaskDate(task: EventTask, eventDate: string): string | null {
-  if (task.date) return task.date;
   if (task.daysBeforeEvent !== undefined) {
     const d = new Date(eventDate + "T00:00:00");
     d.setDate(d.getDate() - task.daysBeforeEvent);
     return d.toISOString().slice(0, 10);
   }
-  return null;
+  return task.date ?? null;
 }
 
 interface DayEventSummariesProps {
@@ -35,29 +36,42 @@ export default function DayEventSummaries({ dateStr }: DayEventSummariesProps) {
     })
     .filter(({ isEventDay, tasks }) => isEventDay || tasks.length > 0);
 
+
   if (relevant.length === 0) return null;
 
   return (
     <div className="mb-1">
       {relevant.map(({ plan, tasks }) => (
-        <div key={plan.id}>
+        <div key={plan.id} className="-mx-4 border-y border-indigo-200 mb-1 last:mb-0">
           {/* Event header — taps to event page */}
-          <div className="-mx-4">
+          <button
+            onClick={() => router.push(`/event-planning/${plan.id}`)}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 bg-indigo-100 border-b border-indigo-200 hover:bg-indigo-200 active:bg-indigo-300 transition-colors"
+          >
+            <CalendarCheck size={14} className="text-indigo-500 flex-shrink-0" />
+            <span className="flex-1 text-sm font-semibold text-gray-900 text-left leading-snug">
+              {plan.name}
+            </span>
+            <ChevronRight size={14} className="text-indigo-400 flex-shrink-0" />
+          </button>
+
+          {/* Dishes — shown only on the event day, tap navigates to event */}
+          {plan.date === dateStr && plan.dishes.map((dish) => (
             <button
+              key={dish.id}
               onClick={() => router.push(`/event-planning/${plan.id}`)}
-              className="w-full flex items-center gap-2.5 px-4 py-2.5 bg-indigo-50 border-y border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 transition-colors text-left"
             >
-              <CalendarCheck size={14} className="text-indigo-400 flex-shrink-0" />
-              <span className="flex-1 text-sm font-semibold text-indigo-800 text-left leading-snug">
-                {plan.name}
+              <span className="flex-shrink-0 text-base leading-none w-4 text-center">
+                {getRecipeEmoji(dish.title)}
               </span>
-              <ChevronRight size={14} className="text-indigo-300 flex-shrink-0" />
+              <span className="flex-1 text-sm text-gray-800">{dish.title}</span>
             </button>
-          </div>
+          ))}
 
           {/* Tasks due on this day */}
           {tasks.map((task) => (
-            <div key={task.id} className={clsx("flex items-center gap-3 px-1 py-2.5", task.completed && "opacity-50")}>
+            <div key={task.id} className={clsx("flex items-center gap-3 px-4 py-2.5 bg-indigo-50", task.completed && "opacity-50")}>
               <button
                 onClick={() =>
                   dispatch({
@@ -69,8 +83,8 @@ export default function DayEventSummaries({ dateStr }: DayEventSummariesProps) {
                 className={clsx(
                   "flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors",
                   task.completed
-                    ? "border-brand-400 bg-brand-400"
-                    : "border-gray-300 hover:border-brand-500 hover:bg-brand-50"
+                    ? "border-indigo-400 bg-indigo-400"
+                    : "border-indigo-300 hover:border-indigo-500"
                 )}
                 aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
               >
@@ -80,7 +94,7 @@ export default function DayEventSummaries({ dateStr }: DayEventSummariesProps) {
                 onClick={() => router.push(`/event-planning/${plan.id}`)}
                 className={clsx(
                   "flex-1 text-sm text-left transition-colors py-0.5",
-                  task.completed ? "line-through text-gray-400" : "text-gray-600 hover:text-gray-800"
+                  task.completed ? "line-through text-gray-400" : "text-gray-800 hover:text-gray-900"
                 )}
               >
                 {task.text}

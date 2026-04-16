@@ -153,7 +153,7 @@ export interface FamilyGroceryItem {
   store?: string;
 }
 
-// ─── Tips ─────────────────────────────────────────────────────────────────────
+// ─── Cheat Sheets ─────────────────────────────────────────────────────────────
 
 export interface Tip {
   id: string;

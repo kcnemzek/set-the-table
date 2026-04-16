@@ -306,8 +306,23 @@ function reducer(state: AppState, action: Action): AppState {
     case "ADD_EVENT_PLAN":
       return { ...state, eventPlans: [...state.eventPlans, action.plan] };
 
-    case "UPDATE_EVENT_PLAN":
-      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.plan.id ? action.plan : p) };
+    case "UPDATE_EVENT_PLAN": {
+      const existing = state.eventPlans.find((p) => p.id === action.plan.id);
+      const plan = (existing && existing.date !== action.plan.date)
+        ? {
+            ...action.plan,
+            tasks: action.plan.tasks.map((t) => {
+              if (t.daysBeforeEvent !== undefined) {
+                const d = new Date(action.plan.date + "T00:00:00");
+                d.setDate(d.getDate() - t.daysBeforeEvent);
+                return { ...t, date: d.toISOString().slice(0, 10) };
+              }
+              return t;
+            }),
+          }
+        : action.plan;
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === plan.id ? plan : p) };
+    }
 
     case "DELETE_EVENT_PLAN":
       return { ...state, eventPlans: state.eventPlans.filter((p) => p.id !== action.id) };

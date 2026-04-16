@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Sparkles, Plus, Heart, BookOpen, Trash2, Loader2, ChevronRight, Pencil, Check, Lightbulb, Share2, Search, X } from "lucide-react";
+import { Plus, Heart, BookOpen, Trash2, Lightbulb, Share2, Search, X } from "lucide-react";
 import clsx from "clsx";
 import RecipeCard from "@/components/recipes/RecipeCard";
-import SearchBar from "@/components/recipes/SearchBar";
 import CustomRecipeSheet from "@/components/recipes/CustomRecipeSheet";
 import RecipeDetailSheet from "@/components/recipes/RecipeDetailSheet";
 import DayPickerSheet from "@/components/recipes/DayPickerSheet";
@@ -16,7 +15,7 @@ import { useAppContext } from "@/store/context";
 import { getRecipeEmoji, getRecipeCategory } from "@/lib/recipe-emoji";
 import type { RecipeSummary, CustomRecipe, Tip } from "@/types";
 
-type Tab = "discover" | "favorites" | "custom" | "tips";
+type Tab = "favorites" | "custom" | "tips";
 
 const TIP_CATEGORY_EMOJI: Record<string, string> = {
   Technique: "🔪",
@@ -28,18 +27,7 @@ const TIP_CATEGORY_EMOJI: Record<string, string> = {
 
 export default function RecipesPage() {
   const { state, dispatch } = useAppContext();
-  const [tab, setTab] = useState<Tab>("discover");
-
-  // Discover state
-  const [query, setQuery] = useState("");
-  const [filterCuisine, setFilterCuisine] = useState("");
-  const [filterDish, setFilterDish] = useState("");
-  const [filterDiet, setFilterDiet] = useState("");
-  const [results, setResults] = useState<RecipeSummary[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [nextPageToken, setNextPageToken] = useState<string | undefined>();
-  const [hasSearched, setHasSearched] = useState(false);
-  const [resultsFromGenerate, setResultsFromGenerate] = useState(false);
+  const [tab, setTab] = useState<Tab>("favorites");
 
   // Favorites state
   const [favRecipes, setFavRecipes] = useState<RecipeSummary[]>([]);
@@ -63,63 +51,9 @@ export default function RecipesPage() {
   const [editingTip, setEditingTip] = useState<Tip | undefined>();
   const [confirmDeleteTip, setConfirmDeleteTip] = useState<{ id: string; title: string } | null>(null);
 
-  // Library search/filter (shared across Favorites + My Recipes)
+  // Library search/filter (shared across Favorites, My Recipes, Tips)
   const [libQuery, setLibQuery] = useState("");
   const [libCategory, setLibCategory] = useState<string | null>(null);
-
-  const handleSearch = useCallback(async (token?: string) => {
-    if (!query.trim()) return;
-    setLoading(true);
-    setHasSearched(true);
-    try {
-      const params = new URLSearchParams({ query, number: "10" });
-      if (token) params.set("nextPageToken", token);
-      if (filterCuisine) params.set("cuisine", filterCuisine);
-      if (filterDish) params.set("type", filterDish);
-      if (filterDiet) params.set("diet", filterDiet);
-      const res = await fetch(`/api/recipes/search?${params}`);
-      const data = await res.json();
-      if (token) {
-        setResults((prev) => [...prev, ...(data.results ?? [])]);
-      } else {
-        setResults(data.results ?? []);
-      }
-      setNextPageToken(data.nextPageToken);
-    } catch {
-      if (!token) setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [query, filterCuisine, filterDish, filterDiet]);
-
-  useEffect(() => {
-    if (!hasSearched || !query.trim()) return;
-    handleSearch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterCuisine, filterDish, filterDiet]);
-
-  const handleGenerate = useCallback(async () => {
-    setLoading(true);
-    setHasSearched(true);
-    setResultsFromGenerate(true);
-    setQuery("");
-    setFilterCuisine("");
-    setFilterDish("");
-    setFilterDiet("");
-    try {
-      const disliked = state.dislikedRecipes.join(",");
-      const res = await fetch(
-        `/api/recipes/generate${disliked ? `?disliked=${disliked}` : ""}`
-      );
-      const data = await res.json();
-      setResults(data.results ?? []);
-      setNextPageToken(undefined);
-    } catch {
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [state.dislikedRecipes]);
 
   const loadFavorites = useCallback(async () => {
     if (state.favorites.length === 0) {
@@ -149,7 +83,7 @@ export default function RecipesPage() {
 
   const handleTabChange = (t: Tab) => {
     setTab(t);
-    if (t === "favorites") loadFavorites();
+    loadFavorites();
   };
 
   const customToSummary = (cr: CustomRecipe): RecipeSummary => ({
@@ -175,6 +109,13 @@ export default function RecipesPage() {
     ? customTextFiltered.filter((r) => getRecipeCategory(r.title, r.category).label === libCategory)
     : customTextFiltered;
 
+  const filteredTips = libQuery.trim()
+    ? state.tips.filter((t) =>
+        t.title.toLowerCase().includes(libQuery.toLowerCase()) ||
+        t.body.toLowerCase().includes(libQuery.toLowerCase())
+      )
+    : state.tips;
+
   // Combined chips derived from both text-filtered sets
   const allChipCategories = [...new Map([
     ...favTextFiltered.map((r) => { const c = getRecipeCategory(r.title); return [c.label, c] as [string, typeof c]; }),
@@ -185,7 +126,7 @@ export default function RecipesPage() {
     <div className="flex flex-col min-h-full">
       {/* Tabs */}
       <div className="flex border-b border-gray-200 bg-white sticky top-0 z-10">
-        {(["discover", "favorites", "custom", "tips"] as Tab[]).map((t) => (
+        {(["favorites", "custom", "tips"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => handleTabChange(t)}
@@ -196,15 +137,14 @@ export default function RecipesPage() {
                 : "border-transparent text-gray-500 hover:text-gray-600"
             )}
           >
-            {t === "discover" && "Discover"}
             {t === "favorites" && "Favorites"}
             {t === "custom" && "My Recipes"}
-            {t === "tips" && "Tips"}
+            {t === "tips" && "Cheat Sheets"}
           </button>
         ))}
       </div>
 
-      {/* Library search bar — always visible, searches Favorites + My Recipes */}
+      {/* Library search bar — searches Favorites, My Recipes, and Cheat Sheets */}
       <div className="sticky top-[45px] z-10 bg-white border-b border-gray-100 px-4 py-3 space-y-2">
         <div className="flex gap-2 items-center">
           <div className="relative flex-1">
@@ -235,7 +175,7 @@ export default function RecipesPage() {
             </button>
           )}
         </div>
-        {tab !== "discover" && allChipCategories.length > 1 && (
+        {allChipCategories.length > 1 && (
           <div className="flex gap-2 overflow-x-auto scrollbar-none py-0.5">
             <button
               onClick={() => setLibCategory(null)}
@@ -265,7 +205,7 @@ export default function RecipesPage() {
       {/* Combined search results — shown instead of tab content when filtering */}
       {isLibFiltering && (
         <div className="p-4 space-y-5">
-          {filteredCustom.length === 0 && filteredFavs.length === 0 ? (
+          {filteredCustom.length === 0 && filteredFavs.length === 0 && filteredTips.length === 0 ? (
             <EmptyState title="No matches" description="Try a different search or category" />
           ) : (
             <>
@@ -348,102 +288,32 @@ export default function RecipesPage() {
                   </div>
                 </div>
               )}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Discover Tab */}
-      {tab === "discover" && (
-        <div className="flex flex-col flex-1 p-4 gap-4">
-          <div className="sticky top-[112px] z-20 bg-white -mx-4 px-4 pb-2 pt-3 space-y-2">
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <SearchBar
-                  value={query}
-                  onChange={(v) => { setQuery(v); if (v) setResultsFromGenerate(false); }}
-                  onSubmit={() => handleSearch()}
-                  placeholder="Discover new recipes…"
-                />
-              </div>
-              <button
-                onClick={handleGenerate}
-                disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-3 bg-brand-50 text-brand-600 rounded-xl text-sm font-medium hover:bg-brand-100 active:bg-brand-200 disabled:opacity-50"
-                title="Generate 10 random recipes"
-              >
-                {loading ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Sparkles size={16} />
-                )}
-                <span className="hidden sm:inline">Generate</span>
-              </button>
-            </div>
-            <div className="flex gap-2 overflow-x-auto py-1 -my-1 scrollbar-none">
-              <select
-                value={filterCuisine}
-                onChange={(e) => setFilterCuisine(e.target.value)}
-                disabled={resultsFromGenerate}
-                className="min-w-[120px] rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <option value="">All cuisines</option>
-                {["American","Asian","British","Caribbean","Central Europe","Chinese","Eastern Europe","French","Indian","Italian","Japanese","Kosher","Mediterranean","Mexican","Middle Eastern","Nordic","South American","South East Asian"].map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <select
-                value={filterDish}
-                onChange={(e) => setFilterDish(e.target.value)}
-                disabled={resultsFromGenerate}
-                className="min-w-[120px] rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <option value="">All dishes</option>
-                {["Biscuits and cookies","Bread","Cereals","Condiments and sauces","Desserts","Drinks","Main course","Pancake","Preserve","Salad","Sandwiches","Soup","Starter","Sweets"].map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-              <select
-                value={filterDiet}
-                onChange={(e) => setFilterDiet(e.target.value)}
-                disabled={resultsFromGenerate}
-                className="min-w-[120px] rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <option value="">All diets</option>
-                {["balanced","high-fiber","high-protein","low-carb","low-fat","low-sodium"].map((d) => (
-                  <option key={d} value={d}>{d.replace(/-/g, " ")}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {loading && results.length === 0 ? (
-            <LoadingSpinner className="py-16" />
-          ) : results.length > 0 ? (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {results.map((recipe) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} />
-                ))}
-              </div>
-              {nextPageToken && (
-                <button
-                  onClick={() => handleSearch(nextPageToken)}
-                  disabled={loading}
-                  className="w-full py-3 text-sm text-brand-500 font-medium hover:text-brand-600"
-                >
-                  {loading ? "Loading…" : "Load more"}
-                </button>
+              {filteredTips.length > 0 && (
+                <div>
+                  <h3 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest px-1 pb-2">
+                    <Lightbulb size={12} className="text-yellow-500" />
+                    Cheat Sheets
+                    <span className="font-normal normal-case tracking-normal text-gray-400">({filteredTips.length})</span>
+                  </h3>
+                  <div className="space-y-2">
+                    {filteredTips.map((tip) => (
+                      <div key={tip.id} className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-xl flex-shrink-0">
+                          {TIP_CATEGORY_EMOJI[tip.category ?? ""] ?? "💡"}
+                        </div>
+                        <button
+                          onClick={() => { setEditingTip(tip); setTipSheetOpen(true); }}
+                          className="flex-1 min-w-0 text-left"
+                        >
+                          <p className="text-sm font-semibold text-gray-800">{tip.title}</p>
+                          <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{tip.body}</p>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </>
-          ) : hasSearched ? (
-            <EmptyState title="No recipes found" description="Try a different search term" />
-          ) : (
-            <EmptyState
-              icon={<BookOpen size={48} />}
-              title="Find your next meal"
-              description='Search for recipes or tap ✨ for inspiration'
-            />
           )}
         </div>
       )}
@@ -583,24 +453,24 @@ export default function RecipesPage() {
         </div>
       )}
 
-      {/* Tips Tab */}
-      {tab === "tips" && (
+      {/* Cheat Sheets Tab */}
+      {tab === "tips" && !isLibFiltering && (
         <div className="p-4">
-          <div className="sticky top-[45px] z-10 bg-white -mx-4 px-4 pb-4 pt-3">
+          <div className="sticky top-[112px] z-10 bg-white -mx-4 px-4 pb-4 pt-3">
             <button
               onClick={() => { setEditingTip(undefined); setTipSheetOpen(true); }}
               className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-brand-200 text-brand-500 rounded-xl text-sm font-medium hover:bg-brand-50 active:bg-brand-100"
             >
               <Plus size={18} />
-              New Tip
+              New Cheat Sheet
             </button>
           </div>
 
           {state.tips.length === 0 ? (
             <EmptyState
               icon={<Lightbulb size={48} />}
-              title="No tips yet"
-              description="Save cooking tips you look up often — techniques, timing, substitutions"
+              title="No cheat sheets yet"
+              description="Save the things you always look up — how long to poach chicken, ingredient swaps, timing tricks"
             />
           ) : (
             <div className="space-y-2">
@@ -688,11 +558,11 @@ export default function RecipesPage() {
         existing={editingTip}
       />
 
-      {/* Delete tip confirmation */}
+      {/* Delete cheat sheet confirmation */}
       {confirmDeleteTip && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setConfirmDeleteTip(null)}>
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-base font-semibold text-gray-800 mb-1">Delete Tip?</h2>
+            <h2 className="text-base font-semibold text-gray-800 mb-1">Delete Cheat Sheet?</h2>
             <p className="text-sm text-gray-500 mb-5">
               &ldquo;{confirmDeleteTip.title}&rdquo; will be permanently deleted.
             </p>

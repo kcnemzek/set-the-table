@@ -4,7 +4,9 @@
       "Bash(powershell -Command \"Get-Command node,npm,npx -ErrorAction SilentlyContinue | Select-Object Name, Source\" 2>&1)",
       "Bash(npx tsc:*)",
       "Bash(ls *)",
-      "Bash(npm test *)"
+      "Bash(npm test *)",
+      "Bash(npx vitest *)",
+      "Bash(node_modules/.bin/tsc --noEmit)"
     ]
   }
 }

@@ -34,10 +34,6 @@ function TaskSheet({
 }) {
   const { state } = useAppContext();
   const [text, setText] = useState(initial?.text ?? "");
-  const [dateType, setDateType] = useState<"absolute" | "relative">(
-    initial?.daysBeforeEvent !== undefined ? "relative" : "absolute"
-  );
-  const [date, setDate] = useState(initial?.date ?? "");
   const [daysBeforeEvent, setDaysBeforeEvent] = useState(initial?.daysBeforeEvent ?? 3);
   const [time, setTime] = useState(initial?.time ?? "");
   const [linkedRecipeId, setLinkedRecipeId] = useState(initial?.customRecipeId ?? "");
@@ -46,8 +42,6 @@ function TaskSheet({
   useMemo(() => {
     if (open) {
       setText(initial?.text ?? "");
-      setDateType(initial?.daysBeforeEvent !== undefined ? "relative" : "absolute");
-      setDate(initial?.date ?? "");
       setDaysBeforeEvent(initial?.daysBeforeEvent ?? 3);
       setTime(initial?.time ?? "");
       setLinkedRecipeId(initial?.customRecipeId ?? "");
@@ -61,31 +55,32 @@ function TaskSheet({
     ? state.customRecipes.filter((r) => r.title.toLowerCase().includes(recipeSearch.toLowerCase()))
     : state.customRecipes;
 
-  const relativePreviewDate = (() => {
+  const previewDate = (() => {
     const d = new Date(eventDate + "T00:00:00");
     d.setDate(d.getDate() - daysBeforeEvent);
     return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
   })();
 
-  const isValid = text.trim() && (dateType === "absolute" ? !!date : daysBeforeEvent >= 0);
+  const previewLabel = daysBeforeEvent === 0
+    ? "Day of the event"
+    : daysBeforeEvent > 0
+    ? `${daysBeforeEvent} day${daysBeforeEvent !== 1 ? "s" : ""} before — ${previewDate}`
+    : `${Math.abs(daysBeforeEvent)} day${Math.abs(daysBeforeEvent) !== 1 ? "s" : ""} after — ${previewDate}`;
+
+  const isValid = text.trim();
 
   function handleSave() {
     if (!isValid) return;
+    const d = new Date(eventDate + "T00:00:00");
+    d.setDate(d.getDate() - daysBeforeEvent);
     const task: Omit<EventTask, "id" | "completed"> = {
       text: text.trim(),
       time: time || undefined,
       customRecipeId: linkedRecipeId || undefined,
       recipeTitle: linkedRecipe?.title,
+      daysBeforeEvent,
+      date: d.toISOString().slice(0, 10),
     };
-    if (dateType === "relative") {
-      task.daysBeforeEvent = daysBeforeEvent;
-      // Also store computed date for sorting/display
-      const d = new Date(eventDate + "T00:00:00");
-      d.setDate(d.getDate() - daysBeforeEvent);
-      task.date = d.toISOString().slice(0, 10);
-    } else {
-      task.date = date;
-    }
     onSave(task);
     onClose();
   }
@@ -110,44 +105,17 @@ function TaskSheet({
         {/* When */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">When</label>
-          <div className="flex gap-2 mb-3">
-            <button
-              onClick={() => setDateType("absolute")}
-              className={clsx("flex-1 py-2 rounded-xl text-sm font-medium border transition-colors",
-                dateType === "absolute" ? "bg-brand-50 text-brand-600 border-brand-200" : "bg-gray-50 text-gray-500 border-gray-200"
-              )}
-            >Specific date</button>
-            <button
-              onClick={() => setDateType("relative")}
-              className={clsx("flex-1 py-2 rounded-xl text-sm font-medium border transition-colors",
-                dateType === "relative" ? "bg-brand-50 text-brand-600 border-brand-200" : "bg-gray-50 text-gray-500 border-gray-200"
-              )}
-            >Before event</button>
-          </div>
-          {dateType === "absolute" ? (
+          <div className="flex items-center gap-3">
             <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+              type="number"
+              value={daysBeforeEvent}
+              onChange={(e) => setDaysBeforeEvent(parseInt(e.target.value) || 0)}
+              className="w-20 rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-brand-400"
             />
-          ) : (
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  min={0}
-                  value={daysBeforeEvent}
-                  onChange={(e) => setDaysBeforeEvent(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-20 rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-brand-400"
-                />
-                <span className="text-sm text-gray-600">days before the event</span>
-              </div>
-              <p className="text-xs text-gray-400 px-1">
-                {daysBeforeEvent === 0 ? "Day of the event" : `On ${relativePreviewDate}`}
-              </p>
-            </div>
-          )}
+            <span className="text-sm text-gray-600">days relative to event</span>
+          </div>
+          <p className="text-xs text-gray-400 px-1 mt-2">{previewLabel}</p>
+          <p className="text-xs text-gray-300 px-1 mt-0.5">Negative = after the event</p>
         </div>
 
         {/* Time */}

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CalendarCheck, ChefHat, ShoppingCart } from "lucide-react";
+import { CalendarDays, CalendarCheck, ChefHat, ShoppingCart, Sparkles } from "lucide-react";
 import clsx from "clsx";
 
 const TABS = [
   { href: "/menu", label: "Menu", Icon: CalendarDays },
+  { href: "/discover", label: "Discover", Icon: Sparkles },
   { href: "/recipes", label: "My Kitchen", Icon: ChefHat },
   { href: "/groceries", label: "Groceries", Icon: ShoppingCart },
   { href: "/event-planning", label: "Events", Icon: CalendarCheck },

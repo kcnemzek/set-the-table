@@ -22,6 +22,11 @@ const MenuShareCard = forwardRef<HTMLDivElement, MenuShareCardProps>(
     const eventEntry = entries.find((e) => e.type === "event");
     const menuEntries = entries.filter((e) => e.type !== "event");
 
+    // Event plans that fall on this date
+    const relevantEvents = state.eventPlans.filter((p) => p.date === dateStr);
+    const eventDishes = relevantEvents.flatMap((p) => p.dishes);
+    const eventName = relevantEvents[0]?.name;
+
     return (
       <div
         ref={ref}
@@ -30,9 +35,9 @@ const MenuShareCard = forwardRef<HTMLDivElement, MenuShareCardProps>(
       >
         {/* Header */}
         <div className="bg-brand-500 px-6 pt-6 pb-5">
-          {eventEntry ? (
+          {(eventEntry || eventName) ? (
             <>
-              <p className="text-white text-xl font-bold leading-tight">{eventEntry.text}</p>
+              <p className="text-white text-xl font-bold leading-tight">{eventEntry?.text ?? eventName}</p>
               <p className="text-brand-100 text-sm mt-1">{weekday}, {monthDay}</p>
             </>
           ) : (
@@ -82,6 +87,19 @@ const MenuShareCard = forwardRef<HTMLDivElement, MenuShareCardProps>(
               </div>
             );
           })}
+
+          {/* Event dishes — shown when there are event plans on this date */}
+          {menuEntries.length > 0 && eventDishes.length > 0 && (
+            <div className="border-t border-gray-100 pt-3" />
+          )}
+          {eventDishes.map((dish) => (
+            <div key={dish.id} className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-xl flex-shrink-0">
+                {getRecipeEmoji(dish.title)}
+              </div>
+              <span className="text-gray-800 text-sm font-medium leading-snug">{dish.title}</span>
+            </div>
+          ))}
         </div>
 
         {/* Footer */}

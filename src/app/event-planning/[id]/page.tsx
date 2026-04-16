@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, Pencil, Check, X, Plus, Trash2, ShoppingCart,
   ChefHat, UtensilsCrossed, CalendarDays, Clock, CheckSquare, Square,
-  ChevronsDown, Search, BookOpen,
+  ChevronsDown, Search, BookOpen, Share2,
 } from "lucide-react";
 import clsx from "clsx";
 import { useAppContext } from "@/store/context";
@@ -214,6 +214,7 @@ export default function EventDetailPage() {
   const [viewingFavRecipe, setViewingFavRecipe] = useState<RecipeSummary | null>(null);
   const [sendDishEntry, setSendDishEntry] = useState<DayEntry | null>(null);
   const [sendAllOpen, setSendAllOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (!plan) {
     return (
@@ -230,6 +231,48 @@ export default function EventDetailPage() {
   const formattedDate = eventDate.toLocaleDateString("en-US", {
     weekday: "long", month: "long", day: "numeric", year: "numeric",
   });
+
+  function buildEventShareText(): string {
+    const lines: string[] = [];
+    lines.push(`🎉 ${plan!.name}`);
+    lines.push(`📅 ${formattedDate}`);
+
+    if (plan!.dishes.length > 0) {
+      lines.push("");
+      for (const dish of plan!.dishes) {
+        lines.push(`${getRecipeEmoji(dish.title)} ${dish.title}`);
+      }
+    }
+
+    // Tasks sorted furthest-out first
+    const shareTasks = [...plan!.tasks]
+      .filter((t) => t.daysBeforeEvent !== undefined)
+      .sort((a, b) => (b.daysBeforeEvent ?? 0) - (a.daysBeforeEvent ?? 0));
+
+    if (shareTasks.length > 0) {
+      lines.push("");
+      for (const task of shareTasks) {
+        const d = task.daysBeforeEvent!;
+        const when = d === 0 ? "day of" : d > 0 ? `${d} day${d !== 1 ? "s" : ""} before` : `${Math.abs(d)} day${Math.abs(d) !== 1 ? "s" : ""} after`;
+        lines.push(`• ${task.text} — ${when}`);
+      }
+    }
+
+    lines.push("");
+    lines.push("Mom, What's for Dinner?");
+    return lines.join("\n");
+  }
+
+  async function handleEventShare() {
+    const text = buildEventShareText();
+    if (navigator.share) {
+      try { await navigator.share({ text }); } catch { /* dismissed */ }
+    } else {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
 
   // Helper: compute the effective calendar date for a task
   function getEffectiveDate(task: EventTask): string {
@@ -388,6 +431,13 @@ export default function EventDetailPage() {
               </button>
             )}
           </div>
+          <button
+            onClick={handleEventShare}
+            className="p-1.5 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0"
+            title="Share event"
+          >
+            {copied ? <Check size={18} className="text-brand-500" /> : <Share2 size={18} />}
+          </button>
         </div>
       </div>
 

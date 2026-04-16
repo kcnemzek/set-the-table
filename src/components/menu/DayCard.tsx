@@ -62,26 +62,31 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
   }
   const { primary, secondary } = formatDateLabelRelative(dateStr);
 
+  const relevantEvents = state.eventPlans.filter((p) => p.date === dateStr);
+  const hasEventContent = relevantEvents.some((p) => p.dishes.length > 0);
+
   function buildShareText(): string {
     const [y, m, d] = dateStr.split("-").map(Number);
     const date = new Date(y, m - 1, d);
     const fullDate = date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
     const eventEntry = entries.find((e) => e.type === "event");
-    const menuEntries = entries.filter((e) => e.type !== "event");
+    const regularEntries = entries.filter((e) => e.type !== "event");
+    const eventDishes = relevantEvents.flatMap((p) => p.dishes);
+    const eventName = relevantEvents[0]?.name;
 
     const lines: string[] = [];
 
-    if (eventEntry) {
-      lines.push(eventEntry.text ?? "");
+    if (eventEntry || eventName) {
+      lines.push(eventEntry?.text ?? eventName ?? "");
       lines.push(fullDate);
     } else {
       lines.push(`📅 ${fullDate}`);
     }
 
-    if (menuEntries.length > 0) {
+    if (regularEntries.length > 0) {
       lines.push("");
-      for (const entry of menuEntries) {
+      for (const entry of regularEntries) {
         if (entry.type === "recipe" || entry.type === "custom-recipe") {
           lines.push(entry.recipeTitle ?? "");
         } else if (entry.type === "text") {
@@ -90,7 +95,14 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
       }
     }
 
-    if (eventEntry) {
+    if (eventDishes.length > 0) {
+      lines.push("");
+      for (const dish of eventDishes) {
+        lines.push(`${getRecipeEmoji(dish.title)} ${dish.title}`);
+      }
+    }
+
+    if (eventEntry || eventName) {
       lines.push("");
       lines.push("See you there! 🙌");
     }
@@ -177,7 +189,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
           </p>
         </div>
         <div className="flex items-center gap-1.5">
-          {entries.length > 0 && (
+          {(entries.length > 0 || hasEventContent) && (
             <>
               <button
                 onClick={() => setSaveMenuOpen(true)}

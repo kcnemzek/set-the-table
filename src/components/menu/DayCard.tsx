@@ -167,7 +167,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
       <div
         className={clsx(
           "flex items-center justify-between px-4 py-3 rounded-t-2xl",
-          isToday ? "bg-[#1e3a6e]" : "bg-gray-100"
+          isToday ? "bg-brand-500" : "bg-gray-100"
         )}
       >
         <div>

@@ -160,14 +160,14 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
     <div
       className={clsx(
         "bg-white rounded-2xl shadow-sm border",
-        isToday ? "border-brand-300 ring-1 ring-brand-200" : "border-gray-200"
+        isToday ? "border-brand-200 ring-1 ring-brand-100" : "border-gray-300"
       )}
     >
       {/* Day Header */}
       <div
         className={clsx(
           "flex items-center justify-between px-4 py-3 rounded-t-2xl",
-          isToday ? "bg-brand-500" : "bg-gray-100"
+          isToday ? "bg-[#1e3a6e]" : "bg-gray-100"
         )}
       >
         <div>

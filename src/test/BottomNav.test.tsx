@@ -35,36 +35,36 @@ describe("BottomNav", () => {
     mockPathname.mockReturnValue("/menu");
     render(<BottomNav />);
     const menuLink = screen.getByText("Menu").closest("a");
-    expect(menuLink?.className).toContain("text-brand-500");
+    expect(menuLink?.className).toContain("text-white");
   });
 
   it("marks My Kitchen tab as active on /recipes", () => {
     mockPathname.mockReturnValue("/recipes");
     render(<BottomNav />);
     const recipesLink = screen.getByText("My Kitchen").closest("a");
-    expect(recipesLink?.className).toContain("text-brand-500");
+    expect(recipesLink?.className).toContain("text-white");
   });
 
   it("marks Groceries tab as active on /groceries", () => {
     mockPathname.mockReturnValue("/groceries");
     render(<BottomNav />);
     const groceriesLink = screen.getByText("Groceries").closest("a");
-    expect(groceriesLink?.className).toContain("text-brand-500");
+    expect(groceriesLink?.className).toContain("text-white");
   });
 
   it("marks Events tab as active on /event-planning", () => {
     mockPathname.mockReturnValue("/event-planning");
     render(<BottomNav />);
     const eventsLink = screen.getByText("Events").closest("a");
-    expect(eventsLink?.className).toContain("text-brand-500");
+    expect(eventsLink?.className).toContain("text-white");
   });
 
   it("marks no tab as active on an unrelated route", () => {
-    mockPathname.mockReturnValue("/login");
+    mockPathname.mockReturnValue("/settings");
     render(<BottomNav />);
     ["Menu", "My Kitchen", "Groceries", "Events"].forEach((label) => {
       const link = screen.getByText(label).closest("a");
-      expect(link?.className).not.toContain("text-brand-500");
+      expect(link?.className).toContain("text-blue-300");
     });
   });
 

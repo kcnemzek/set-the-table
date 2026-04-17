@@ -259,7 +259,7 @@ export default function EventDetailPage() {
     }
 
     lines.push("");
-    lines.push("Mom, What's for Dinner?");
+    lines.push("Set the Table — Daily Dinner. Set.");
     return lines.join("\n");
   }
 

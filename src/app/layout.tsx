@@ -8,12 +8,12 @@ import MobileHeader from "@/components/layout/MobileHeader";
 import SessionWrapper from "@/components/layout/SessionWrapper";
 
 export const metadata: Metadata = {
-  title: "Mom, What's for Dinner?",
-  description: "Simple meal planning for the week ahead",
+  title: "SetTheTable",
+  description: "Daily Dinner. Set.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "What's for Dinner",
+    title: "SetTheTable",
   },
 };
 
@@ -22,7 +22,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#0055b2",
+  themeColor: "#162D5A",
 };
 
 export default function RootLayout({

@@ -3,13 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChefHat, CalendarDays, CalendarCheck, BookOpen, ShoppingCart, LogOut, Menu, HelpCircle, Sparkles } from "lucide-react";
+import { CalendarDays, CalendarCheck, BookOpen, ShoppingCart, LogOut, Menu, HelpCircle, Sparkles } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import clsx from "clsx";
 import { useAppContext } from "@/store/context";
 import AppMenuSheet from "./AppMenuSheet";
 import HelpSheet from "./HelpSheet";
+import setthetableIcon from "@/app/setthetable_nobg.png";
 
 const TABS = [
   { href: "/menu", label: "Menu", Icon: CalendarDays },
@@ -30,17 +31,19 @@ export default function TopNav() {
   if (pathname.startsWith("/view")) return null;
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-40 bg-[#162D5A] border-b border-white/10 shadow-sm">
       <nav className="max-w-5xl mx-auto px-6 flex items-center justify-between h-16">
         {/* Brand */}
         <Link
           href="/menu"
-          className="flex items-center gap-2 font-bold text-brand-600 text-lg hover:text-brand-700 transition-colors"
+          className="flex items-center gap-2 font-bold text-white text-lg hover:text-white/80 transition-colors"
         >
-          <ChefHat className="w-7 h-7" />
+          <Image src={setthetableIcon} alt="Set the Table" width={32} height={33} className="rounded-sm" />
           <div className="flex flex-col leading-tight">
-            <span>Mom, What&apos;s for Dinner?</span>
-            <span className="text-[10px] font-normal text-gray-500">v{process.env.NEXT_PUBLIC_VERSION}</span>
+            <span style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "-0.022em" }}>
+              <span style={{ fontWeight: 300 }}>SetThe</span><span style={{ fontWeight: 700 }}>Table</span>
+            </span>
+            <span className="text-[10px] font-normal text-blue-200">Daily dinner. Set.</span>
           </div>
         </Link>
 
@@ -55,8 +58,8 @@ export default function TopNav() {
                 className={clsx(
                   "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors",
                   active
-                    ? "bg-brand-50 text-brand-700"
-                    : "text-gray-500 hover:bg-gray-200 hover:text-gray-800"
+                    ? "bg-white/10 text-white"
+                    : "text-blue-200 hover:bg-white/10 hover:text-white"
                 )}
               >
                 <Icon size={17} strokeWidth={active ? 2.5 : 1.75} />
@@ -71,14 +74,14 @@ export default function TopNav() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setHelpOpen(true)}
-              className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-200 rounded-xl transition-colors"
+              className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
               title="Help"
             >
               <HelpCircle size={18} />
             </button>
             <button
               onClick={() => setMenuOpen(true)}
-              className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-200 rounded-xl transition-colors"
+              className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
               title="Menu"
             >
               <Menu size={18} />
@@ -86,7 +89,7 @@ export default function TopNav() {
             <div className="relative">
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-white/10 transition-colors"
               >
                 {session.user.image && (
                   <Image
@@ -97,7 +100,7 @@ export default function TopNav() {
                     className="rounded-full"
                   />
                 )}
-                <span className="text-sm text-gray-600 hidden lg:block">
+                <span className="text-sm text-blue-200 hidden lg:block">
                   {session.user.name?.split(" ")[0]}
                 </span>
               </button>

@@ -3,12 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChefHat, LogOut, Menu, HelpCircle } from "lucide-react";
+import { LogOut, Menu, HelpCircle } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import { useAppContext } from "@/store/context";
 import AppMenuSheet from "./AppMenuSheet";
 import HelpSheet from "./HelpSheet";
+import setthetableIcon from "@/app/setthetable_nobg.png";
 
 export default function MobileHeader() {
   const { data: session } = useSession();
@@ -18,21 +19,23 @@ export default function MobileHeader() {
   const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
 
-  if (pathname.startsWith("/view")) return null;
+  if (pathname.startsWith("/view") || pathname.startsWith("/login")) return null;
 
   return (
     <>
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-40 bg-[#162D5A] border-b border-white/10 shadow-sm">
       <div className="flex items-center justify-between h-14 px-4">
         {/* Brand */}
         <Link
           href="/menu"
-          className="flex items-center gap-2 font-bold text-brand-600 text-base"
+          className="flex items-center gap-2 font-bold text-white text-base"
         >
-          <ChefHat className="w-6 h-6" />
+          <Image src={setthetableIcon} alt="Set the Table" width={28} height={29} className="rounded-sm" />
           <div className="flex flex-col leading-tight">
-            <span>Mom, What&apos;s for Dinner?</span>
-            <span className="text-[10px] font-normal text-gray-500">v{process.env.NEXT_PUBLIC_VERSION}</span>
+            <span style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "-0.022em" }}>
+              <span style={{ fontWeight: 300 }}>SetThe</span><span style={{ fontWeight: 700 }}>Table</span>
+            </span>
+            <span className="text-[10px] font-normal text-blue-200">Daily dinner. Set.</span>
           </div>
         </Link>
 
@@ -41,14 +44,14 @@ export default function MobileHeader() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setHelpOpen(true)}
-              className="p-2 text-gray-500 hover:text-gray-600 active:text-gray-800"
+              className="p-2 text-blue-200 hover:text-white active:text-white"
               title="Help"
             >
               <HelpCircle size={18} />
             </button>
             <button
               onClick={() => setMenuOpen(true)}
-              className="p-2 text-gray-500 hover:text-gray-600 active:text-gray-800"
+              className="p-2 text-blue-200 hover:text-white active:text-white"
               title="Menu"
             >
               <Menu size={18} />

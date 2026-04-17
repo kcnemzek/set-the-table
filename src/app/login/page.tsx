@@ -1,5 +1,6 @@
 import { signIn } from "@/auth";
-import { ChefHat } from "lucide-react";
+import Image from "next/image";
+import setthetableIcon from "@/app/setthetable_nobg.png";
 
 export default function LoginPage() {
   return (
@@ -7,12 +8,12 @@ export default function LoginPage() {
       <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 w-full max-w-sm text-center">
         {/* Brand */}
         <div className="flex flex-col items-center gap-3 mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-brand-500 flex items-center justify-center">
-            <ChefHat className="w-9 h-9 text-white" />
-          </div>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "#162D5A" }}>
+              <Image src={setthetableIcon} alt="SetTheTable" width={44} height={46} />
+            </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-800">Mom, What&apos;s for Dinner?</h1>
-            <p className="text-sm text-gray-500 mt-1">Plan the week, build the list, and finally end the interrogation.</p>
+            <h1 className="text-xl font-bold text-gray-800">Ready to Set the Table?</h1>
+            <p className="text-sm text-gray-500 mt-1">Daily Dinner. Set.</p>
           </div>
         </div>
 

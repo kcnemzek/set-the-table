@@ -16,10 +16,10 @@ const TABS = [
 export default function BottomNav() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/view")) return null;
+  if (pathname.startsWith("/view") || pathname.startsWith("/login")) return null;
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 safe-area-inset-bottom">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#162D5A] border-t border-white/10 safe-area-inset-bottom">
       <div className="flex">
         {TABS.map(({ href, label, Icon }) => {
           const active = pathname.startsWith(href);
@@ -30,8 +30,8 @@ export default function BottomNav() {
               className={clsx(
                 "flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors",
                 active
-                  ? "text-brand-500"
-                  : "text-gray-500 hover:text-gray-600 active:text-brand-400"
+                  ? "text-white"
+                  : "text-blue-300 hover:text-blue-100 active:text-white"
               )}
             >
               <Icon size={24} strokeWidth={active ? 2.5 : 1.75} />

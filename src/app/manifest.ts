@@ -2,13 +2,13 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Mom, What's for Dinner?",
-    short_name: "What's for Dinner",
-    description: "Simple meal planning for the week ahead",
+    name: "SetTheTable",
+    short_name: "SetTheTable",
+    description: "Daily Dinner. Set.",
     start_url: "/menu",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#0055b2",
+    theme_color: "#162D5A",
     icons: [
       {
         src: "/apple-icon.png",

@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     message.trim(),
   ].join("\n");
 
-  const res = await fetch("https://api.github.com/repos/kcnemzek/whats-for-dinner/issues", {
+  const res = await fetch("https://api.github.com/repos/kcnemzek/set-the-table/issues", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.GITHUB_FEEDBACK_TOKEN}`,

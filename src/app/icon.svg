@@ -1,9 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="#0055b2"/>
-  <!-- Chef hat -->
-  <path d="M16 7C13.5 7 11.5 8.8 11.2 11.1C10 11.4 9 12.4 9 13.7C9 15.2 10.2 16.4 11.7 16.4H20.3C21.8 16.4 23 15.2 23 13.7C23 12.4 22 11.4 20.8 11.1C20.5 8.8 18.5 7 16 7Z" fill="white"/>
-  <!-- Hat brim -->
-  <rect x="10" y="17" width="12" height="2" rx="1" fill="white"/>
-  <!-- Hat body lower -->
-  <rect x="11" y="19" width="10" height="5" rx="1" fill="white"/>
+  <defs>
+    <linearGradient id="metallic" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4d4d4"/>
+      <stop offset="30%" stop-color="#f5f5f5"/>
+      <stop offset="70%" stop-color="#e0e0e0"/>
+      <stop offset="100%" stop-color="#aaaaaa"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="#0D1B2A"/>
+  <text x="16" y="23" font-family="Georgia, 'Times New Roman', serif" font-size="20" font-weight="bold" font-style="italic" text-anchor="middle" fill="url(#metallic)">S</text>
 </svg>

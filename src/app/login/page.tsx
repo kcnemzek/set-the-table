@@ -13,7 +13,7 @@ export default function LoginPage() {
             </div>
           <div>
             <h1 className="text-xl font-bold text-gray-800">Ready to Set the Table?</h1>
-            <p className="text-sm text-gray-500 mt-1">Daily Dinner. Set.</p>
+            <p className="text-sm text-gray-500 mt-1">Stop wondering what's for dinner. Start setting the table.</p>
           </div>
         </div>
 

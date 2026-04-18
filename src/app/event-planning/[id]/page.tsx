@@ -105,17 +105,25 @@ function TaskSheet({
         {/* When */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">When</label>
-          <div className="flex items-center gap-3">
-            <input
-              type="number"
-              value={daysBeforeEvent}
-              onChange={(e) => setDaysBeforeEvent(parseInt(e.target.value) || 0)}
-              className="w-20 rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-brand-400"
-            />
-            <span className="text-sm text-gray-600">days relative to event</span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setDaysBeforeEvent((v) => v - 1)}
+              className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-lg font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100"
+            >
+              −
+            </button>
+            <span className="w-16 text-center text-sm font-semibold text-gray-800">{daysBeforeEvent}</span>
+            <button
+              type="button"
+              onClick={() => setDaysBeforeEvent((v) => v + 1)}
+              className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-lg font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100"
+            >
+              +
+            </button>
+            <span className="text-sm text-gray-600">days before event</span>
           </div>
           <p className="text-xs text-gray-400 px-1 mt-2">{previewLabel}</p>
-          <p className="text-xs text-gray-300 px-1 mt-0.5">Negative = after the event</p>
         </div>
 
         {/* Time */}
@@ -668,6 +676,12 @@ export default function EventDetailPage() {
                               )}
                             </div>
                           </div>
+                          <button
+                            onClick={() => setEditingTask(task)}
+                            className="p-1.5 rounded-lg text-gray-300 hover:text-brand-500 hover:bg-brand-50 transition-colors flex-shrink-0"
+                          >
+                            <Pencil size={14} />
+                          </button>
                           <button
                             onClick={() => setConfirmDeleteTask({ id: task.id, text: task.text })}
                             className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors flex-shrink-0"

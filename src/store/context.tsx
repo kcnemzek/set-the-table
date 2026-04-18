@@ -436,6 +436,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             savedMenus: data.savedMenus ?? [],
             tips: data.tips ?? [],
             eventPlans: data.eventPlans ?? [],
+            stores: data.stores ?? [],
           },
         });
       })

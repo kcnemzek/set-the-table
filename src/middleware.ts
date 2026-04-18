@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 
 export default auth((req) => {
   if (!req.auth) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    const url = req.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
   }
 });
 

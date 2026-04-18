@@ -128,6 +128,11 @@ export default function EventPlanningPage() {
             </button>
           ))}
         </div>
+        <p className="text-xs text-gray-400 mt-2 px-1">
+          {tab === "events"
+            ? "Special occasions with dishes, tasks, and prep timelines"
+            : "Reusable meal plans to stamp onto any day"}
+        </p>
       </div>
 
       {/* Events Tab */}

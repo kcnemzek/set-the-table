@@ -4,7 +4,6 @@ import clsx from "clsx";
 import { Tag, Trash2 } from "lucide-react";
 import { useAppContext } from "@/store/context";
 import { groceryItemKey } from "@/lib/ingredient-utils";
-import { STORES } from "@/lib/stores";
 import type { AggregatedIngredient } from "@/types";
 
 interface GrocerySectionProps {
@@ -122,7 +121,7 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
                   className="absolute inset-0 opacity-0 cursor-pointer w-full"
                 >
                   <option value="">No store</option>
-                  {STORES.map((s) => (
+                  {state.stores.map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>

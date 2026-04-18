@@ -9,7 +9,6 @@ import EmptyState from "@/components/shared/EmptyState";
 import { useAppContext } from "@/store/context";
 import { aggregateIngredients, groceryItemKey } from "@/lib/ingredient-utils";
 import { getNext10Days } from "@/lib/dates";
-import { STORES } from "@/lib/stores";
 import type { RecipeDetail, GroceryListByAisle, FamilyGroceryItem } from "@/types";
 
 type Tab = "recipes" | "family" | "all";
@@ -400,7 +399,7 @@ export default function GroceriesPage() {
                                 className="absolute inset-0 opacity-0 cursor-pointer w-full"
                               >
                                 <option value="">No store</option>
-                                {STORES.map((s) => <option key={s} value={s}>{s}</option>)}
+                                {state.stores.map((s) => <option key={s} value={s}>{s}</option>)}
                               </select>
                             </div>
                             <button

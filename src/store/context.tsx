@@ -21,6 +21,7 @@ import type {
   EventDish,
   EventTask,
 } from "@/types";
+import { STORES as DEFAULT_STORES } from "@/lib/stores";
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ interface AppState {
   /** key: aisle|name|unit → store for recipe ingredients */
   groceryItemStores: Record<string, string>;
   familyMembers: FamilyMember[];
+  stores: string[];
   savedMenus: SavedMenu[];
   tips: Tip[];
   eventPlans: EventPlan[];
@@ -52,6 +54,7 @@ const initialState: AppState = {
   groceryChecked: {},
   groceryItemStores: {},
   familyMembers: [],
+  stores: [...DEFAULT_STORES],
   savedMenus: [],
   tips: [],
   eventPlans: [],
@@ -82,6 +85,8 @@ type Action =
   | { type: "CACHE_RECIPE"; recipe: RecipeDetail }
   | { type: "ADD_FAMILY_MEMBER"; member: FamilyMember }
   | { type: "REMOVE_FAMILY_MEMBER"; id: string }
+  | { type: "ADD_STORE"; name: string }
+  | { type: "REMOVE_STORE"; name: string }
   | { type: "SAVE_DAY_AS_MENU"; savedMenu: SavedMenu }
   | { type: "DELETE_SAVED_MENU"; id: string }
   | { type: "RENAME_SAVED_MENU"; id: string; name: string }
@@ -107,7 +112,13 @@ type Action =
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "HYDRATE":
-      return { ...state, ...action.payload, recipeCache: {}, hydrated: true };
+      return {
+        ...state,
+        ...action.payload,
+        stores: action.payload.stores?.length ? action.payload.stores : [...DEFAULT_STORES],
+        recipeCache: {},
+        hydrated: true,
+      };
 
     case "ADD_DAY_ENTRY": {
       const existing = state.menu[action.dateStr] ?? [];
@@ -235,6 +246,13 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         familyMembers: state.familyMembers.filter((m) => m.id !== action.id),
       };
+
+    case "ADD_STORE":
+      if (state.stores.includes(action.name)) return state;
+      return { ...state, stores: [...state.stores, action.name].sort() };
+
+    case "REMOVE_STORE":
+      return { ...state, stores: state.stores.filter((s) => s !== action.name) };
 
     case "SAVE_DAY_AS_MENU":
       return { ...state, savedMenus: [...state.savedMenus, action.savedMenu] };

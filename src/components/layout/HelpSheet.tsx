@@ -11,7 +11,7 @@ interface HelpSheetProps {
 
 const SECTIONS = [
   {
-    title: "🍽️ The Master Plan - Menu",
+    title: "🗓️ The Master Plan - Menu",
     tips: [
       { label: "Smart Scheduling", body: "Planning your week shouldn't feel like a chore. Tap + on any day to instantly pull from your curated favorites, custom notes, or high-priority events." },
       { label: "Fluid Organization", body: "Plans change, so your menu should too. Easily move meals from one night to another." },
@@ -23,12 +23,18 @@ const SECTIONS = [
     title: "📖 Your Digital Cookbook - My Kitchen",
     tips: [
       { label: "Intelligent Creation", body: "Stop manual typing. Use 'Smart Copy-Paste' for web recipes or 'Snap a Pic' to instantly digitize handwritten cards and cookbooks with AI." },
-      { label: "Smart Discovery", body: "Find exactly what you’re craving in the Discover tab by filtering for specific diets, cuisines, or the ingredients already in your pantry." },
-      { label: "The ✨ Sparkle Effect", body: "Feeling uninspired? Tap the Sparkle to let our AI generate a fresh group of surprise recipes that are sperfect for shaking up your entire 10-day plan." },
       { label: "The \"Heart\" Factor", body: "Spot something delicious in the Discover tab? Hit the heart to save it to your Favorites for instant access later." },
       { label: "Smart Ingredients", body: "Want to eat your famous meatballs? When you add a custom recipe, the app does the heavy lifting. Ingredients are automatically parsed and synced directly to your shopping list." },
       { label: "Share Your Recipes", body: "Did everyone love your lasagna? Share it with your friends and family with one click." },
-      { label: "Save Your Tips", body: "Use tips to save how long it took to poach your chicken or soft boil your eggs." },
+      { label: "Cheat Sheets", body: "Use cheat sheets to save how long it took to poach your chicken or soft boil your eggs." },
+    ],
+  },
+  {
+    title: "✨ Find Something New - Discover",
+    tips: [
+      { label: "AI-Powered Ideas", body: "Browse a curated feed of recipes tailored to your taste. Filter by diet, cuisine, or ingredients you already have." },
+      { label: "The Sparkle", body: "Feeling uninspired? Tap ✨ to let AI generate a fresh batch of surprise recipes — perfect for shaking up your weekly plan." },
+      { label: "Save Your Favorites", body: "Spot something delicious? Tap the heart to save it to your Favorites for instant access when you're planning meals." },
     ],
   },
   {
@@ -40,15 +46,16 @@ const SECTIONS = [
     ],
   },
   {
-    title: "📅 Stress-Free Hosting - Event Planning",
+    title: "🎉 Stress-Free Hosting - Event Planning",
     tips: [
       { label: "The Big Day", body: "Whether it's Easter Brunch or a birthday party, create a dedicated space for your event with linked recipes and tips." },
       { label: "To-Do Trackers", body: "Keep the chaos at bay with integrated checklists. Track everything from 'Buy flowers' to 'Pre-heat oven' directly inside your event." },
-      { label: "Future Templates", body: "Don't reinvent the wheel. Save this year's Thanksgiving as a template to make next year’s planning a one-click breeze." },
+      { label: "Copy Events", body: "Recurring occasion? Copy last year’s Thanksgiving — dishes and all prep tasks carry over with the same timelines. Just set a new date." },
+      { label: "Templates", body: "Save a dinner night as a reusable template to stamp onto any day — great for Taco Tuesday, Pasta Night, or your weekly rotation." },
     ],
   },
   {
-    title: "👨‍👩‍👧 Family Sync",
+    title: "🔗 Family Sync",
     tips: [
       { label: "Real-Time Collaboration", body: "Invite your crew via the ☰ menu. Everyone stays on the same page with a shared meal plan and a live grocery list that updates for everyone...instantly." },
     ],
@@ -128,7 +135,7 @@ export default function HelpSheet({ open, onClose }: HelpSheetProps) {
               </div>
             ))}
             <p className="text-xs text-gray-500 text-center pt-2">
-              Mom, What&apos;s for Dinner? v{process.env.NEXT_PUBLIC_VERSION}
+              SetTheTable v{process.env.NEXT_PUBLIC_VERSION}
             </p>
           </div>
         )}

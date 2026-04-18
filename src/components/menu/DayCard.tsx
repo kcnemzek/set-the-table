@@ -159,7 +159,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
   return (
     <div
       className={clsx(
-        "bg-white rounded-2xl shadow-sm border",
+        "bg-white rounded-2xl shadow-sm border overflow-hidden",
         isToday ? "border-brand-200 ring-1 ring-brand-100" : "border-gray-300"
       )}
     >

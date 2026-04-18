@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, Pencil, Check, X, Plus, Trash2, ShoppingCart,
@@ -39,7 +39,7 @@ function TaskSheet({
   const [linkedRecipeId, setLinkedRecipeId] = useState(initial?.customRecipeId ?? "");
   const [recipeSearch, setRecipeSearch] = useState("");
 
-  useMemo(() => {
+  useEffect(() => {
     if (open) {
       setText(initial?.text ?? "");
       setDaysBeforeEvent(initial?.daysBeforeEvent ?? 3);

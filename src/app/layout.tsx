@@ -9,7 +9,7 @@ import SessionWrapper from "@/components/layout/SessionWrapper";
 
 export const metadata: Metadata = {
   title: "SetTheTable",
-  description: "Daily Dinner. Set.",
+  description: "Daily is set.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

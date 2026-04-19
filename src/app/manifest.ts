@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "SetTheTable",
     short_name: "SetTheTable",
-    description: "Daily Dinner. Set.",
+    description: "Dinner is set.",
     start_url: "/menu",
     display: "standalone",
     background_color: "#ffffff",

@@ -267,7 +267,7 @@ export default function EventDetailPage() {
     }
 
     lines.push("");
-    lines.push("Set the Table — Daily Dinner. Set.");
+    lines.push("Set the Table - Dinner is set.");
     return lines.join("\n");
   }
 

@@ -35,7 +35,7 @@ export default function MobileHeader() {
             <span style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "-0.022em" }}>
               <span style={{ fontWeight: 300 }}>SetThe</span><span style={{ fontWeight: 700 }}>Table</span>
             </span>
-            <span className="text-[10px] font-normal text-blue-200">Daily dinner. Set.</span>
+            <span className="text-[10px] font-normal text-blue-200">Dinner is set.</span>
           </div>
         </Link>
 

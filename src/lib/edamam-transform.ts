@@ -9,24 +9,55 @@ function toAisle(foodCategory?: string): string {
   const map: Record<string, string> = {
     vegetables: "Produce",
     fruit: "Produce",
+    produce: "Produce",
     grains: "Grains & Pasta",
+    pasta: "Grains & Pasta",
+    cereal: "Grains & Pasta",
+    bread: "Bakery",
+    pastry: "Bakery",
+    "quick bread": "Bakery",
+    muffin: "Bakery",
+    bagel: "Bakery",
+    roll: "Bakery",
+    croissant: "Bakery",
+    "baked goods": "Bakery",
     meat: "Meat & Seafood",
     seafood: "Meat & Seafood",
+    poultry: "Meat & Seafood",
+    fish: "Meat & Seafood",
     dairy: "Dairy",
+    egg: "Dairy",
+    cheese: "Dairy",
+    milk: "Dairy",
     "oils and fats": "Oils & Condiments",
     "condiments and sauces": "Oils & Condiments",
+    oil: "Oils & Condiments",
+    sauce: "Oils & Condiments",
+    vinegar: "Oils & Condiments",
     beverages: "Beverages",
+    alcohol: "Beverages",
+    wine: "Beverages",
+    beer: "Beverages",
+    juice: "Beverages",
     baking: "Baking",
+    sugar: "Baking",
+    sweets: "Baking",
     "spices and herbs": "Spices & Herbs",
+    spice: "Spices & Herbs",
+    herb: "Spices & Herbs",
     legumes: "Canned & Dry Goods",
+    beans: "Canned & Dry Goods",
+    canned: "Canned & Dry Goods",
     "nuts and seeds": "Nuts & Snacks",
+    nuts: "Nuts & Snacks",
+    snacks: "Nuts & Snacks",
     frozen: "Frozen",
   };
   const lower = foodCategory.toLowerCase();
   for (const [key, label] of Object.entries(map)) {
     if (lower.includes(key)) return label;
   }
-  return foodCategory.charAt(0).toUpperCase() + foodCategory.slice(1);
+  return "Miscellaneous";
 }
 
 function capitalize(s: string): string {

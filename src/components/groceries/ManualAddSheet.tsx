@@ -6,17 +6,18 @@ import { useAppContext } from "@/store/context";
 import type { ManualGroceryItem } from "@/types";
 
 const AISLES = [
-  "Produce",
-  "Meat & Seafood",
-  "Dairy",
-  "Grains & Pasta",
-  "Canned & Dry Goods",
+  "Bakery",
   "Baking",
-  "Spices & Herbs",
-  "Oils & Condiments",
-  "Frozen",
   "Beverages",
+  "Canned & Dry Goods",
+  "Dairy",
+  "Frozen",
+  "Grains & Pasta",
+  "Meat & Seafood",
   "Nuts & Snacks",
+  "Oils & Condiments",
+  "Produce",
+  "Spices & Herbs",
   "Miscellaneous",
 ];
 

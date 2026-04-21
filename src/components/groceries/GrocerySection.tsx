@@ -12,6 +12,7 @@ const AISLE_CONFIG: Record<string, { color: string; emoji: string }> = {
   "Dairy":             { color: "#2563eb", emoji: "🥛" },
   "Grains & Pasta":    { color: "#d97706", emoji: "🌾" },
   "Canned & Dry Goods":{ color: "#0d9488", emoji: "🥫" },
+  "Bakery":            { color: "#c2410c", emoji: "🥐" },
   "Baking":            { color: "#f59e0b", emoji: "🧁" },
   "Spices & Herbs":    { color: "#7c3aed", emoji: "🌿" },
   "Oils & Condiments": { color: "#ea580c", emoji: "🫙" },

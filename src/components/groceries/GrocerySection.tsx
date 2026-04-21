@@ -6,6 +6,22 @@ import { useAppContext } from "@/store/context";
 import { groceryItemKey } from "@/lib/ingredient-utils";
 import type { AggregatedIngredient } from "@/types";
 
+const AISLE_CONFIG: Record<string, { color: string; emoji: string }> = {
+  "Produce":           { color: "#16a34a", emoji: "🥦" },
+  "Meat & Seafood":    { color: "#dc2626", emoji: "🥩" },
+  "Dairy":             { color: "#2563eb", emoji: "🥛" },
+  "Grains & Pasta":    { color: "#d97706", emoji: "🌾" },
+  "Canned & Dry Goods":{ color: "#0d9488", emoji: "🥫" },
+  "Baking":            { color: "#f59e0b", emoji: "🧁" },
+  "Spices & Herbs":    { color: "#7c3aed", emoji: "🌿" },
+  "Oils & Condiments": { color: "#ea580c", emoji: "🫙" },
+  "Frozen":            { color: "#0891b2", emoji: "🧊" },
+  "Beverages":         { color: "#8b5cf6", emoji: "🧃" },
+  "Nuts & Snacks":     { color: "#b45309", emoji: "🥜" },
+  "Miscellaneous":     { color: "#6b7280", emoji: "📦" },
+};
+const DEFAULT_CONFIG = { color: "#6b7280", emoji: "🛒" };
+
 interface GrocerySectionProps {
   aisle: string;
   items: AggregatedIngredient[];
@@ -14,6 +30,7 @@ interface GrocerySectionProps {
 
 export default function GrocerySection({ aisle, items, hideChecked }: GrocerySectionProps) {
   const { dispatch, state } = useAppContext();
+  const config = AISLE_CONFIG[aisle] ?? DEFAULT_CONFIG;
 
   const visibleItems = hideChecked
     ? items.filter((item) => {
@@ -26,10 +43,12 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
 
   return (
     <div>
-      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest px-4 pt-4 pb-2">
-        {aisle}
+      <h3 className="text-xs font-bold uppercase tracking-widest px-4 pt-4 pb-2 flex items-center gap-1.5"
+        style={{ color: config.color }}>
+        <span>{config.emoji}</span> {aisle}
       </h3>
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mx-4">
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mx-4"
+        style={{ borderLeft: `4px solid ${config.color}` }}>
         {visibleItems.map((item, i) => {
           const key = groceryItemKey(item.aisle, item.name, item.unit);
           const checked = state.groceryChecked[key] ?? false;
@@ -48,10 +67,9 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
               <div
                 className={clsx(
                   "w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors",
-                  checked
-                    ? "bg-brand-500 border-brand-500"
-                    : "border-gray-300"
+                  checked ? "border-green-500" : "border-gray-300"
                 )}
+                style={checked ? { background: "#16a34a", borderColor: "#16a34a" } : {}}
               >
                 {checked && (
                   <svg viewBox="0 0 10 8" className="w-2.5 h-2.5 text-white" fill="none">

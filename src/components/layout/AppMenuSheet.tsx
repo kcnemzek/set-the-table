@@ -254,6 +254,20 @@ export default function AppMenuSheet({ open, onClose }: AppMenuSheetProps) {
                 </button>
               </div>
             </div>
+
+            {/* About */}
+            <div className="border-t border-gray-100 pt-4 space-y-1 text-center">
+              <p className="text-xs font-semibold text-gray-700">SetTheTable</p>
+              <p className="text-xs text-gray-400">Because dinner is set.</p>
+              <a
+                href="https://www.setthetable.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block text-xs text-brand-500 hover:text-brand-600 transition-colors"
+              >
+                setthetable.io
+              </a>
+            </div>
           </>
         )}
       </div>

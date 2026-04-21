@@ -7,7 +7,8 @@ export default function LoginPage() {
     <div className="min-h-[100dvh] relative flex items-center justify-center px-4">
       <Image src="/tablelinenimage.jpg" alt="" fill className="object-cover object-center" priority />
       <div className="absolute inset-0 bg-brand-600/80" />
-      <div className="relative z-10 bg-white rounded-3xl shadow-sm border border-gray-200 p-8 w-full max-w-sm text-center">
+      <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-4">
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 w-full text-center">
         {/* Brand */}
         <div className="flex flex-col items-center gap-3 mb-8">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "#162D5A" }}>
@@ -44,6 +45,15 @@ export default function LoginPage() {
         <p className="text-xs text-gray-500 mt-6">
           Family meal planning — your data stays private to your account.
         </p>
+      </div>
+      <a
+        href="https://www.setthetable.io"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-200 text-sm hover:text-white transition-colors tracking-wide"
+      >
+        setthetable.io
+      </a>
       </div>
     </div>
   );

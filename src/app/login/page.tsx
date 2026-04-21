@@ -4,8 +4,10 @@ import setthetableIcon from "@/app/setthetable_nobg.png";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-[100dvh] bg-gray-100 flex items-center justify-center px-4">
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 w-full max-w-sm text-center">
+    <div className="min-h-[100dvh] relative flex items-center justify-center px-4">
+      <Image src="/tablelinenimage.jpg" alt="" fill className="object-cover object-center" priority />
+      <div className="absolute inset-0 bg-brand-600/80" />
+      <div className="relative z-10 bg-white rounded-3xl shadow-sm border border-gray-200 p-8 w-full max-w-sm text-center">
         {/* Brand */}
         <div className="flex flex-col items-center gap-3 mb-8">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "#162D5A" }}>

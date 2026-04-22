@@ -13,7 +13,8 @@
       "Bash(cp \"C:/Users/karen/projects/ClaudeCode/set-the-table/src/app/setthetable.png\" \"C:/Users/karen/projects/setthetable-website/public/icon-bg.png\")",
       "Bash(npm install *)",
       "Bash(powershell *)",
-      "Read(//c/Users/karen/projects/ClaudeCode/set-the-table-website/**)"
+      "Read(//c/Users/karen/projects/ClaudeCode/set-the-table-website/**)",
+      "Bash(npx playwright *)"
     ]
   }
 }

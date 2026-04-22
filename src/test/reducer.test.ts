@@ -499,6 +499,7 @@ describe("reducer — hydrate", () => {
         groceryChecked: {},
         familyMembers: [{ id: "m1", name: "Karen", inviteToken: "tok-1" }],
         tips: [],
+        eventPlans: [],
       },
     });
     expect(state.hydrated).toBe(true);

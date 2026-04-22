@@ -394,7 +394,7 @@ export default function AddEntrySheet({
 
         {/* Favorites tab */}
         {!quickAdd && tab === "favorites" && !query.trim() && (
-          <div className="space-y-1">
+          <div>
             {favLoading && (
               <div className="flex justify-center py-8">
                 <Loader2 size={20} className="animate-spin text-gray-500" />
@@ -403,27 +403,42 @@ export default function AddEntrySheet({
             {!favLoading && favRecipes.length === 0 && (
               <p className="text-sm text-gray-500 text-center py-8">No favorites yet — heart a recipe on the Discover tab</p>
             )}
-            {!favLoading && favRecipes.map((recipe) => (
-              <div key={recipe.id} className="flex items-center gap-2 rounded-xl hover:bg-brand-50 active:bg-brand-100">
-                <button onClick={() => setViewingFavRecipe(recipe)} className="flex items-center gap-3 flex-1 min-w-0 p-3 text-left">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
-                    {recipe.image && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
-                    )}
+            {!favLoading && favRecipes.length > 0 && (
+              Object.entries(
+                favRecipes.reduce<Record<string, { emoji: string; recipes: typeof favRecipes }>>((groups, recipe) => {
+                  const { emoji, label } = getRecipeCategory(recipe.title);
+                  if (!groups[label]) groups[label] = { emoji, recipes: [] };
+                  groups[label].recipes.push(recipe);
+                  groups[label].recipes.sort((a, b) => a.title.localeCompare(b.title));
+                  return groups;
+                }, {})
+              )
+                .sort(([a], [b]) => a === "Other" ? 1 : b === "Other" ? -1 : a.localeCompare(b))
+                .map(([label, { emoji, recipes }]) => (
+                  <div key={label} className="mb-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-1 mb-1">{emoji} {label}</p>
+                    {recipes.map((recipe) => (
+                      <div key={recipe.id} className="flex items-center gap-2 rounded-xl hover:bg-brand-50 active:bg-brand-100">
+                        <button onClick={() => setViewingFavRecipe(recipe)} className="flex items-center gap-3 flex-1 min-w-0 p-3 text-left">
+                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center">
+                            {recipe.image
+                              ? <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" /> // eslint-disable-line @next/next/no-img-element
+                              : <span className="text-lg">{getRecipeEmoji(recipe.title)}</span>
+                            }
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 leading-tight line-clamp-2">{recipe.title}</p>
+                            {recipe.readyInMinutes > 0 && <p className="text-xs text-gray-500 mt-0.5">{recipe.readyInMinutes} min</p>}
+                          </div>
+                        </button>
+                        <button onClick={() => addRecipe(recipe)} className="flex-shrink-0 p-2 mr-1 rounded-xl text-brand-500 hover:bg-brand-100" aria-label="Add to day">
+                          <Plus size={18} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 leading-tight line-clamp-2">{recipe.title}</p>
-                    {recipe.readyInMinutes > 0 && (
-                      <p className="text-xs text-gray-500 mt-0.5">{recipe.readyInMinutes} min</p>
-                    )}
-                  </div>
-                </button>
-                <button onClick={() => addRecipe(recipe)} className="flex-shrink-0 p-2 mr-1 rounded-xl text-brand-500 hover:bg-brand-100" aria-label="Add to day">
-                  <Plus size={18} />
-                </button>
-              </div>
-            ))}
+                ))
+            )}
           </div>
         )}
 

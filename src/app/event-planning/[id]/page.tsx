@@ -49,11 +49,14 @@ function SortableDishRow({ dish, emoji, canView, onView, entry, onSend, onDelete
       </button>
       <button
         onClick={canView ? onView : undefined}
-        className={clsx("w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-xl",
+        className={clsx("w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 text-xl",
           canView ? "bg-brand-50 hover:bg-brand-100 active:bg-brand-200 cursor-pointer" : "bg-gray-50 cursor-default"
         )}
       >
-        {emoji ?? <ChefHat size={15} className="text-gray-400" />}
+        {dish.recipeImage
+          ? <img src={dish.recipeImage} alt={dish.title} className="w-full h-full object-cover" />
+          : emoji ?? <ChefHat size={15} className="text-gray-400" />
+        }
       </button>
       <button
         onClick={canView ? onView : undefined}

@@ -107,7 +107,9 @@ type Action =
   | { type: "ADD_EVENT_TASK"; planId: string; task: EventTask }
   | { type: "UPDATE_EVENT_TASK"; planId: string; task: EventTask }
   | { type: "REMOVE_EVENT_TASK"; planId: string; taskId: string }
-  | { type: "TOGGLE_EVENT_GROCERIES"; planId: string };
+  | { type: "TOGGLE_EVENT_GROCERIES"; planId: string }
+  | { type: "REORDER_EVENT_DISHES"; planId: string; dishes: EventDish[] }
+  | { type: "REORDER_EVENT_TASKS"; planId: string; tasks: EventTask[] };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -286,14 +288,20 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, tips: state.tips.filter((t) => t.id !== action.id) };
 
     case "RESET_STORE_ITEMS": {
-      // Uncheck manual items for this store
       const updatedManual = state.manualGroceryItems.map((i) =>
         i.store === action.store ? { ...i, checked: false } : i
       );
-      // Uncheck recipe ingredients assigned to this store
       const updatedChecked = { ...state.groceryChecked };
+      // Uncheck recipe ingredients assigned to this store
       for (const [key, store] of Object.entries(state.groceryItemStores)) {
         if (store === action.store) updatedChecked[key] = false;
+      }
+      // Uncheck manual items assigned to this store (UI reads from groceryChecked for all items)
+      for (const item of state.manualGroceryItems) {
+        if (item.store === action.store) {
+          const key = `${item.aisle}|${item.name.toLowerCase()}|${item.unit.toLowerCase()}`;
+          updatedChecked[key] = false;
+        }
       }
       return { ...state, manualGroceryItems: updatedManual, groceryChecked: updatedChecked };
     }
@@ -386,6 +394,12 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "TOGGLE_EVENT_GROCERIES":
       return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, addedToGroceries: !p.addedToGroceries } : p) };
+
+    case "REORDER_EVENT_DISHES":
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, dishes: action.dishes } : p) };
+
+    case "REORDER_EVENT_TASKS":
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, tasks: action.tasks } : p) };
 
     default:
       return state;

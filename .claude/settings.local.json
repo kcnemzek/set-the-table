@@ -12,7 +12,8 @@
       "Bash(cp \"C:/Users/karen/projects/ClaudeCode/set-the-table/src/app/setthetable_nobg.png\" \"C:/Users/karen/projects/setthetable-website/public/icon.png\")",
       "Bash(cp \"C:/Users/karen/projects/ClaudeCode/set-the-table/src/app/setthetable.png\" \"C:/Users/karen/projects/setthetable-website/public/icon-bg.png\")",
       "Bash(npm install *)",
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "Read(//c/Users/karen/projects/ClaudeCode/set-the-table-website/**)"
     ]
   }
 }

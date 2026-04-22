@@ -5,8 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, Pencil, Check, X, Plus, Trash2, ShoppingCart,
   ChefHat, UtensilsCrossed, CalendarDays, Clock, CheckSquare, Square,
-  ChevronsDown, Search, BookOpen, Share2,
+  ChevronsDown, Search, BookOpen, Share2, GripVertical,
 } from "lucide-react";
+import {
+  DndContext, closestCenter, PointerSensor, TouchSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
 import { useAppContext } from "@/store/context";
 import BottomSheet from "@/components/shared/BottomSheet";
@@ -16,6 +22,139 @@ import CustomRecipeSheet from "@/components/recipes/CustomRecipeSheet";
 import RecipeDetailSheet from "@/components/recipes/RecipeDetailSheet";
 import { getRecipeEmoji } from "@/lib/recipe-emoji";
 import type { EventDish, EventTask, DayEntry, RecipeSummary, CustomRecipe } from "@/types";
+
+// ─── Sortable Dish Row ────────────────────────────────────────────────────────
+
+function SortableDishRow({ dish, emoji, canView, onView, entry, onSend, onDelete }: {
+  dish: EventDish;
+  emoji: string | null;
+  canView: boolean;
+  onView: () => void;
+  entry: DayEntry | null;
+  onSend: (() => void) | null;
+  onDelete: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: dish.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-3 px-4 py-3">
+      <button
+        {...attributes}
+        {...listeners}
+        className="flex-shrink-0 p-1 text-gray-300 hover:text-gray-400 cursor-grab active:cursor-grabbing touch-none"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical size={15} />
+      </button>
+      <button
+        onClick={canView ? onView : undefined}
+        className={clsx("w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-xl",
+          canView ? "bg-brand-50 hover:bg-brand-100 active:bg-brand-200 cursor-pointer" : "bg-gray-50 cursor-default"
+        )}
+      >
+        {emoji ?? <ChefHat size={15} className="text-gray-400" />}
+      </button>
+      <button
+        onClick={canView ? onView : undefined}
+        className={clsx("flex-1 min-w-0 text-left", canView && "cursor-pointer")}
+      >
+        <p className="text-sm font-medium text-gray-800 truncate">{dish.title}</p>
+      </button>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {entry && onSend && (
+          <button
+            onClick={onSend}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-brand-500 hover:bg-brand-50 transition-colors"
+            title="Send to a day"
+          >
+            <Plus size={15} />
+          </button>
+        )}
+        <button
+          onClick={onDelete}
+          className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Sortable Task Row ────────────────────────────────────────────────────────
+
+function SortableTaskRow({ task, customRecipes, onToggle, onEdit, onDelete, onViewRecipe }: {
+  task: EventTask;
+  customRecipes: CustomRecipe[];
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onViewRecipe: (r: CustomRecipe) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  const linkedRecipe = task.customRecipeId ? customRecipes.find((r) => r.id === task.customRecipeId) : null;
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-3 px-4 py-3">
+      <button
+        {...attributes}
+        {...listeners}
+        className="flex-shrink-0 p-1 text-gray-300 hover:text-gray-400 cursor-grab active:cursor-grabbing touch-none"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical size={15} />
+      </button>
+      <button
+        onClick={onToggle}
+        className="flex-shrink-0 text-gray-400 hover:text-brand-500 transition-colors"
+      >
+        {task.completed ? <CheckSquare size={18} className="text-brand-500" /> : <Square size={18} />}
+      </button>
+      <div className="flex-1 min-w-0 cursor-pointer" onClick={onEdit}>
+        <p className={clsx("text-sm font-medium", task.completed ? "line-through text-gray-400" : "text-gray-800")}>
+          {task.text}
+        </p>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          {task.time && (
+            <p className="text-xs text-gray-400 flex items-center gap-1">
+              <Clock size={10} />
+              {new Date("1970-01-01T" + task.time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+            </p>
+          )}
+          {task.daysBeforeEvent !== undefined && (
+            <p className="text-xs text-brand-400 flex items-center gap-1">
+              <CalendarDays size={10} />
+              {task.daysBeforeEvent === 0 ? "Day of event" : `${task.daysBeforeEvent}d before`}
+            </p>
+          )}
+          {linkedRecipe && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onViewRecipe(linkedRecipe); }}
+              className="text-xs text-brand-500 flex items-center gap-1 hover:text-brand-700"
+            >
+              <BookOpen size={10} />
+              {linkedRecipe.title}
+            </button>
+          )}
+        </div>
+      </div>
+      <button
+        onClick={onEdit}
+        className="p-1.5 rounded-lg text-gray-300 hover:text-brand-500 hover:bg-brand-50 transition-colors flex-shrink-0"
+      >
+        <Pencil size={14} />
+      </button>
+      <button
+        onClick={onDelete}
+        className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors flex-shrink-0"
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
+  );
+}
 
 // ─── Add/Edit Task Sheet ───────────────────────────────────────────────────────
 
@@ -383,6 +522,34 @@ export default function EventDetailPage() {
 
   const completedCount = plan.tasks.filter((t) => t.completed).length;
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  );
+
+  function handleDragEndDishes(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = plan!.dishes.findIndex((d) => d.id === active.id);
+    const newIndex = plan!.dishes.findIndex((d) => d.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    dispatch({ type: "REORDER_EVENT_DISHES", planId: plan!.id, dishes: arrayMove(plan!.dishes, oldIndex, newIndex) });
+  }
+
+  function makeHandleDragEndTasks(dateStr: string) {
+    return (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const group = tasksByDate[dateStr];
+      const oldIndex = group.findIndex((t) => t.id === active.id);
+      const newIndex = group.findIndex((t) => t.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+      const reorderedGroup = arrayMove(group, oldIndex, newIndex);
+      const otherTasks = plan!.tasks.filter((t) => getEffectiveDate(t) !== dateStr);
+      dispatch({ type: "REORDER_EVENT_TASKS", planId: plan!.id, tasks: [...otherTasks, ...reorderedGroup] });
+    };
+  }
+
   return (
     <div className="pb-24">
       {/* Header */}
@@ -519,63 +686,37 @@ export default function EventDetailPage() {
               </button>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
-              {plan.dishes.map((dish) => {
-                const linkedCustom = dish.customRecipeId
-                  ? state.customRecipes.find((r) => r.id === dish.customRecipeId)
-                  : null;
-                const emoji = linkedCustom
-                  ? getRecipeEmoji(linkedCustom.title, linkedCustom.category, linkedCustom.emoji)
-                  : dish.recipeId
-                  ? getRecipeEmoji(dish.title)
-                  : null;
-                const entry = dishToDayEntry(dish);
-                const canView = !!linkedCustom || !!dish.recipeId;
-
-                function handleViewDish() {
-                  if (linkedCustom) { setViewingCustomRecipe(linkedCustom); return; }
-                  if (dish.recipeId) {
-                    setViewingFavRecipe({ id: dish.recipeId, title: dish.title, image: dish.recipeImage ?? "", readyInMinutes: 0, servings: 0, sourceUrl: dish.recipeUrl });
-                  }
-                }
-
-                return (
-                  <div key={dish.id} className="flex items-center gap-3 px-4 py-3">
-                    <button
-                      onClick={canView ? handleViewDish : undefined}
-                      className={clsx("w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-xl",
-                        canView ? "bg-brand-50 hover:bg-brand-100 active:bg-brand-200 cursor-pointer" : "bg-gray-50 cursor-default"
-                      )}
-                    >
-                      {emoji ?? <ChefHat size={15} className="text-gray-400" />}
-                    </button>
-                    <button
-                      onClick={canView ? handleViewDish : undefined}
-                      className={clsx("flex-1 min-w-0 text-left", canView && "cursor-pointer")}
-                    >
-                      <p className="text-sm font-medium text-gray-800 truncate">{dish.title}</p>
-                    </button>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {entry && (
-                        <button
-                          onClick={() => setSendDishEntry(entry)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-brand-500 hover:bg-brand-50 transition-colors"
-                          title="Send to a day"
-                        >
-                          <Plus size={15} />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => setConfirmDeleteDish({ id: dish.id, title: dish.title })}
-                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndDishes}>
+              <SortableContext items={plan.dishes.map((d) => d.id)} strategy={verticalListSortingStrategy}>
+                <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
+                  {plan.dishes.map((dish) => {
+                    const linkedCustom = dish.customRecipeId
+                      ? state.customRecipes.find((r) => r.id === dish.customRecipeId)
+                      : null;
+                    const entry = dishToDayEntry(dish);
+                    const canView = !!linkedCustom || !!dish.recipeId;
+                    const emojiVal = linkedCustom
+                      ? getRecipeEmoji(linkedCustom.title, linkedCustom.category, linkedCustom.emoji)
+                      : dish.recipeId ? getRecipeEmoji(dish.title) : null;
+                    return (
+                      <SortableDishRow
+                        key={dish.id}
+                        dish={dish}
+                        emoji={emojiVal}
+                        canView={canView}
+                        onView={() => {
+                          if (linkedCustom) { setViewingCustomRecipe(linkedCustom); return; }
+                          if (dish.recipeId) setViewingFavRecipe({ id: dish.recipeId, title: dish.title, image: dish.recipeImage ?? "", readyInMinutes: 0, servings: 0, sourceUrl: dish.recipeUrl });
+                        }}
+                        entry={entry}
+                        onSend={entry ? () => setSendDishEntry(entry) : null}
+                        onDelete={() => setConfirmDeleteDish({ id: dish.id, title: dish.title })}
+                      />
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
 
@@ -627,71 +768,23 @@ export default function EventDetailPage() {
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5 px-1">
                       {label}<span className="font-normal normal-case tracking-normal text-gray-400">{relativePart}</span>
                     </p>
-                    <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
-                      {tasks.map((task) => {
-                        const linkedTaskRecipe = task.customRecipeId
-                          ? state.customRecipes.find((r) => r.id === task.customRecipeId)
-                          : null;
-                        return (
-                        <div
-                          key={task.id}
-                          className="flex items-center gap-3 px-4 py-3"
-                        >
-                          <button
-                            onClick={() => toggleTask(task)}
-                            className="flex-shrink-0 text-gray-400 hover:text-brand-500 transition-colors"
-                          >
-                            {task.completed
-                              ? <CheckSquare size={18} className="text-brand-500" />
-                              : <Square size={18} />}
-                          </button>
-                          <div
-                            className="flex-1 min-w-0 cursor-pointer"
-                            onClick={() => { setEditingTask(task); }}
-                          >
-                            <p className={clsx("text-sm font-medium", task.completed ? "line-through text-gray-400" : "text-gray-800")}>
-                              {task.text}
-                            </p>
-                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                              {task.time && (
-                                <p className="text-xs text-gray-400 flex items-center gap-1">
-                                  <Clock size={10} />
-                                  {new Date("1970-01-01T" + task.time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                                </p>
-                              )}
-                              {task.daysBeforeEvent !== undefined && (
-                                <p className="text-xs text-brand-400 flex items-center gap-1">
-                                  <CalendarDays size={10} />
-                                  {task.daysBeforeEvent === 0 ? "Day of event" : `${task.daysBeforeEvent}d before`}
-                                </p>
-                              )}
-                              {linkedTaskRecipe && (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setViewingCustomRecipe(linkedTaskRecipe); }}
-                                  className="text-xs text-brand-500 flex items-center gap-1 hover:text-brand-700"
-                                >
-                                  <BookOpen size={10} />
-                                  {linkedTaskRecipe.title}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => setEditingTask(task)}
-                            className="p-1.5 rounded-lg text-gray-300 hover:text-brand-500 hover:bg-brand-50 transition-colors flex-shrink-0"
-                          >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            onClick={() => setConfirmDeleteTask({ id: task.id, text: task.text })}
-                            className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors flex-shrink-0"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={makeHandleDragEndTasks(dateStr)}>
+                      <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                        <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
+                          {tasks.map((task) => (
+                            <SortableTaskRow
+                              key={task.id}
+                              task={task}
+                              customRecipes={state.customRecipes}
+                              onToggle={() => toggleTask(task)}
+                              onEdit={() => setEditingTask(task)}
+                              onDelete={() => setConfirmDeleteTask({ id: task.id, text: task.text })}
+                              onViewRecipe={(r) => setViewingCustomRecipe(r)}
+                            />
+                          ))}
                         </div>
-                        );
-                      })}
-                    </div>
+                      </SortableContext>
+                    </DndContext>
                   </div>
                 );
               })}

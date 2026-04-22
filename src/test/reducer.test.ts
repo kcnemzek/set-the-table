@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { DayEntry, CustomRecipe, Tip, FamilyMember } from "@/types";
+import type { DayEntry, CustomRecipe, Tip, FamilyMember, EventDish, EventTask, EventPlan } from "@/types";
 
 // ─── Inline the reducer so we don't need to mock next-auth ───────────────────
 
@@ -12,6 +12,7 @@ interface AppState {
   groceryChecked: Record<string, boolean>;
   familyMembers: FamilyMember[];
   tips: Tip[];
+  eventPlans: EventPlan[];
   recipeCache: Record<string, unknown>;
   hydrated: boolean;
 }
@@ -32,7 +33,9 @@ type Action =
   | { type: "REMOVE_FAMILY_MEMBER"; id: string }
   | { type: "ADD_TIP"; tip: Tip }
   | { type: "UPDATE_TIP"; tip: Tip }
-  | { type: "DELETE_TIP"; id: string };
+  | { type: "DELETE_TIP"; id: string }
+  | { type: "REORDER_EVENT_DISHES"; planId: string; dishes: EventDish[] }
+  | { type: "REORDER_EVENT_TASKS"; planId: string; tasks: EventTask[] };
 
 const initialState: AppState = {
   menu: {},
@@ -43,6 +46,7 @@ const initialState: AppState = {
   groceryChecked: {},
   familyMembers: [],
   tips: [],
+  eventPlans: [],
   recipeCache: {},
   hydrated: false,
 };
@@ -135,6 +139,12 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "DELETE_TIP":
       return { ...state, tips: state.tips.filter((t) => t.id !== action.id) };
+
+    case "REORDER_EVENT_DISHES":
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, dishes: action.dishes } : p) };
+
+    case "REORDER_EVENT_TASKS":
+      return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, tasks: action.tasks } : p) };
 
     default:
       return state;
@@ -394,6 +404,85 @@ describe("reducer — tips", () => {
     state = reducer(state, { type: "DELETE_TIP", id: "tip_1" });
     expect(state.tips).toHaveLength(1);
     expect(state.tips[0].id).toBe("tip_2");
+  });
+});
+
+function makeDish(overrides: Partial<EventDish> = {}): EventDish {
+  return { id: crypto.randomUUID(), title: "Roast Turkey", ...overrides };
+}
+
+function makeTask(overrides: Partial<EventTask> = {}): EventTask {
+  return { id: crypto.randomUUID(), text: "Brine turkey", completed: false, date: "2026-11-26", daysBeforeEvent: 1, ...overrides };
+}
+
+function makePlan(overrides: Partial<EventPlan> = {}): EventPlan {
+  return {
+    id: crypto.randomUUID(),
+    name: "Thanksgiving",
+    date: "2026-11-27",
+    dishes: [],
+    tasks: [],
+    addedToGroceries: false,
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+function stateWithPlan(plan: EventPlan): AppState {
+  return { ...initialState, eventPlans: [plan] };
+}
+
+describe("reducer — event plan reordering", () => {
+  it("reorders dishes within a plan", () => {
+    const a = makeDish({ title: "Appetizer" });
+    const b = makeDish({ title: "Main" });
+    const c = makeDish({ title: "Dessert" });
+    const plan = makePlan({ dishes: [a, b, c] });
+    const state = reducer(stateWithPlan(plan), {
+      type: "REORDER_EVENT_DISHES",
+      planId: plan.id,
+      dishes: [c, a, b],
+    });
+    const dishes = state.eventPlans[0].dishes;
+    expect(dishes[0].title).toBe("Dessert");
+    expect(dishes[1].title).toBe("Appetizer");
+    expect(dishes[2].title).toBe("Main");
+  });
+
+  it("does not affect other plans when reordering dishes", () => {
+    const plan1 = makePlan({ id: "plan-1", dishes: [makeDish({ title: "A" }), makeDish({ title: "B" })] });
+    const plan2 = makePlan({ id: "plan-2", dishes: [makeDish({ title: "C" })] });
+    const state = reducer({ ...initialState, eventPlans: [plan1, plan2] }, {
+      type: "REORDER_EVENT_DISHES",
+      planId: "plan-1",
+      dishes: [plan1.dishes[1], plan1.dishes[0]],
+    });
+    expect(state.eventPlans.find((p) => p.id === "plan-2")!.dishes[0].title).toBe("C");
+  });
+
+  it("reorders tasks within a plan", () => {
+    const t1 = makeTask({ text: "Brine" });
+    const t2 = makeTask({ text: "Thaw" });
+    const plan = makePlan({ tasks: [t1, t2] });
+    const state = reducer(stateWithPlan(plan), {
+      type: "REORDER_EVENT_TASKS",
+      planId: plan.id,
+      tasks: [t2, t1],
+    });
+    const tasks = state.eventPlans[0].tasks;
+    expect(tasks[0].text).toBe("Thaw");
+    expect(tasks[1].text).toBe("Brine");
+  });
+
+  it("does not affect other plans when reordering tasks", () => {
+    const plan1 = makePlan({ id: "plan-1", tasks: [makeTask({ text: "X" }), makeTask({ text: "Y" })] });
+    const plan2 = makePlan({ id: "plan-2", tasks: [makeTask({ text: "Z" })] });
+    const state = reducer({ ...initialState, eventPlans: [plan1, plan2] }, {
+      type: "REORDER_EVENT_TASKS",
+      planId: "plan-1",
+      tasks: [plan1.tasks[1], plan1.tasks[0]],
+    });
+    expect(state.eventPlans.find((p) => p.id === "plan-2")!.tasks[0].text).toBe("Z");
   });
 });
 

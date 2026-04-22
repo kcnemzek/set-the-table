@@ -290,7 +290,7 @@ export default function EventPlanningPage() {
                       <p className="text-sm font-semibold text-gray-800 truncate">{savedMenu.name}</p>
                     )}
                     <p className="text-xs text-gray-500">
-                      {savedMenu.entries.length} item{savedMenu.entries.length !== 1 ? "s" : ""} · {new Date(savedMenu.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      {savedMenu.entries.length} item{savedMenu.entries.length !== 1 ? "s" : ""}
                     </p>
                   </div>
                   <div className="flex items-center gap-1">

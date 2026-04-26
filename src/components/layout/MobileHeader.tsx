@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, HelpCircle } from "lucide-react";
+import { LogOut, HelpCircle, Settings } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import { useAppContext } from "@/store/context";
@@ -47,6 +47,13 @@ export default function MobileHeader() {
             >
               <HelpCircle size={18} />
             </button>
+            <Link
+              href="/settings"
+              className="p-2 text-blue-200 hover:text-white active:text-white"
+              title="Settings"
+            >
+              <Settings size={18} />
+            </Link>
             <div className="relative">
               <button
                 onClick={() => setProfileOpen(!profileOpen)}

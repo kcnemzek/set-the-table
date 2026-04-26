@@ -17,7 +17,6 @@ const TABS = [
   { href: "/recipes", label: "My Kitchen", Icon: BookOpen },
   { href: "/groceries", label: "Groceries", Icon: ShoppingCart },
   { href: "/event-planning", label: "Events", Icon: CalendarCheck },
-  { href: "/settings", label: "Settings", Icon: Settings },
 ];
 
 export default function TopNav() {
@@ -78,6 +77,18 @@ export default function TopNav() {
             >
               <HelpCircle size={18} />
             </button>
+            <Link
+              href="/settings"
+              className={clsx(
+                "p-2 rounded-xl transition-colors",
+                pathname.startsWith("/settings")
+                  ? "text-white bg-white/10"
+                  : "text-blue-200 hover:text-white hover:bg-white/10"
+              )}
+              title="Settings"
+            >
+              <Settings size={18} />
+            </Link>
             <div className="relative">
               <button
                 onClick={() => setProfileOpen(!profileOpen)}

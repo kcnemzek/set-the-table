@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import clsx from "clsx";
-import { Tag, Trash2 } from "lucide-react";
+import { Tag, Trash2, Check, X } from "lucide-react";
 import { useAppContext } from "@/store/context";
 import { groceryItemKey } from "@/lib/ingredient-utils";
 import type { AggregatedIngredient } from "@/types";
@@ -32,6 +33,7 @@ interface GrocerySectionProps {
 export default function GrocerySection({ aisle, items, hideChecked }: GrocerySectionProps) {
   const { dispatch, state } = useAppContext();
   const config = AISLE_CONFIG[aisle] ?? DEFAULT_CONFIG;
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const visibleItems = hideChecked
     ? items.filter((item) => {
@@ -148,15 +150,31 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
 
               {/* Delete — manual items only */}
               {item.manualId && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.manualId! });
-                  }}
-                  className="text-gray-300 hover:text-red-400 transition-colors p-1 flex-shrink-0"
-                >
-                  <Trash2 size={14} />
-                </button>
+                confirmingId === item.manualId ? (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.manualId! }); setConfirmingId(null); }}
+                      className="p-1 text-red-500 hover:text-red-700 transition-colors"
+                      title="Confirm delete"
+                    >
+                      <Check size={14} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setConfirmingId(null); }}
+                      className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                      title="Cancel"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setConfirmingId(item.manualId!); }}
+                    className="text-gray-300 hover:text-red-400 transition-colors p-1 flex-shrink-0"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )
               )}
             </div>
           );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Plus, ShoppingCart, Tag, Trash2, EyeOff, Eye, Users } from "lucide-react";
+import { Plus, ShoppingCart, Tag, Trash2, EyeOff, Eye, Users, Check, X } from "lucide-react";
 import GrocerySection from "@/components/groceries/GrocerySection";
 import ManualAddSheet from "@/components/groceries/ManualAddSheet";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
@@ -24,6 +24,7 @@ export default function GroceriesPage() {
   const [hideChecked, setHideChecked] = useState<boolean>(() => {
     try { return localStorage.getItem("grocery-hide-checked") === "true"; } catch { return false; }
   });
+  const [confirmingFamilyId, setConfirmingFamilyId] = useState<string | null>(null);
   const [selectedStore, setSelectedStore] = useState<string | null>(() => {
     try { return localStorage.getItem("grocery-selected-store") ?? null; } catch { return null; }
   });
@@ -402,12 +403,31 @@ export default function GroceriesPage() {
                                 {state.stores.map((s) => <option key={s} value={s}>{s}</option>)}
                               </select>
                             </div>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleRemoveFamilyItem(item.id); }}
-                              className="text-gray-300 hover:text-red-400 transition-colors p-1"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            {confirmingFamilyId === item.id ? (
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleRemoveFamilyItem(item.id); setConfirmingFamilyId(null); }}
+                                  className="p-1 text-red-500 hover:text-red-700 transition-colors"
+                                  title="Confirm delete"
+                                >
+                                  <Check size={14} />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setConfirmingFamilyId(null); }}
+                                  className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                  title="Cancel"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setConfirmingFamilyId(item.id); }}
+                                className="text-gray-300 hover:text-red-400 transition-colors p-1"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -423,7 +443,7 @@ export default function GroceriesPage() {
                   {tab === "family" && (
                     <div className="px-4 mt-4">
                       <button
-                        onClick={handleClearFamilyItems}
+                        onClick={() => { if (confirm("Clear all family requests?")) handleClearFamilyItems(); }}
                         className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-400 py-2"
                       >
                         <Trash2 size={14} />

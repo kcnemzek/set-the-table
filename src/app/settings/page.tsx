@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { ChefHat, UserPlus, Trash2, Crown, Users, LogOut } from "lucide-react";
+import { ChefHat, UserPlus, Trash2, Crown, Users, LogOut, Link as LinkIcon, Plus, X, RefreshCw, Copy, Check, ShoppingBag } from "lucide-react";
 import clsx from "clsx";
-import type { Household, HouseholdRole } from "@/types";
+import type { Household, HouseholdRole, FamilyMember } from "@/types";
+import { useAppContext } from "@/store/context";
 
 const ROLE_LABELS: Record<HouseholdRole, string> = {
   "executive-chef": "Executive Chef",
@@ -16,27 +17,37 @@ const ROLE_OPTIONS: HouseholdRole[] = ["executive-chef", "sous-chef", "commensal
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const { state, dispatch, addFamilyMember, removeFamilyMember } = useAppContext();
+
+  // Household
   const [household, setHousehold] = useState<Household | null | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // Create household form
   const [createOpen, setCreateOpen] = useState(false);
   const [householdName, setHouseholdName] = useState("");
   const [creating, setCreating] = useState(false);
-
-  // Invite form
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<HouseholdRole>("sous-chef");
   const [inviting, setInviting] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState(false);
 
+  // Family members
+  const [newMemberName, setNewMemberName] = useState("");
+  const [addingMember, setAddingMember] = useState(false);
+  const [copiedMemberId, setCopiedMemberId] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareUrlCopied, setShareUrlCopied] = useState(false);
+
+  // Stores
+  const [newStore, setNewStore] = useState("");
+
   const loadHousehold = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/household");
+      if (!res.ok) { setHousehold(null); return; }
       const data = await res.json();
-      setHousehold(data);
+      setHousehold(data && typeof data === "object" && "members" in data ? data as Household : null);
     } catch {
       setHousehold(null);
     } finally {
@@ -45,6 +56,15 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => { loadHousehold(); }, [loadHousehold]);
+
+  useEffect(() => {
+    fetch("/api/share-token")
+      .then((r) => r.json())
+      .then(({ token }) => setShareUrl(`${window.location.origin}/view/${token}`))
+      .catch(() => {});
+  }, []);
+
+  // ── Household handlers ────────────────────────────────
 
   async function handleCreate() {
     if (!householdName.trim()) return;
@@ -61,8 +81,7 @@ export default function SettingsPage() {
         setError(e ?? "Failed to create household");
         return;
       }
-      const data = await res.json();
-      setHousehold(data);
+      setHousehold(await res.json());
       setCreateOpen(false);
       setHouseholdName("");
     } finally {
@@ -94,7 +113,7 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleRemoveMember(userId: string) {
+  async function handleRemoveHouseholdMember(userId: string) {
     setError("");
     const res = await fetch(`/api/household/members?userId=${userId}`, { method: "DELETE" });
     if (!res.ok) {
@@ -128,7 +147,72 @@ export default function SettingsPage() {
     setHousehold(null);
   }
 
-  const myMember = household?.members.find((m) => m.userId === session?.user?.id);
+  // ── Family member handlers ────────────────────────────
+
+  function memberInviteUrl(member: FamilyMember) {
+    return `${window.location.origin}/view/${member.inviteToken}`;
+  }
+
+  function handleCopyMemberInvite(member: FamilyMember) {
+    navigator.clipboard.writeText(memberInviteUrl(member)).then(() => {
+      setCopiedMemberId(member.id);
+      setTimeout(() => setCopiedMemberId(null), 2500);
+    }).catch(() => {});
+  }
+
+  async function handleAddFamilyMember() {
+    const trimmed = newMemberName.trim();
+    if (!trimmed || addingMember) return;
+    setAddingMember(true);
+    try {
+      const res = await fetch("/api/family-members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      if (res.ok) {
+        const { member } = await res.json();
+        addFamilyMember(member as FamilyMember);
+        setNewMemberName("");
+      }
+    } finally {
+      setAddingMember(false);
+    }
+  }
+
+  async function handleRemoveFamilyMember(member: FamilyMember) {
+    try {
+      await fetch(`/api/family-members/${member.id}`, { method: "DELETE" });
+      removeFamilyMember(member.id);
+    } catch { /* ignore */ }
+  }
+
+  function handleCopyShareUrl() {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setShareUrlCopied(true);
+      setTimeout(() => setShareUrlCopied(false), 2500);
+    }).catch(() => {});
+  }
+
+  async function handleResetShareLink() {
+    try {
+      const res = await fetch("/api/share-token", { method: "DELETE" });
+      const { token } = await res.json();
+      setShareUrl(`${window.location.origin}/view/${token}`);
+    } catch { /* ignore */ }
+  }
+
+  // ── Store handlers ────────────────────────────────────
+
+  function handleAddStore() {
+    const trimmed = newStore.trim();
+    if (!trimmed) return;
+    dispatch({ type: "ADD_STORE", name: trimmed });
+    setNewStore("");
+  }
+
+  const myMember = household?.members?.find((m) => m.userId === session?.user?.id);
   const isChef = myMember?.role === "executive-chef";
 
   return (
@@ -141,7 +225,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* ── Household section ───────────────────────────── */}
+      {/* ── Household ───────────────────────────────────── */}
       <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100 bg-gray-50">
           <Users size={16} className="text-brand-500" />
@@ -151,7 +235,6 @@ export default function SettingsPage() {
         {loading ? (
           <div className="px-4 py-6 text-sm text-gray-500">Loading…</div>
         ) : !household ? (
-          /* ── No household ────────────────────────────── */
           <div className="px-4 py-6 space-y-4">
             <p className="text-sm text-gray-600">
               You&apos;re cooking solo. Create a household to share your menu and invite your family.
@@ -194,9 +277,7 @@ export default function SettingsPage() {
             )}
           </div>
         ) : (
-          /* ── Has household ───────────────────────────── */
           <div className="divide-y divide-gray-100">
-            {/* Household name + your role */}
             <div className="px-4 py-4">
               <p className="font-semibold text-gray-800">{household.name}</p>
               {myMember && (
@@ -207,10 +288,9 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {/* Members list */}
             <div className="px-4 py-3 space-y-2.5">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Members</p>
-              {household.members.map((m) => (
+              {(household.members ?? []).map((m) => (
                 <div key={m.userId} className="flex items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium text-gray-800">
@@ -223,7 +303,7 @@ export default function SettingsPage() {
                   </div>
                   {isChef && m.userId !== session?.user?.id && (
                     <button
-                      onClick={() => handleRemoveMember(m.userId)}
+                      onClick={() => handleRemoveHouseholdMember(m.userId)}
                       className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
                       title="Remove member"
                     >
@@ -234,11 +314,10 @@ export default function SettingsPage() {
               ))}
             </div>
 
-            {/* Pending invites */}
-            {household.pendingInvites.length > 0 && (
+            {(household.pendingInvites ?? []).length > 0 && (
               <div className="px-4 py-3 space-y-2.5">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pending Invites</p>
-                {household.pendingInvites.map((inv) => (
+                {(household.pendingInvites ?? []).map((inv) => (
                   <div key={inv.email} className="flex items-center justify-between gap-2">
                     <div>
                       <p className="text-sm text-gray-700">{inv.email}</p>
@@ -258,12 +337,11 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Invite form (executive-chef only) */}
             {isChef && (
               <div className="px-4 py-4 space-y-3">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Invite Someone</p>
                 <p className="text-xs text-gray-500">
-                  Ask them to sign in with their Google account at this app — they&apos;ll be added automatically when they log in.
+                  Ask them to sign in with their Google account — they&apos;ll be added automatically when they log in.
                 </p>
                 <input
                   type="email"
@@ -299,7 +377,6 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Leave household */}
             <div className="px-4 py-4">
               <button
                 onClick={handleLeave}
@@ -311,6 +388,139 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
+      </section>
+
+      {/* ── Family ──────────────────────────────────────── */}
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <Users size={16} className="text-brand-500" />
+          <h2 className="text-sm font-semibold text-gray-700">Family</h2>
+        </div>
+
+        <div className="divide-y divide-gray-100">
+          {/* Named family members */}
+          <div className="px-4 py-4 space-y-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Members</p>
+            <p className="text-xs text-gray-500">
+              Each person gets their own link so you know who added what to the grocery list.
+            </p>
+
+            {state.familyMembers.length > 0 && (
+              <div className="space-y-2">
+                {state.familyMembers.map((member) => (
+                  <div key={member.id} className="flex items-center gap-2 p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                    <span className="flex-1 text-sm font-medium text-gray-800 truncate">{member.name}</span>
+                    <button
+                      onClick={() => handleCopyMemberInvite(member)}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-50 text-brand-600 text-xs font-medium hover:bg-brand-100 transition-colors flex-shrink-0"
+                    >
+                      {copiedMemberId === member.id ? <Check size={12} /> : <Copy size={12} />}
+                      {copiedMemberId === member.id ? "Copied!" : "Copy link"}
+                    </button>
+                    <button
+                      onClick={() => handleRemoveFamilyMember(member)}
+                      className="text-gray-400 hover:text-red-400 transition-colors flex-shrink-0"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddFamilyMember()}
+                placeholder="Add a name…"
+                className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+              />
+              <button
+                onClick={handleAddFamilyMember}
+                disabled={!newMemberName.trim() || addingMember}
+                className="p-2.5 rounded-xl bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-40 transition-colors"
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Read-only share link */}
+          <div className="px-4 py-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <LinkIcon size={14} className="text-gray-500" />
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Read-Only Link</p>
+            </div>
+            <p className="text-xs text-gray-500">
+              Share this for read-only access — no identity or grocery list.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopyShareUrl}
+                disabled={!shareUrl}
+                className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
+              >
+                {shareUrlCopied ? "Copied!" : !shareUrl ? "…" : "Copy Link"}
+              </button>
+              <button
+                onClick={handleResetShareLink}
+                title="Reset link (old link will stop working)"
+                className="p-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <RefreshCw size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── My Stores ───────────────────────────────────── */}
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <ShoppingBag size={16} className="text-brand-500" />
+          <h2 className="text-sm font-semibold text-gray-700">My Stores</h2>
+        </div>
+        <div className="px-4 py-4 space-y-3">
+          <p className="text-xs text-gray-500">
+            These appear in the grocery list when tagging items to a store.
+          </p>
+
+          {state.stores.length > 0 && (
+            <div className="space-y-1.5">
+              {state.stores.map((store) => (
+                <div key={store} className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                  <span className="flex-1 text-sm text-gray-800">{store}</span>
+                  <button
+                    onClick={() => dispatch({ type: "REMOVE_STORE", name: store })}
+                    className="text-gray-400 hover:text-red-400 transition-colors"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newStore}
+              onChange={(e) => setNewStore(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddStore()}
+              placeholder="Add a store…"
+              className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+            />
+            <button
+              onClick={handleAddStore}
+              disabled={!newStore.trim()}
+              className="p-2.5 rounded-xl bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-40 transition-colors"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+        </div>
       </section>
 
       {/* ── Role guide ──────────────────────────────────── */}
@@ -330,6 +540,22 @@ export default function SettingsPage() {
               <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── About ───────────────────────────────────────── */}
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-4 py-5 text-center space-y-1">
+          <p className="text-sm font-semibold text-gray-700">SetTheTable</p>
+          <p className="text-xs text-gray-400">Because dinner is set.</p>
+          <a
+            href="https://www.setthetable.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block text-xs text-brand-500 hover:text-brand-600 transition-colors"
+          >
+            setthetable.io
+          </a>
         </div>
       </section>
     </div>

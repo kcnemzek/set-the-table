@@ -3,18 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Menu, HelpCircle } from "lucide-react";
+import { LogOut, HelpCircle } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import { useAppContext } from "@/store/context";
-import AppMenuSheet from "./AppMenuSheet";
 import HelpSheet from "./HelpSheet";
 import setthetableIcon from "@/app/setthetable_nobg.png";
 
 export default function MobileHeader() {
   const { data: session } = useSession();
   const { forceSave } = useAppContext();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
@@ -48,13 +46,6 @@ export default function MobileHeader() {
               title="Help"
             >
               <HelpCircle size={18} />
-            </button>
-            <button
-              onClick={() => setMenuOpen(true)}
-              className="p-2 text-blue-200 hover:text-white active:text-white"
-              title="Menu"
-            >
-              <Menu size={18} />
             </button>
             <div className="relative">
               <button
@@ -91,7 +82,6 @@ export default function MobileHeader() {
       </div>
     </header>
 
-    <AppMenuSheet open={menuOpen} onClose={() => setMenuOpen(false)} />
     <HelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />
     </>
   );

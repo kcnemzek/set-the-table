@@ -121,6 +121,41 @@ FamilyGroceryItem {
 }
 ```
 
+### Household & Role Types
+
+```typescript
+HouseholdRole = "executive-chef" | "sous-chef" | "commensal"
+
+HouseholdMember {
+  userId: string          // Google providerAccountId
+  email: string
+  name: string
+  role: HouseholdRole
+  joinedAt: string        // ISO timestamp
+}
+
+PendingInvite {
+  email: string
+  role: HouseholdRole
+  householdId: string
+  invitedAt: string       // ISO timestamp
+  invitedBy: string       // inviter's name
+}
+
+Household {
+  id: string
+  name: string
+  members: HouseholdMember[]
+  pendingInvites: PendingInvite[]
+  createdAt: string
+  createdBy: string       // userId
+}
+
+MenuDayMeta {
+  isSet: boolean          // "Dinner is set" toggle for a calendar day
+}
+```
+
 ### Tip Types
 
 ```typescript
@@ -204,6 +239,8 @@ GroceryListByAisle = Record<string, AggregatedIngredient[]>
 
 ### Persisted User Data Shape (KV / JSON)
 
+Stored at `app-data:{userId}` (solo) or `household-data:{householdId}` (shared):
+
 ```typescript
 {
   menu: Menu
@@ -217,6 +254,8 @@ GroceryListByAisle = Record<string, AggregatedIngredient[]>
   savedMenus: SavedMenu[]
   tips: Tip[]
   eventPlans: EventPlan[]
+  stores: string[]              // ordered list of store names for grocery assignment
+  menuDayMeta: Record<string, MenuDayMeta>  // key: "YYYY-MM-DD"
 }
 ```
 
@@ -225,7 +264,14 @@ Family grocery items are stored separately, keyed by owner userId (not inside th
 ```typescript
 // KV key: "family-groceries:{userId}" → FamilyGroceryItem[]
 // Local fallback: ./data/family-groceries-{userId}.json
-}
+```
+
+Household records are stored at separate KV keys (not part of user data):
+
+```typescript
+// KV key: "household:{householdId}"          → Household
+// KV key: "user-household:{userId}"          → householdId string
+// KV key: "pending-invite:{email}"           → PendingInvite
 ```
 
 ---
@@ -247,6 +293,8 @@ AppState
 ├── savedMenus            SavedMenu[]
 ├── tips                  Tip[]
 ├── eventPlans            EventPlan[]
+├── stores                string[]                       ← ordered store names
+├── menuDayMeta           Record<string, MenuDayMeta>    ← "Dinner is set" per day
 ├── recipeCache           Record<string, RecipeDetail>   ← in-memory only, not persisted
 └── hydrated              boolean
 ```
@@ -263,6 +311,7 @@ AppState
 | Templates | `SAVE_DAY_AS_MENU`, `DELETE_SAVED_MENU`, `RENAME_SAVED_MENU`, `ADD_ENTRY_TO_SAVED_MENU` |
 | Tips | `ADD_TIP`, `UPDATE_TIP`, `DELETE_TIP` |
 | Event Plans | `ADD_EVENT_PLAN`, `UPDATE_EVENT_PLAN`, `DELETE_EVENT_PLAN`, `ADD_EVENT_DISH`, `REMOVE_EVENT_DISH`, `ADD_EVENT_TASK`, `UPDATE_EVENT_TASK`, `REMOVE_EVENT_TASK`, `TOGGLE_EVENT_GROCERIES` |
+| Menu Meta | `SET_DAY_META` |
 | Lifecycle | `HYDRATE` |
 
 ### Context Helper Methods
@@ -285,13 +334,14 @@ AppState
 | `/groceries` | Yes | Aggregated shopping list from 10-day menu + event plans; store filter chips |
 | `/event-planning` | Yes | Event list (Events tab) + Templates tab |
 | `/event-planning/[id]` | Yes | Event detail — dishes, prep timeline, grocery toggle |
+| `/settings` | Yes | Household management — create, invite members, manage roles |
 | `/view/[token]` | No | Read-only family view via share token |
 
 ### Navigation Components
 
 - **Desktop**: `TopNav` — logo, 5 tabs (Menu, Discover, My Kitchen, Groceries, Events), user avatar, sign out
-- **Mobile**: `MobileHeader` (top) + `BottomNav` (5-tab: Menu, Discover, My Kitchen, Groceries, Events)
-- **Route protection**: `src/middleware.ts` intercepts `/menu/*`, `/discover/*`, `/recipes/*`, `/groceries/*`, `/event-planning/*` and redirects unauthenticated users to `/login`
+- **Mobile**: `MobileHeader` (top) + `BottomNav` (6-tab: Menu, Discover, My Kitchen, Groceries, Events, Settings)
+- **Route protection**: `src/middleware.ts` intercepts `/menu/*`, `/discover/*`, `/recipes/*`, `/groceries/*`, `/event-planning/*`, `/settings/*` and redirects unauthenticated users to `/login`
 
 ---
 
@@ -306,6 +356,9 @@ User visits protected route
   → /login → Google OAuth flow
   → callback → JWT created
      └── token.userId = Google providerAccountId (stable)
+  → signIn callback fires
+     └── checks pending-invite:{email} in KV
+         → if found: adds user to household, clears invite
   → session cookie (30-day max age, HTTP-only, SameSite=lax)
   → session.user.id available in all API routes via auth()
 ```
@@ -314,9 +367,10 @@ User visits protected route
 
 | File | Role |
 |------|------|
-| `src/auth.ts` | NextAuth config (provider, callbacks, session) |
+| `src/auth.ts` | NextAuth config (provider, callbacks, session, invite resolution) |
 | `src/middleware.ts` | Route protection |
 | `src/app/api/auth/[...nextauth]/route.ts` | Auth handlers |
+| `src/lib/household.ts` | KV helpers for household, membership, and invite records |
 
 ---
 
@@ -327,8 +381,13 @@ User visits protected route
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
 | `/api/auth/[...nextauth]` | GET/POST | — | NextAuth login/logout handlers |
-| `/api/data` | GET | Yes | Load user's persisted state |
-| `/api/data` | POST | Yes | Save user's state |
+| `/api/data` | GET | Yes | Load user's persisted state (resolved to household or solo key) |
+| `/api/data` | POST | Yes | Save user's state (resolved to household or solo key) |
+| `/api/household` | GET | Yes | Return current user's household or null |
+| `/api/household` | POST | Yes | Create a new household; copies solo data to shared key |
+| `/api/household` | DELETE | Yes | Leave the household; restores solo data if last member |
+| `/api/household/members` | POST | Yes | Invite a member by email (executive-chef only) |
+| `/api/household/members` | DELETE | Yes | Remove a member (`?userId=`) or revoke invite (`?email=`) |
 | `/api/recipes/search` | GET | No | Search Edamam (query, cuisine, diet, type, pagination) |
 | `/api/recipes/generate` | GET | No | 10 random recipes (excludes disliked) |
 | `/api/recipes/[id]` | GET | No | Full recipe detail (1h ISR cache) |
@@ -366,8 +425,11 @@ User action
   → dispatch() → reducer → React state updated
   → useEffect in AppProvider (500ms debounce)
   → POST /api/data
-  → KV.set("app-data:{userId}", state)     ← if KV configured
-     OR write ./data/app-data-{userId}.json ← fallback
+  → resolveDataKey(userId)
+      → "household-data:{householdId}"  ← if in a household
+         OR "app-data:{userId}"          ← solo
+  → KV.set(dataKey, state)              ← if KV configured
+     OR write ./data/{key-as-filename}.json ← fallback
 ```
 
 ### Read Path (Hydration)
@@ -375,7 +437,8 @@ User action
 ```
 App mounts
   → GET /api/data
-  → KV.get("app-data:{userId}") or read JSON file
+  → resolveDataKey(userId)
+  → KV.get(dataKey) or read JSON file
   → dispatch("HYDRATE", data)
   → state.hydrated = true
 ```
@@ -417,6 +480,25 @@ Helpers: src/lib/invite-tokens.ts
   readFamilyGroceries(), writeFamilyGroceries()
 ```
 
+### Household Storage
+
+```
+KV keys:
+  "household:{householdId}"       → Household record (members, pending invites)
+  "user-household:{userId}"       → householdId string
+  "pending-invite:{email}"        → PendingInvite (resolved on next sign-in)
+  "household-data:{householdId}"  → shared app state (same shape as app-data)
+
+Fallback:
+  ./data/{key-with-colons-replaced-by-dashes}.json
+
+Helpers: src/lib/household.ts
+  getHousehold(), saveHousehold()
+  getUserHouseholdId(), setUserHouseholdId(), deleteUserHouseholdId()
+  storePendingInvite(), getPendingInvite(), deletePendingInvite()
+  resolveDataKey(userId) → "household-data:{id}" or "app-data:{userId}"
+```
+
 ### Storage Decision
 
 ```
@@ -448,7 +530,7 @@ KV_REST_API_URL set?
 
 ### Vercel KV (Redis)
 
-- **Keys**: `app-data:{userId}`, `share-token:{token}`, `share-user:{userId}`, `invite-token:{token}`, `family-groceries:{userId}`
+- **Keys**: `app-data:{userId}`, `household-data:{householdId}`, `household:{householdId}`, `user-household:{userId}`, `pending-invite:{email}`, `share-token:{token}`, `share-user:{userId}`, `invite-token:{token}`, `family-groceries:{userId}`
 - **Env**: `KV_REST_API_URL`, `KV_REST_API_TOKEN`
 - **Fallback**: Local JSON files in `./data/`
 
@@ -535,12 +617,17 @@ layout.tsx
 │       │   ├── Dishes section  (AddDishSheet — freeform + optional custom recipe link)
 │       │   └── Timeline section (TaskSheet — text, days relative to event, time; grouped by date)
 │       │
+│       ├── /settings → SettingsPage
+│       │   ├── Household section: create / member list / pending invites / invite form / leave
+│       │   └── Roles guide section (Executive Chef, Sous Chef, At the Table descriptions)
+│       │       Note: household UI is also embedded in AppMenuSheet (hamburger → Settings tab)
+│       │
 │       ├── /view/[token] → FamilyViewPage (no auth)
 │       │   ├── Invite-token path: shows member name, ReadOnlyDayCard × n, grocery request input
 │       │   └── Shared-token path: name picker → ReadOnlyDayCard × n (read-only)
 │       │
 │       └── BottomNav (mobile)
-│           └── Menu / Discover / My Kitchen / Groceries / Events tabs
+│           └── Menu / Discover / My Kitchen / Groceries / Events / Settings tabs
 │
 └── Analytics
 ```

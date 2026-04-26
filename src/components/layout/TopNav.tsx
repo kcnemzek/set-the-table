@@ -3,12 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CalendarCheck, BookOpen, ShoppingCart, LogOut, Menu, HelpCircle, Sparkles } from "lucide-react";
+import { CalendarDays, CalendarCheck, BookOpen, ShoppingCart, LogOut, HelpCircle, Sparkles, Settings } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import clsx from "clsx";
 import { useAppContext } from "@/store/context";
-import AppMenuSheet from "./AppMenuSheet";
 import HelpSheet from "./HelpSheet";
 import setthetableIcon from "@/app/setthetable_nobg.png";
 
@@ -18,13 +17,13 @@ const TABS = [
   { href: "/recipes", label: "My Kitchen", Icon: BookOpen },
   { href: "/groceries", label: "Groceries", Icon: ShoppingCart },
   { href: "/event-planning", label: "Events", Icon: CalendarCheck },
+  { href: "/settings", label: "Settings", Icon: Settings },
 ];
 
 export default function TopNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { forceSave } = useAppContext();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -79,13 +78,6 @@ export default function TopNav() {
             >
               <HelpCircle size={18} />
             </button>
-            <button
-              onClick={() => setMenuOpen(true)}
-              className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
-              title="Menu"
-            >
-              <Menu size={18} />
-            </button>
             <div className="relative">
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
@@ -122,7 +114,6 @@ export default function TopNav() {
           </div>
         )}
       </nav>
-      <AppMenuSheet open={menuOpen} onClose={() => setMenuOpen(false)} />
       <HelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />
     </header>
   );

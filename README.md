@@ -12,6 +12,7 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 - **Grocery list** — auto-generated from the week's planned meals, with store assignment, store filter chips, and tabbed views for Recipes, Family requests, and All
 - **Event planning** — plan holiday dinners and special occasions with a dish list, prep timeline, and automatic grocery list integration; tasks are scheduled relative to the event date (e.g. "3 days before") and auto-shift when the event date changes; events and their tasks auto-surface on the relevant days in the menu view
 - **Templates** — save and reuse sets of day entries as named templates (e.g. Taco Tuesday); pick from the Add to Day sheet with per-entry deselect before stamping
+- **Household & roles** — create a household to share the menu and grocery list with family; three roles: Executive Chef (full access), Sous Chef (edit), and At the Table (view-only); Executive Chef invites by email and members join automatically when they sign in with Google
 - **Family sharing** — each family member gets their own invite link; they can view the menu and add grocery requests attributed to them
 - **PWA** — installable on iPhone/Android home screen
 
@@ -35,12 +36,13 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 ```
 src/
 ├── app/                  # Next.js app router pages & API routes
-│   ├── api/              # API routes (recipes, data, share)
+│   ├── api/              # API routes (recipes, data, household, share)
 │   ├── discover/         # Recipe discovery page (search + AI generate)
 │   ├── event-planning/   # Event planning list page + [id] detail page
 │   ├── groceries/        # Grocery list page
 │   ├── menu/             # Menu planning page
 │   ├── recipes/          # My Kitchen page (Favorites, My Recipes, Tips)
+│   ├── settings/         # Household management (roles, invites)
 │   └── view/[token]/     # Read-only family share page
 ├── components/
 │   ├── layout/           # Header, nav, bottom sheet
@@ -48,10 +50,10 @@ src/
 │   ├── recipes/          # Recipe cards, search
 │   ├── groceries/        # Grocery sections
 │   └── shared/           # Reusable components
-├── lib/                  # Utilities (dates, emoji mapping, invite token helpers)
+├── lib/                  # Utilities (dates, emoji mapping, invite/household helpers)
 ├── store/                # React context + state management
 ├── types/                # TypeScript types
-├── auth.ts               # NextAuth configuration
+├── auth.ts               # NextAuth configuration (+ household invite resolution)
 └── middleware.ts          # Route protection
 ```
 
@@ -83,4 +85,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Data Storage
 
-User data (menu, favorites, custom recipes) is stored in **Upstash Redis**, keyed by the user's stable Google account ID (`app-data:<userId>`). The app uses the `@vercel/kv` package, which connects to Upstash under the hood via the `KV_REST_API_URL` and `KV_REST_API_TOKEN` env vars. In local development without those vars configured, data falls back to local JSON files in `data/`.
+User data is stored in **Upstash Redis** via `@vercel/kv`. Solo users have a single key; household members share one key routed by `resolveDataKey(userId)`:
+
+| KV key | Contents |
+|--------|---------|
+| `app-data:{userId}` | Solo user's full app state |
+| `household-data:{householdId}` | Shared app state for household members |
+| `household:{householdId}` | Household record (members, pending invites) |
+| `user-household:{userId}` | Maps a user ID to their household ID |
+| `pending-invite:{email}` | Email invite awaiting first Google sign-in |
+
+In local development without `KV_REST_API_URL` configured, all keys fall back to local JSON files in `data/`.

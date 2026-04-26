@@ -13,6 +13,7 @@ interface AppState {
   familyMembers: FamilyMember[];
   tips: Tip[];
   eventPlans: EventPlan[];
+  menuDayMeta: Record<string, { isSet: boolean }>;
   recipeCache: Record<string, unknown>;
   hydrated: boolean;
 }
@@ -35,7 +36,8 @@ type Action =
   | { type: "UPDATE_TIP"; tip: Tip }
   | { type: "DELETE_TIP"; id: string }
   | { type: "REORDER_EVENT_DISHES"; planId: string; dishes: EventDish[] }
-  | { type: "REORDER_EVENT_TASKS"; planId: string; tasks: EventTask[] };
+  | { type: "REORDER_EVENT_TASKS"; planId: string; tasks: EventTask[] }
+  | { type: "SET_DAY_META"; dateStr: string; meta: { isSet: boolean } };
 
 const initialState: AppState = {
   menu: {},
@@ -47,6 +49,7 @@ const initialState: AppState = {
   familyMembers: [],
   tips: [],
   eventPlans: [],
+  menuDayMeta: {},
   recipeCache: {},
   hydrated: false,
 };
@@ -145,6 +148,9 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "REORDER_EVENT_TASKS":
       return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, tasks: action.tasks } : p) };
+
+    case "SET_DAY_META":
+      return { ...state, menuDayMeta: { ...state.menuDayMeta, [action.dateStr]: action.meta } };
 
     default:
       return state;
@@ -486,6 +492,34 @@ describe("reducer — event plan reordering", () => {
   });
 });
 
+describe("reducer — menuDayMeta", () => {
+  it("sets isSet true for a date", () => {
+    const state = reducer(initialState, {
+      type: "SET_DAY_META",
+      dateStr: "2026-04-26",
+      meta: { isSet: true },
+    });
+    expect(state.menuDayMeta["2026-04-26"]).toEqual({ isSet: true });
+  });
+
+  it("sets isSet false for a date", () => {
+    let state = reducer(initialState, { type: "SET_DAY_META", dateStr: "2026-04-26", meta: { isSet: true } });
+    state = reducer(state, { type: "SET_DAY_META", dateStr: "2026-04-26", meta: { isSet: false } });
+    expect(state.menuDayMeta["2026-04-26"]).toEqual({ isSet: false });
+  });
+
+  it("does not affect other dates when setting meta", () => {
+    let state = reducer(initialState, { type: "SET_DAY_META", dateStr: "2026-04-26", meta: { isSet: true } });
+    state = reducer(state, { type: "SET_DAY_META", dateStr: "2026-04-27", meta: { isSet: true } });
+    state = reducer(state, { type: "SET_DAY_META", dateStr: "2026-04-26", meta: { isSet: false } });
+    expect(state.menuDayMeta["2026-04-27"]).toEqual({ isSet: true });
+  });
+
+  it("starts with empty menuDayMeta", () => {
+    expect(initialState.menuDayMeta).toEqual({});
+  });
+});
+
 describe("reducer — hydrate", () => {
   it("sets hydrated and merges payload", () => {
     const state = reducer(initialState, {
@@ -500,11 +534,13 @@ describe("reducer — hydrate", () => {
         familyMembers: [{ id: "m1", name: "Karen", inviteToken: "tok-1" }],
         tips: [],
         eventPlans: [],
+        menuDayMeta: { "2026-03-28": { isSet: true } },
       },
     });
     expect(state.hydrated).toBe(true);
     expect(state.favorites).toContain("recipe_1");
     expect(state.familyMembers[0].name).toBe("Karen");
+    expect(state.menuDayMeta["2026-03-28"]).toEqual({ isSet: true });
     expect(state.recipeCache).toEqual({});
   });
 });

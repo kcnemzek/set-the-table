@@ -19,10 +19,10 @@ test.describe("Menu page", () => {
     const noteTab = page.getByRole("button", { name: /note/i });
     await noteTab.click();
 
-    const input = page.getByPlaceholder(/note/i);
+    const input = page.getByPlaceholder(/easter brunch/i);
     await input.fill("Leftover soup");
-    await page.getByRole("button", { name: /add/i }).last().click();
+    await page.getByRole("button", { name: /cancel/i }).locator("..").getByRole("button", { name: /^add$/i }).click();
 
-    await expect(page.getByText("Leftover soup")).toBeVisible();
+    await expect(page.getByText("Leftover soup").first()).toBeVisible();
   });
 });

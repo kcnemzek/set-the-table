@@ -163,6 +163,40 @@ export interface Tip {
   createdAt: string;
 }
 
+// ─── Household & Roles ────────────────────────────────────────────────────────
+
+export type HouseholdRole = "executive-chef" | "sous-chef" | "commensal";
+
+export interface HouseholdMember {
+  userId: string;
+  email: string;
+  name: string;
+  role: HouseholdRole;
+  joinedAt: string;
+}
+
+export interface PendingInvite {
+  email: string;
+  role: HouseholdRole;
+  invitedAt: string;
+  invitedBy: string;
+}
+
+export interface Household {
+  id: string;
+  name: string;
+  members: HouseholdMember[];
+  pendingInvites: PendingInvite[];
+  createdAt: string;
+  createdBy: string;
+}
+
+// ─── Menu Day Meta ────────────────────────────────────────────────────────────
+
+export interface MenuDayMeta {
+  isSet: boolean;
+}
+
 // ─── Search ───────────────────────────────────────────────────────────────────
 
 export interface SearchFilters {

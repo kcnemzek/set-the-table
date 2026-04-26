@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CalendarCheck, ChefHat, ShoppingCart, Sparkles } from "lucide-react";
+import { CalendarDays, CalendarCheck, ChefHat, ShoppingCart, Sparkles, Settings } from "lucide-react";
 import clsx from "clsx";
 
 const TABS = [
@@ -11,6 +11,7 @@ const TABS = [
   { href: "/recipes", label: "My Kitchen", Icon: ChefHat },
   { href: "/groceries", label: "Groceries", Icon: ShoppingCart },
   { href: "/event-planning", label: "Events", Icon: CalendarCheck },
+  { href: "/settings", label: "Settings", Icon: Settings },
 ];
 
 export default function BottomNav() {

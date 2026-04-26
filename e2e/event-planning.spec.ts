@@ -1,60 +1,46 @@
 import { test, expect } from "@playwright/test";
 
+const TEST_DATE = "2026-06-01";
+const uid = () => Date.now().toString(36);
+
+async function createEvent(page: any, name: string) {
+  await page.getByRole("button", { name: /new event/i }).first().click();
+  await page.getByPlaceholder(/thanksgiving 2025/i).fill(name);
+  await page.locator('input[type="date"]').fill(TEST_DATE);
+  await page.getByRole("button", { name: /create event/i }).click();
+  // Creation navigates directly to the event detail page
+  await expect(page).toHaveURL(/\/event-planning\/.+/);
+}
+
+async function addDish(page: any, dishName: string) {
+  await page.getByRole("button", { name: "Add dish", exact: true }).click();
+  await page.getByRole("button", { name: /note/i }).click();
+  await page.getByPlaceholder(/easter brunch/i).fill(dishName);
+  await page.getByRole("button", { name: /cancel/i }).locator("..").getByRole("button", { name: /^add$/i }).click();
+}
+
 test.describe("Event planning", () => {
   test("can create a new event", async ({ page }) => {
     await page.goto("/event-planning");
     await expect(page).not.toHaveURL(/login/);
-
-    await page.getByRole("button", { name: /new event/i }).click();
-
-    const nameInput = page.getByPlaceholder(/event name/i);
-    await nameInput.fill("Thanksgiving Dinner");
-    await page.getByRole("button", { name: /create/i }).click();
-
-    await expect(page.getByText("Thanksgiving Dinner")).toBeVisible();
+    await createEvent(page, `Thanksgiving ${uid()}`);
   });
 
   test("can open an event and add a dish", async ({ page }) => {
     await page.goto("/event-planning");
-
-    // Create an event first
-    await page.getByRole("button", { name: /new event/i }).click();
-    await page.getByPlaceholder(/event name/i).fill("Dinner Party");
-    await page.getByRole("button", { name: /create/i }).click();
-
-    // Navigate into the event
-    await page.getByText("Dinner Party").click();
-    await expect(page.getByText("Dishes")).toBeVisible();
-
-    // Add a dish
-    await page.getByRole("button", { name: /add dish/i }).click();
-    const dishInput = page.getByPlaceholder(/dish name/i);
-    await dishInput.fill("Roast Chicken");
-    await page.getByRole("button", { name: /add/i }).last().click();
-
+    await createEvent(page, `Dinner Party ${uid()}`);
+    // Already on the event detail page after creation
+    await addDish(page, "Roast Chicken");
     await expect(page.getByText("Roast Chicken")).toBeVisible();
   });
 
   test("can reorder dishes with drag handles visible", async ({ page }) => {
     await page.goto("/event-planning");
+    await createEvent(page, `Potluck ${uid()}`);
 
-    // Create event with two dishes
-    await page.getByRole("button", { name: /new event/i }).click();
-    await page.getByPlaceholder(/event name/i).fill("Potluck");
-    await page.getByRole("button", { name: /create/i }).click();
-    await page.getByText("Potluck").click();
+    await addDish(page, "Salad");
+    await addDish(page, "Pasta");
 
-    // Add first dish
-    await page.getByRole("button", { name: /add dish/i }).click();
-    await page.getByPlaceholder(/dish name/i).fill("Salad");
-    await page.getByRole("button", { name: /add/i }).last().click();
-
-    // Add second dish
-    await page.getByRole("button", { name: /add dish/i }).click();
-    await page.getByPlaceholder(/dish name/i).fill("Pasta");
-    await page.getByRole("button", { name: /add/i }).last().click();
-
-    // Both dishes visible, drag handles present
     await expect(page.getByText("Salad")).toBeVisible();
     await expect(page.getByText("Pasta")).toBeVisible();
     const handles = page.getByLabel("Drag to reorder");
@@ -63,11 +49,7 @@ test.describe("Event planning", () => {
 
   test("can add a task to an event", async ({ page }) => {
     await page.goto("/event-planning");
-
-    await page.getByRole("button", { name: /new event/i }).click();
-    await page.getByPlaceholder(/event name/i).fill("Birthday Party");
-    await page.getByRole("button", { name: /create/i }).click();
-    await page.getByText("Birthday Party").click();
+    await createEvent(page, `Birthday Party ${uid()}`);
 
     await page.getByRole("button", { name: /add task/i }).click();
     await page.getByPlaceholder(/make turkey brine/i).fill("Order the cake");

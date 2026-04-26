@@ -14,7 +14,20 @@
       "Bash(npm install *)",
       "Bash(powershell *)",
       "Read(//c/Users/karen/projects/ClaudeCode/set-the-table-website/**)",
-      "Bash(npx playwright *)"
+      "Bash(npx playwright *)",
+      "Bash(ffmpeg -i \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/STT_intro.mp4\" -vf cropdetect -f null -)",
+      "Bash(ffmpeg -i \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/intro.mp4\" -vf cropdetect -f null -)",
+      "Bash(ffprobe -v quiet -print_format json -show_streams \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/intro.mp4\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); v=[s for s in d['streams'] if s['codec_type']=='video'][0]; print\\('intro.mp4:', v['width'],'x',v['height'], 'duration:', v.get\\('duration','?'\\)\\)\")",
+      "Bash(ffprobe -v quiet -print_format json -show_streams \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/STT_intro.mp4\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); v=[s for s in d['streams'] if s['codec_type']=='video'][0]; print\\('STT_intro.mp4:', v['width'],'x',v['height'], 'duration:', v.get\\('duration','?'\\)\\)\")",
+      "Bash(ffmpeg -i \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/intro.mp4\" -vf \"fps=2,blackdetect=d=0.1:pix_th=0.9\" -f null -)",
+      "Bash(ffmpeg -i \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/intro.mp4\" -vf \"fps=1,scale=80:90\" -frames:v 8 -f image2 \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/frame_%02d.png\" -y)",
+      "Bash(ffmpeg -ss 5 -i \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/intro.mp4\" -vf \"fps=4,scale=80:90\" -frames:v 12 -f image2 \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/precise_%02d.png\" -y)",
+      "Bash(ffmpeg -ss 5.75 -i \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/intro.mp4\" -vf \"crop=800:896:0:2\" -c:v libx264 -crf 18 -preset fast -c:a copy \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/STT_intro_final.mp4\" -y)",
+      "Bash(ffmpeg -ss 5.75 -i \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/intro.webm\" -vf \"crop=800:896:0:2\" -c:v libx264 -crf 12 -preset slow -c:a copy \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/STT_intro_final.mp4\" -y)",
+      "Bash(npm ls *)",
+      "Bash(awk '{print $NF}')"
     ]
   }
 }

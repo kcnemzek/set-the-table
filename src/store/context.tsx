@@ -20,6 +20,7 @@ import type {
   EventPlan,
   EventDish,
   EventTask,
+  MenuDayMeta,
 } from "@/types";
 import { STORES as DEFAULT_STORES } from "@/lib/stores";
 
@@ -40,6 +41,8 @@ interface AppState {
   savedMenus: SavedMenu[];
   tips: Tip[];
   eventPlans: EventPlan[];
+  /** key: "YYYY-MM-DD" → per-day metadata (e.g. "Dinner is set") */
+  menuDayMeta: Record<string, MenuDayMeta>;
   /** cache of full recipe details fetched for grocery aggregation */
   recipeCache: Record<string, RecipeDetail>;
   hydrated: boolean;
@@ -58,6 +61,7 @@ const initialState: AppState = {
   savedMenus: [],
   tips: [],
   eventPlans: [],
+  menuDayMeta: {},
   recipeCache: {},
   hydrated: false,
 };
@@ -67,7 +71,7 @@ const initialState: AppState = {
 type Action =
   | {
       type: "HYDRATE";
-      payload: Omit<AppState, "hydrated" | "recipeCache">;
+      payload: Omit<AppState, "hydrated" | "recipeCache" | "menuDayMeta"> & { menuDayMeta?: Record<string, MenuDayMeta> };
     }
   | { type: "ADD_DAY_ENTRY"; dateStr: string; entry: DayEntry }
   | { type: "REMOVE_DAY_ENTRY"; dateStr: string; entryId: string }
@@ -109,7 +113,8 @@ type Action =
   | { type: "REMOVE_EVENT_TASK"; planId: string; taskId: string }
   | { type: "TOGGLE_EVENT_GROCERIES"; planId: string }
   | { type: "REORDER_EVENT_DISHES"; planId: string; dishes: EventDish[] }
-  | { type: "REORDER_EVENT_TASKS"; planId: string; tasks: EventTask[] };
+  | { type: "REORDER_EVENT_TASKS"; planId: string; tasks: EventTask[] }
+  | { type: "SET_DAY_META"; dateStr: string; meta: MenuDayMeta };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -118,6 +123,7 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         ...action.payload,
         stores: action.payload.stores?.length ? action.payload.stores : [...DEFAULT_STORES],
+        menuDayMeta: action.payload.menuDayMeta ?? {},
         recipeCache: {},
         hydrated: true,
       };
@@ -401,6 +407,12 @@ function reducer(state: AppState, action: Action): AppState {
     case "REORDER_EVENT_TASKS":
       return { ...state, eventPlans: state.eventPlans.map((p) => p.id === action.planId ? { ...p, tasks: action.tasks } : p) };
 
+    case "SET_DAY_META":
+      return {
+        ...state,
+        menuDayMeta: { ...state.menuDayMeta, [action.dateStr]: action.meta },
+      };
+
     default:
       return state;
   }
@@ -451,6 +463,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             tips: data.tips ?? [],
             eventPlans: data.eventPlans ?? [],
             stores: data.stores ?? [],
+            menuDayMeta: data.menuDayMeta ?? {},
           },
         });
       })
@@ -476,9 +489,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           groceryChecked: state.groceryChecked,
           groceryItemStores: state.groceryItemStores,
           familyMembers: state.familyMembers,
+          stores: state.stores,
           savedMenus: state.savedMenus,
           tips: state.tips,
           eventPlans: state.eventPlans,
+          menuDayMeta: state.menuDayMeta,
         }),
       });
     }, 500);
@@ -492,9 +507,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.groceryChecked,
     state.groceryItemStores,
     state.familyMembers,
+    state.stores,
     state.savedMenus,
     state.tips,
     state.eventPlans,
+    state.menuDayMeta,
     state.hydrated,
   ]);
 
@@ -553,8 +570,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         groceryChecked: state.groceryChecked,
         groceryItemStores: state.groceryItemStores,
         familyMembers: state.familyMembers,
+        stores: state.stores,
         savedMenus: state.savedMenus,
         tips: state.tips,
+        eventPlans: state.eventPlans,
+        menuDayMeta: state.menuDayMeta,
       }),
     });
   }, [
@@ -566,9 +586,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.groceryChecked,
     state.groceryItemStores,
     state.familyMembers,
+    state.stores,
     state.savedMenus,
     state.tips,
     state.eventPlans,
+    state.menuDayMeta,
   ]);
 
   return (

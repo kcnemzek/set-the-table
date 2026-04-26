@@ -10,5 +10,12 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/menu/:path*", "/discover/:path*", "/recipes/:path*", "/groceries/:path*"],
+  matcher: [
+    "/menu/:path*",
+    "/discover/:path*",
+    "/recipes/:path*",
+    "/groceries/:path*",
+    "/event-planning/:path*",
+    "/settings/:path*",
+  ],
 };

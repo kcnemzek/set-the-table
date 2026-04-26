@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { storeInviteToken } from "@/lib/invite-tokens";
+import { resolveDataKey } from "@/lib/household";
 import type { FamilyMember } from "@/types";
 
 const EMPTY = {
@@ -13,29 +14,28 @@ const EMPTY = {
   familyMembers: [],
   savedMenus: [],
   tips: [],
+  stores: [],
+  eventPlans: [],
+  menuDayMeta: {},
 };
 
 const hasKV = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 
-function userKey(userId: string): string {
-  return `app-data:${userId}`;
+// For local dev: map KV key to a safe filename (matches household.ts keyToFilename)
+function keyToFilename(key: string): string {
+  return key.replace(/[^a-z0-9]/gi, "-");
 }
 
-// Sanitize user ID for use as a filename (for local dev fallback)
-function safeFilename(userId: string): string {
-  return userId.replace(/[^a-z0-9]/gi, "-");
-}
-
-async function readData(userId: string) {
+async function readData(dataKey: string) {
   if (hasKV) {
     const { kv } = await import("@vercel/kv");
-    return (await kv.get<object>(userKey(userId))) ?? EMPTY;
+    return (await kv.get<object>(dataKey)) ?? EMPTY;
   }
   const { readFile } = await import("fs/promises");
   const { join } = await import("path");
   try {
     const raw = await readFile(
-      join(process.cwd(), "data", `app-data-${safeFilename(userId)}.json`),
+      join(process.cwd(), "data", `${keyToFilename(dataKey)}.json`),
       "utf-8"
     );
     return JSON.parse(raw);
@@ -44,10 +44,10 @@ async function readData(userId: string) {
   }
 }
 
-async function writeData(userId: string, body: unknown) {
+async function writeData(dataKey: string, body: unknown) {
   if (hasKV) {
     const { kv } = await import("@vercel/kv");
-    await kv.set(userKey(userId), body);
+    await kv.set(dataKey, body);
     return;
   }
   const { writeFile, mkdir } = await import("fs/promises");
@@ -55,7 +55,7 @@ async function writeData(userId: string, body: unknown) {
   const dir = join(process.cwd(), "data");
   await mkdir(dir, { recursive: true });
   await writeFile(
-    join(dir, `app-data-${safeFilename(userId)}.json`),
+    join(dir, `${keyToFilename(dataKey)}.json`),
     JSON.stringify(body, null, 2)
   );
 }
@@ -85,11 +85,12 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    let data = await readData(session.user.id) as Record<string, unknown>;
+    const dataKey = await resolveDataKey(session.user.id);
+    let data = await readData(dataKey) as Record<string, unknown>;
     const { migrated, data: migratedData } = await migrateFamilyMembers(session.user.id, data);
     if (migrated) {
       data = migratedData;
-      await writeData(session.user.id, data);
+      await writeData(dataKey, data);
     }
     return NextResponse.json(data);
   } catch {
@@ -103,8 +104,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
+    const dataKey = await resolveDataKey(session.user.id);
     const body = await request.json();
-    await writeData(session.user.id, body);
+    await writeData(dataKey, body);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });

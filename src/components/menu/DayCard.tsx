@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Plus, Share2, Check, Bookmark } from "lucide-react";
+import { Plus, Share2, Check, Bookmark, Utensils } from "lucide-react";
 import DayPickerSheet from "@/components/recipes/DayPickerSheet";
 import clsx from "clsx";
 import {
@@ -45,6 +45,11 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
   const eventEntries = allEntries.filter((e) => e.type === "event");
   const menuEntries = allEntries.filter((e) => e.type !== "event");
   const entries = [...eventEntries, ...menuEntries];
+
+  const isSet = state.menuDayMeta[dateStr]?.isSet ?? false;
+  function toggleDinnerSet() {
+    dispatch({ type: "SET_DAY_META", dateStr, meta: { isSet: !isSet } });
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -189,6 +194,22 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
           </p>
         </div>
         <div className="flex items-center gap-1.5">
+          <button
+            onClick={toggleDinnerSet}
+            className={clsx(
+              "p-1.5 rounded-xl transition-colors",
+              isSet
+                ? isToday
+                  ? "text-white bg-white/20"
+                  : "text-brand-500 bg-brand-50"
+                : isToday
+                ? "text-white/50 hover:text-white hover:bg-white/20 active:bg-white/30"
+                : "text-gray-400 hover:text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+            )}
+            title={isSet ? "Dinner is set ✓" : "Mark dinner as set"}
+          >
+            <Utensils size={15} />
+          </button>
           {(entries.length > 0 || hasEventContent) && (
             <>
               <button

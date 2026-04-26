@@ -15,6 +15,12 @@ const ROLE_LABELS: Record<HouseholdRole, string> = {
 
 const ROLE_OPTIONS: HouseholdRole[] = ["executive-chef", "sous-chef", "commensal"];
 
+const ROLE_DESCRIPTIONS: Record<HouseholdRole, string> = {
+  "executive-chef": "Full access — manages the menu, recipes, events, and household.",
+  "sous-chef": "Can view and edit the menu, groceries, and events.",
+  "commensal": "View-only — sees the menu and grocery list.",
+};
+
 export default function SettingsPage() {
   const { data: session } = useSession();
   const { state, dispatch } = useAppContext();
@@ -312,16 +318,17 @@ export default function SettingsPage() {
                   placeholder="their@email.com"
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                 />
-                <div className="flex gap-2">
+                <div className="space-y-1.5">
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value as HouseholdRole)}
-                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-300"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-300"
                   >
                     {ROLE_OPTIONS.map((r) => (
                       <option key={r} value={r}>{ROLE_LABELS[r]}</option>
                     ))}
                   </select>
+                  <p className="text-xs text-gray-400">{ROLE_DESCRIPTIONS[inviteRole]}</p>
                   <button
                     onClick={handleInvite}
                     disabled={inviting || !inviteEmail.trim()}
@@ -425,26 +432,6 @@ export default function SettingsPage() {
               <Plus size={16} />
             </button>
           </div>
-        </div>
-      </section>
-
-      {/* ── Role guide ──────────────────────────────────── */}
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100 bg-gray-50">
-          <ChefHat size={16} className="text-brand-500" />
-          <h2 className="text-sm font-semibold text-gray-700">Roles</h2>
-        </div>
-        <div className="divide-y divide-gray-100">
-          {[
-            { role: "executive-chef" as HouseholdRole, desc: "Full access — manages the menu, recipes, events, and household." },
-            { role: "sous-chef" as HouseholdRole, desc: "Can view and edit the menu, groceries, and events." },
-            { role: "commensal" as HouseholdRole, desc: "View-only — sees the menu and grocery list." },
-          ].map(({ role, desc }) => (
-            <div key={role} className="px-4 py-3">
-              <p className="text-sm font-medium text-gray-800">{ROLE_LABELS[role]}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
-            </div>
-          ))}
         </div>
       </section>
 

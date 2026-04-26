@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { ChefHat, UserPlus, Trash2, Crown, Users, LogOut, Link as LinkIcon, Plus, X, RefreshCw, Copy, Check, ShoppingBag } from "lucide-react";
+import { ChefHat, UserPlus, Trash2, Crown, Users, LogOut, Link as LinkIcon, Plus, X, RefreshCw, ShoppingBag } from "lucide-react";
 import clsx from "clsx";
-import type { Household, HouseholdRole, FamilyMember } from "@/types";
+import type { Household, HouseholdRole } from "@/types";
 import { useAppContext } from "@/store/context";
 
 const ROLE_LABELS: Record<HouseholdRole, string> = {
@@ -17,7 +17,7 @@ const ROLE_OPTIONS: HouseholdRole[] = ["executive-chef", "sous-chef", "commensal
 
 export default function SettingsPage() {
   const { data: session } = useSession();
-  const { state, dispatch, addFamilyMember, removeFamilyMember } = useAppContext();
+  const { state, dispatch } = useAppContext();
 
   // Household
   const [household, setHousehold] = useState<Household | null | undefined>(undefined);
@@ -31,10 +31,7 @@ export default function SettingsPage() {
   const [inviting, setInviting] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState(false);
 
-  // Family members
-  const [newMemberName, setNewMemberName] = useState("");
-  const [addingMember, setAddingMember] = useState(false);
-  const [copiedMemberId, setCopiedMemberId] = useState<string | null>(null);
+  // Share link
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareUrlCopied, setShareUrlCopied] = useState(false);
 
@@ -147,45 +144,7 @@ export default function SettingsPage() {
     setHousehold(null);
   }
 
-  // ── Family member handlers ────────────────────────────
-
-  function memberInviteUrl(member: FamilyMember) {
-    return `${window.location.origin}/view/${member.inviteToken}`;
-  }
-
-  function handleCopyMemberInvite(member: FamilyMember) {
-    navigator.clipboard.writeText(memberInviteUrl(member)).then(() => {
-      setCopiedMemberId(member.id);
-      setTimeout(() => setCopiedMemberId(null), 2500);
-    }).catch(() => {});
-  }
-
-  async function handleAddFamilyMember() {
-    const trimmed = newMemberName.trim();
-    if (!trimmed || addingMember) return;
-    setAddingMember(true);
-    try {
-      const res = await fetch("/api/family-members", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: trimmed }),
-      });
-      if (res.ok) {
-        const { member } = await res.json();
-        addFamilyMember(member as FamilyMember);
-        setNewMemberName("");
-      }
-    } finally {
-      setAddingMember(false);
-    }
-  }
-
-  async function handleRemoveFamilyMember(member: FamilyMember) {
-    try {
-      await fetch(`/api/family-members/${member.id}`, { method: "DELETE" });
-      removeFamilyMember(member.id);
-    } catch { /* ignore */ }
-  }
+  // ── Share link handlers ───────────────────────────────
 
   function handleCopyShareUrl() {
     if (!shareUrl) return;
@@ -255,6 +214,9 @@ export default function SettingsPage() {
                   onChange={(e) => setHouseholdName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleCreate()}
                   placeholder="e.g. The Nemzek Table"
+                  spellCheck
+                  autoCorrect="on"
+                  autoCapitalize="words"
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                   autoFocus
                 />
@@ -390,88 +352,31 @@ export default function SettingsPage() {
         )}
       </section>
 
-      {/* ── Family ──────────────────────────────────────── */}
+      {/* ── Share Link ──────────────────────────────────── */}
       <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100 bg-gray-50">
-          <Users size={16} className="text-brand-500" />
-          <h2 className="text-sm font-semibold text-gray-700">Family</h2>
+          <LinkIcon size={16} className="text-brand-500" />
+          <h2 className="text-sm font-semibold text-gray-700">Read-Only Link</h2>
         </div>
-
-        <div className="divide-y divide-gray-100">
-          {/* Named family members */}
-          <div className="px-4 py-4 space-y-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Members</p>
-            <p className="text-xs text-gray-500">
-              Each person gets their own link so you know who added what to the grocery list.
-            </p>
-
-            {state.familyMembers.length > 0 && (
-              <div className="space-y-2">
-                {state.familyMembers.map((member) => (
-                  <div key={member.id} className="flex items-center gap-2 p-2.5 bg-gray-50 rounded-xl border border-gray-200">
-                    <span className="flex-1 text-sm font-medium text-gray-800 truncate">{member.name}</span>
-                    <button
-                      onClick={() => handleCopyMemberInvite(member)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-50 text-brand-600 text-xs font-medium hover:bg-brand-100 transition-colors flex-shrink-0"
-                    >
-                      {copiedMemberId === member.id ? <Check size={12} /> : <Copy size={12} />}
-                      {copiedMemberId === member.id ? "Copied!" : "Copy link"}
-                    </button>
-                    <button
-                      onClick={() => handleRemoveFamilyMember(member)}
-                      className="text-gray-400 hover:text-red-400 transition-colors flex-shrink-0"
-                    >
-                      <X size={15} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newMemberName}
-                onChange={(e) => setNewMemberName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddFamilyMember()}
-                placeholder="Add a name…"
-                className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
-              />
-              <button
-                onClick={handleAddFamilyMember}
-                disabled={!newMemberName.trim() || addingMember}
-                className="p-2.5 rounded-xl bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-40 transition-colors"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Read-only share link */}
-          <div className="px-4 py-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <LinkIcon size={14} className="text-gray-500" />
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Read-Only Link</p>
-            </div>
-            <p className="text-xs text-gray-500">
-              Share this for read-only access — no identity or grocery list.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={handleCopyShareUrl}
-                disabled={!shareUrl}
-                className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
-              >
-                {shareUrlCopied ? "Copied!" : !shareUrl ? "…" : "Copy Link"}
-              </button>
-              <button
-                onClick={handleResetShareLink}
-                title="Reset link (old link will stop working)"
-                className="p-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-              >
-                <RefreshCw size={16} />
-              </button>
-            </div>
+        <div className="px-4 py-4 space-y-3">
+          <p className="text-sm text-gray-600">
+            Share this with anyone who just wants to see the menu — no sign-in required.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={handleCopyShareUrl}
+              disabled={!shareUrl}
+              className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
+            >
+              {shareUrlCopied ? "Copied!" : !shareUrl ? "…" : "Copy Link"}
+            </button>
+            <button
+              onClick={handleResetShareLink}
+              title="Reset link — the old link will stop working"
+              className="p-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <RefreshCw size={16} />
+            </button>
           </div>
         </div>
       </section>

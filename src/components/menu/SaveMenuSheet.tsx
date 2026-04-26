@@ -45,6 +45,9 @@ export default function SaveMenuSheet({ open, onClose, entries }: SaveMenuSheetP
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSave()}
           placeholder="e.g. Taco Tuesday, Pasta Night, Sunday Roast"
+          spellCheck
+          autoCorrect="on"
+          autoCapitalize="words"
           className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           autoFocus
         />

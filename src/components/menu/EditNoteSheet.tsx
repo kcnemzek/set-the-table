@@ -44,6 +44,9 @@ export default function EditNoteSheet({ open, onClose, entry, dateStr }: EditNot
           onChange={(e) => setText(e.target.value)}
           placeholder={isHeadline ? "e.g. 🎂 Elizabeth's Birthday" : "e.g. Easter Brunch"}
           rows={3}
+          spellCheck
+          autoCorrect="on"
+          autoCapitalize="sentences"
           className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
           autoFocus
         />

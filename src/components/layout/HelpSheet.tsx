@@ -55,9 +55,12 @@ const SECTIONS = [
     ],
   },
   {
-    title: "🔗 Family Sync",
+    title: "⚙️ Settings",
     tips: [
-      { label: "Real-Time Collaboration", body: "Invite your crew via the ☰ menu. Everyone stays on the same page with a shared meal plan and a live grocery list that updates for everyone...instantly." },
+      { label: "Your Household", body: "Create a household to share your menu, recipes, and grocery list with family. Invite members by email — they join automatically the next time they sign in with Google." },
+      { label: "Roles", body: "Executive Chef has full access. Sous Chef can view and edit. At the Table is view-only. Pick the right role when you invite someone." },
+      { label: "Read-Only Link", body: "Share this link with anyone who just wants to see the menu without signing in — grandparents, guests, anyone. Tap the reset icon to generate a new link if you need to revoke access." },
+      { label: "My Stores", body: "Add your regular grocery stores here. You can then tag items to a specific store and filter your grocery list by store while you shop." },
     ],
   },
 ];
@@ -169,6 +172,9 @@ export default function HelpSheet({ open, onClose }: HelpSheetProps) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name (optional)"
+                  spellCheck
+                  autoCorrect="on"
+                  autoCapitalize="words"
                   className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
                 />
                 <textarea
@@ -176,6 +182,9 @@ export default function HelpSheet({ open, onClose }: HelpSheetProps) {
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder={type === "Bug" ? "What went wrong?" : "What would you like to see?"}
                   rows={4}
+                  spellCheck
+                  autoCorrect="on"
+                  autoCapitalize="sentences"
                   className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
                 />
                 {submitState === "error" && (

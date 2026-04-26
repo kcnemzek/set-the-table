@@ -100,6 +100,9 @@ export default function TipSheet({ open, onClose, existing }: TipSheetProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. How to poach chicken"
+            spellCheck
+            autoCorrect="on"
+            autoCapitalize="sentences"
             className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
         </div>
@@ -129,6 +132,9 @@ export default function TipSheet({ open, onClose, existing }: TipSheetProps) {
             onChange={(e) => setBody(e.target.value)}
             placeholder="e.g. Bring water to a gentle simmer (not a rolling boil)..."
             rows={6}
+            spellCheck
+            autoCorrect="on"
+            autoCapitalize="sentences"
             className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
           />
         </div>

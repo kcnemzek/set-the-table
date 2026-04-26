@@ -179,6 +179,9 @@ export default function FamilyViewPage({ params }: { params: Promise<{ token: st
                   onChange={(e) => setNewItem(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddItem()}
                   placeholder="Add an item…"
+                  spellCheck
+                  autoCorrect="on"
+                  autoCapitalize="sentences"
                   className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-brand-400"
                 />
                 <button

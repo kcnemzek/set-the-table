@@ -28,6 +28,9 @@ export default function SearchBar({
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onSubmit()}
           placeholder={placeholder}
+          spellCheck={false}
+          autoCorrect="off"
+          autoCapitalize="none"
           className="w-full pl-9 pr-9 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
         />
         {value && (

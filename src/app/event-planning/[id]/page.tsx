@@ -240,6 +240,9 @@ function TaskSheet({
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSave()}
+            spellCheck
+            autoCorrect="on"
+            autoCapitalize="sentences"
             className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
         </div>
@@ -572,6 +575,9 @@ export default function EventDetailPage() {
                   value={nameValue}
                   onChange={(e) => setNameValue(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditingName(false); }}
+                  spellCheck
+                  autoCorrect="on"
+                  autoCapitalize="words"
                   className="flex-1 text-base font-bold rounded-lg border border-brand-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-400"
                 />
                 <button onClick={saveName} className="p-1 text-brand-500"><Check size={18} /></button>

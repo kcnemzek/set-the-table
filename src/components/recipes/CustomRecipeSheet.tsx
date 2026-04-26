@@ -485,6 +485,9 @@ export default function CustomRecipeSheet({
                   onChange={(e) => setImportText(e.target.value)}
                   placeholder="Paste recipe text here — ingredients, directions, anything you have…"
                   rows={5}
+                  spellCheck
+                  autoCorrect="on"
+                  autoCapitalize="sentences"
                   className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
                 />
                 <button
@@ -513,6 +516,9 @@ export default function CustomRecipeSheet({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Mom's Lasagna"
+            spellCheck
+            autoCorrect="on"
+            autoCapitalize="words"
             className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
         </div>
@@ -577,6 +583,9 @@ export default function CustomRecipeSheet({
                   value={row.text}
                   onChange={(e) => updateRow(idx, "text", e.target.value)}
                   placeholder="e.g. 2 cups flour"
+                  spellCheck
+                  autoCorrect="on"
+                  autoCapitalize="none"
                   className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
                 />
                 <select
@@ -618,6 +627,9 @@ export default function CustomRecipeSheet({
             onChange={(e) => setDirections(e.target.value)}
             placeholder={"Step 1: Preheat oven to 375°F\nStep 2: ..."}
             rows={5}
+            spellCheck
+            autoCorrect="on"
+            autoCapitalize="sentences"
             className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
           />
         </div>

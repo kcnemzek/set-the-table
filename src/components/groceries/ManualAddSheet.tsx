@@ -68,6 +68,9 @@ export default function ManualAddSheet({ open, onClose }: ManualAddSheetProps) {
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             placeholder="e.g. Olive oil"
             autoFocus
+            spellCheck
+            autoCorrect="on"
+            autoCapitalize="sentences"
             className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
         </div>

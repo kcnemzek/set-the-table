@@ -168,6 +168,9 @@ export default function AddEntrySheet({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search all recipes…"
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="none"
               className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
             />
             {query && (
@@ -243,6 +246,9 @@ export default function AddEntrySheet({
               onChange={(e) => setTextEntry(e.target.value)}
               placeholder="e.g. Easter Brunch"
               rows={3}
+              spellCheck
+              autoCorrect="on"
+              autoCapitalize="sentences"
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
             />
             <div className="flex gap-2">
@@ -275,6 +281,9 @@ export default function AddEntrySheet({
               onChange={(e) => setTextEntry(e.target.value)}
               placeholder="e.g. 🎂 Elizabeth's Birthday"
               rows={3}
+              spellCheck
+              autoCorrect="on"
+              autoCapitalize="words"
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
             />
             <div className="flex gap-2">

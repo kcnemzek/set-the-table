@@ -274,6 +274,9 @@ export default function EventPlanningPage() {
                             }
                             if (e.key === "Escape") setRenamingMenuId(null);
                           }}
+                          spellCheck
+                          autoCorrect="on"
+                          autoCapitalize="words"
                           className="flex-1 text-sm font-semibold rounded-lg border border-brand-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-400"
                         />
                         <button
@@ -377,6 +380,9 @@ export default function EventPlanningPage() {
               value={copyName}
               onChange={(e) => setCopyName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCopyEvent()}
+              spellCheck
+              autoCorrect="on"
+              autoCapitalize="words"
               className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
             />
           </div>
@@ -412,6 +418,9 @@ export default function EventPlanningPage() {
               value={newEventName}
               onChange={(e) => setNewEventName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreateEvent()}
+              spellCheck
+              autoCorrect="on"
+              autoCapitalize="words"
               className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
             />
           </div>

@@ -1,4 +1,4 @@
-# Mom, What's for Dinner? — Architecture
+# SetTheTable — Architecture
 
 ## Table of Contents
 1. [Stack](#1-stack)

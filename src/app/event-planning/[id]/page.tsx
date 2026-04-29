@@ -412,7 +412,7 @@ export default function EventDetailPage() {
     }
 
     lines.push("");
-    lines.push("Set the Table - Dinner is set.");
+    lines.push("Dinner is set. Shared via SetTheTable.");
     return lines.join("\n");
   }
 

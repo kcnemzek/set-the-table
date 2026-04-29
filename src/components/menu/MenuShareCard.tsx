@@ -105,7 +105,7 @@ const MenuShareCard = forwardRef<HTMLDivElement, MenuShareCardProps>(
         {/* Footer */}
         <div className="px-6 pb-5 pt-1 flex items-center gap-1.5">
           <ChefHat size={13} className="text-brand-300" />
-          <p className="text-xs text-brand-300 font-medium">Mom, What&apos;s for Dinner?</p>
+          <p className="text-xs text-brand-300 font-medium">SetTheTable</p>
         </div>
       </div>
     );

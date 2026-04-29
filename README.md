@@ -1,4 +1,4 @@
-# Mom, What's for Dinner?
+# SetTheTable
 
 A mobile-first meal planning web app for families. Plan the week's meals, build a grocery list automatically, and share a read-only view with family members.
 

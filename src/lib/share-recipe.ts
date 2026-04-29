@@ -17,6 +17,7 @@ export function formatRecipeText(recipe: CustomRecipe): string {
   if (recipe.url?.trim()) {
     lines.push("", recipe.url.trim());
   }
+  lines.push("", "Dinner is set. Shared via SetTheTable.");
   return lines.join("\n");
 }
 

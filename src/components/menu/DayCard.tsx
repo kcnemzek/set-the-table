@@ -112,6 +112,7 @@ export default function DayCard({ dateStr, isToday }: DayCardProps) {
       lines.push("See you there! 🙌");
     }
 
+    lines.push("", "Dinner is set. Shared via SetTheTable.");
     return lines.join("\n");
   }
 

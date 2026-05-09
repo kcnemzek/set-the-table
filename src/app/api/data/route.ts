@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { storeInviteToken } from "@/lib/invite-tokens";
-import { resolveDataKey } from "@/lib/household";
+import {
+  resolveDataKey,
+  getUserHouseholdId,
+  getPendingInvite,
+  deletePendingInvite,
+  getHousehold,
+  saveHousehold,
+  setUserHouseholdId,
+} from "@/lib/household";
 import type { FamilyMember } from "@/types";
 
 const EMPTY = {
@@ -79,10 +87,40 @@ async function migrateFamilyMembers(
   return { migrated: true, data: { ...data, familyMembers: upgraded } };
 }
 
+async function resolveAnyPendingInvite(userId: string, email: string, name: string) {
+  const existingHouseholdId = await getUserHouseholdId(userId);
+  if (existingHouseholdId) return;
+  const invite = await getPendingInvite(email);
+  if (!invite) return;
+  const household = await getHousehold(invite.householdId);
+  if (!household) return;
+  if (household.members.some((m) => m.userId === userId)) return;
+  household.members.push({
+    userId,
+    email,
+    name,
+    role: invite.role,
+    joinedAt: new Date().toISOString(),
+  });
+  household.pendingInvites = household.pendingInvites.filter(
+    (p) => p.email.toLowerCase() !== email.toLowerCase()
+  );
+  await saveHousehold(household);
+  await setUserHouseholdId(userId, invite.householdId);
+  await deletePendingInvite(email);
+}
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (session.user.email) {
+    await resolveAnyPendingInvite(
+      session.user.id,
+      session.user.email,
+      session.user.name ?? session.user.email
+    );
   }
   try {
     const dataKey = await resolveDataKey(session.user.id);

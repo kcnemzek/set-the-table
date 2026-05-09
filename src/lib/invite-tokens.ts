@@ -1,5 +1,3 @@
-import type { FamilyGroceryItem } from "@/types";
-
 const hasKV = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 
 // ─── Invite token records ─────────────────────────────────────────────────────
@@ -59,40 +57,3 @@ export async function resolveInviteToken(token: string): Promise<InviteTokenReco
   return tokens[token] ?? null;
 }
 
-// ─── Family grocery items ─────────────────────────────────────────────────────
-
-export async function readFamilyGroceries(userId: string): Promise<FamilyGroceryItem[]> {
-  if (hasKV) {
-    const { kv } = await import("@vercel/kv");
-    return (await kv.get<FamilyGroceryItem[]>(`family-groceries:${userId}`)) ?? [];
-  }
-  const { readFile } = await import("fs/promises");
-  const { join } = await import("path");
-  const safe = userId.replace(/[^a-z0-9]/gi, "-");
-  try {
-    const raw = await readFile(
-      join(process.cwd(), "data", `family-groceries-${safe}.json`),
-      "utf-8"
-    );
-    return JSON.parse(raw) as FamilyGroceryItem[];
-  } catch {
-    return [];
-  }
-}
-
-export async function writeFamilyGroceries(userId: string, items: FamilyGroceryItem[]) {
-  if (hasKV) {
-    const { kv } = await import("@vercel/kv");
-    await kv.set(`family-groceries:${userId}`, items);
-    return;
-  }
-  const { writeFile, mkdir } = await import("fs/promises");
-  const { join } = await import("path");
-  const safe = userId.replace(/[^a-z0-9]/gi, "-");
-  const dir = join(process.cwd(), "data");
-  await mkdir(dir, { recursive: true });
-  await writeFile(
-    join(dir, `family-groceries-${safe}.json`),
-    JSON.stringify(items, null, 2)
-  );
-}

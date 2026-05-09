@@ -13,6 +13,7 @@ import type {
   DayEntry,
   CustomRecipe,
   ManualGroceryItem,
+  StapleItem,
   RecipeDetail,
   SavedMenu,
   Tip,
@@ -43,6 +44,7 @@ interface AppState {
   eventPlans: EventPlan[];
   /** key: "YYYY-MM-DD" → per-day metadata (e.g. "Dinner is set") */
   menuDayMeta: Record<string, MenuDayMeta>;
+  staples: StapleItem[];
   /** cache of full recipe details fetched for grocery aggregation */
   recipeCache: Record<string, RecipeDetail>;
   hydrated: boolean;
@@ -62,17 +64,18 @@ const initialState: AppState = {
   tips: [],
   eventPlans: [],
   menuDayMeta: {},
+  staples: [],
   recipeCache: {},
   hydrated: false,
 };
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
 
+type SyncPayload = Omit<AppState, "hydrated" | "recipeCache" | "menuDayMeta"> & { menuDayMeta?: Record<string, MenuDayMeta> };
+
 type Action =
-  | {
-      type: "HYDRATE";
-      payload: Omit<AppState, "hydrated" | "recipeCache" | "menuDayMeta"> & { menuDayMeta?: Record<string, MenuDayMeta> };
-    }
+  | { type: "HYDRATE"; payload: SyncPayload }
+  | { type: "SYNC"; payload: SyncPayload }
   | { type: "ADD_DAY_ENTRY"; dateStr: string; entry: DayEntry }
   | { type: "REMOVE_DAY_ENTRY"; dateStr: string; entryId: string }
   | { type: "REORDER_DAY_ENTRIES"; dateStr: string; entries: DayEntry[] }
@@ -114,7 +117,11 @@ type Action =
   | { type: "TOGGLE_EVENT_GROCERIES"; planId: string }
   | { type: "REORDER_EVENT_DISHES"; planId: string; dishes: EventDish[] }
   | { type: "REORDER_EVENT_TASKS"; planId: string; tasks: EventTask[] }
-  | { type: "SET_DAY_META"; dateStr: string; meta: MenuDayMeta };
+  | { type: "SET_DAY_META"; dateStr: string; meta: MenuDayMeta }
+  | { type: "ADD_STAPLE"; staple: StapleItem }
+  | { type: "REMOVE_STAPLE"; id: string }
+  | { type: "TOGGLE_STAPLE_IN_LIST"; stapleId: string }
+  | { type: "ADD_ALL_STAPLES_TO_LIST" };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -125,6 +132,15 @@ function reducer(state: AppState, action: Action): AppState {
         stores: action.payload.stores?.length ? action.payload.stores : [...DEFAULT_STORES],
         menuDayMeta: action.payload.menuDayMeta ?? {},
         recipeCache: {},
+        hydrated: true,
+      };
+
+    case "SYNC":
+      return {
+        ...state,
+        ...action.payload,
+        stores: action.payload.stores?.length ? action.payload.stores : [...DEFAULT_STORES],
+        menuDayMeta: action.payload.menuDayMeta ?? {},
         hydrated: true,
       };
 
@@ -413,6 +429,53 @@ function reducer(state: AppState, action: Action): AppState {
         menuDayMeta: { ...state.menuDayMeta, [action.dateStr]: action.meta },
       };
 
+    case "ADD_STAPLE":
+      return { ...state, staples: [...state.staples, action.staple] };
+
+    case "REMOVE_STAPLE":
+      return {
+        ...state,
+        staples: state.staples.filter((s) => s.id !== action.id),
+        manualGroceryItems: state.manualGroceryItems.filter((i) => i.stapleId !== action.id),
+      };
+
+    case "TOGGLE_STAPLE_IN_LIST": {
+      const existing = state.manualGroceryItems.find((i) => i.stapleId === action.stapleId);
+      if (existing) {
+        return { ...state, manualGroceryItems: state.manualGroceryItems.filter((i) => i.stapleId !== action.stapleId) };
+      }
+      const staple = state.staples.find((s) => s.id === action.stapleId);
+      if (!staple) return state;
+      const newItem: ManualGroceryItem = {
+        id: crypto.randomUUID(),
+        name: staple.name,
+        amount: 0,
+        unit: "",
+        aisle: staple.aisle,
+        checked: false,
+        store: staple.store,
+        stapleId: staple.id,
+      };
+      return { ...state, manualGroceryItems: [...state.manualGroceryItems, newItem] };
+    }
+
+    case "ADD_ALL_STAPLES_TO_LIST": {
+      const inListIds = new Set(state.manualGroceryItems.map((i) => i.stapleId).filter(Boolean));
+      const toAdd: ManualGroceryItem[] = state.staples
+        .filter((s) => !inListIds.has(s.id))
+        .map((s) => ({
+          id: crypto.randomUUID(),
+          name: s.name,
+          amount: 0,
+          unit: "",
+          aisle: s.aisle,
+          checked: false,
+          store: s.store,
+          stapleId: s.id,
+        }));
+      return { ...state, manualGroceryItems: [...state.manualGroceryItems, ...toAdd] };
+    }
+
     default:
       return state;
   }
@@ -441,6 +504,7 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const hydrationOk = useRef(false);
+  const lastLocalChangeRef = useRef(0);
 
   // Hydrate from server on mount
   useEffect(() => {
@@ -464,11 +528,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             eventPlans: data.eventPlans ?? [],
             stores: data.stores ?? [],
             menuDayMeta: data.menuDayMeta ?? {},
+            staples: data.staples ?? [],
           },
         });
       })
       .catch(() => {
-        hydrationOk.current = true;
+        // Do NOT set hydrationOk.current here — a failed load must never trigger a save.
+        // The UI still renders (hydrated: true in state), but the save guard stays blocked
+        // until the background poll succeeds and re-enables it.
         dispatch({ type: "HYDRATE", payload: { ...initialState } });
       });
   }, []);
@@ -476,6 +543,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Persist on state changes (debounced 500ms)
   useEffect(() => {
     if (!state.hydrated || !hydrationOk.current) return;
+    lastLocalChangeRef.current = Date.now();
     const handler = setTimeout(() => {
       fetch("/api/data", {
         method: "POST",
@@ -494,6 +562,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           tips: state.tips,
           eventPlans: state.eventPlans,
           menuDayMeta: state.menuDayMeta,
+          staples: state.staples,
         }),
       });
     }, 500);
@@ -512,8 +581,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.tips,
     state.eventPlans,
     state.menuDayMeta,
+    state.staples,
     state.hydrated,
   ]);
+
+  // Background poll — sync household changes from other members
+  useEffect(() => {
+    if (!state.hydrated) return;
+
+    const poll = async () => {
+      if (Date.now() - lastLocalChangeRef.current < 2000) return;
+      try {
+        const res = await fetch("/api/data");
+        if (!res.ok) return;
+        const data = await res.json();
+        // If initial hydration failed (server was down), re-enable saving now that server is back.
+        if (!hydrationOk.current) hydrationOk.current = true;
+        dispatch({
+          type: "SYNC",
+          payload: {
+            menu: data.menu ?? {},
+            favorites: data.favorites ?? [],
+            dislikedRecipes: data.dislikedRecipes ?? [],
+            customRecipes: data.customRecipes ?? [],
+            manualGroceryItems: data.manualGroceryItems ?? [],
+            groceryChecked: data.groceryChecked ?? {},
+            groceryItemStores: data.groceryItemStores ?? {},
+            familyMembers: data.familyMembers ?? [],
+            savedMenus: data.savedMenus ?? [],
+            tips: data.tips ?? [],
+            eventPlans: data.eventPlans ?? [],
+            stores: data.stores ?? [],
+            menuDayMeta: data.menuDayMeta ?? {},
+            staples: data.staples ?? [],
+          },
+        });
+      } catch { /* ignore */ }
+    };
+
+    const id = setInterval(poll, 30_000);
+    const onVisible = () => { if (document.visibilityState === "visible") poll(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [state.hydrated]);
 
   const addDayEntry = useCallback(
     (dateStr: string, entry: DayEntry) =>
@@ -575,6 +688,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         tips: state.tips,
         eventPlans: state.eventPlans,
         menuDayMeta: state.menuDayMeta,
+        staples: state.staples,
       }),
     });
   }, [
@@ -591,6 +705,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.tips,
     state.eventPlans,
     state.menuDayMeta,
+    state.staples,
   ]);
 
   return (

@@ -59,7 +59,13 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
           return (
             <div
               key={key}
-              onClick={() => dispatch({ type: "TOGGLE_GROCERY_CHECKED", key })}
+              onClick={() => {
+                if (item.stapleId && item.manualId) {
+                  dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.manualId });
+                } else {
+                  dispatch({ type: "TOGGLE_GROCERY_CHECKED", key });
+                }
+              }}
               className={clsx(
                 "w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors cursor-pointer",
                 i > 0 && "border-t border-gray-50",
@@ -148,8 +154,8 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
                 </select>
               </div>
 
-              {/* Delete — manual items only */}
-              {item.manualId && (
+              {/* Delete — manual items only (not staple-sourced items) */}
+              {item.manualId && !item.stapleId && (
                 confirmingId === item.manualId ? (
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <button

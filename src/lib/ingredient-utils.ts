@@ -78,6 +78,7 @@ export function aggregateIngredients(
       recipes: [],
       manualId: item.id,
       store: item.store,
+      stapleId: item.stapleId,
     });
   }
 

@@ -1,30 +1,28 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Plus, ShoppingCart, Tag, Trash2, EyeOff, Eye, Users, Check, X } from "lucide-react";
+import { Plus, ShoppingCart, Tag, Trash2, EyeOff, Eye } from "lucide-react";
 import GrocerySection from "@/components/groceries/GrocerySection";
 import ManualAddSheet from "@/components/groceries/ManualAddSheet";
+import StaplesTab from "@/components/groceries/StaplesTab";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import EmptyState from "@/components/shared/EmptyState";
 import { useAppContext } from "@/store/context";
 import { aggregateIngredients, groceryItemKey } from "@/lib/ingredient-utils";
 import { getNext10Days } from "@/lib/dates";
-import type { RecipeDetail, GroceryListByAisle, FamilyGroceryItem } from "@/types";
+import type { RecipeDetail, GroceryListByAisle } from "@/types";
 
-type Tab = "recipes" | "family" | "all";
+type Tab = "list" | "staples";
 
 export default function GroceriesPage() {
   const { state, dispatch } = useAppContext();
-  const [tab, setTab] = useState<Tab>("all");
+  const [tab, setTab] = useState<Tab>("list");
   const [groceryList, setGroceryList] = useState<GroceryListByAisle>({});
   const [recipeLoading, setRecipeLoading] = useState(true);
-  const [familyItems, setFamilyItems] = useState<FamilyGroceryItem[]>([]);
-  const [familyLoading, setFamilyLoading] = useState(true);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [hideChecked, setHideChecked] = useState<boolean>(() => {
     try { return localStorage.getItem("grocery-hide-checked") === "true"; } catch { return false; }
   });
-  const [confirmingFamilyId, setConfirmingFamilyId] = useState<string | null>(null);
   const [selectedStore, setSelectedStore] = useState<string | null>(() => {
     try { return localStorage.getItem("grocery-selected-store") ?? null; } catch { return null; }
   });
@@ -42,13 +40,9 @@ export default function GroceriesPage() {
 
   const UNASSIGNED = "__unassigned__";
 
-  // All unique store names — derived from the aggregated list (already correct since tags update)
-  // plus family items which aren't in groceryList
   const stores = useMemo(() => {
-    const fromList = Object.values(groceryList).flat().map((i) => i.store).filter(Boolean) as string[];
-    const fromFamily = familyItems.map((i) => i.store).filter(Boolean) as string[];
-    return Array.from(new Set([...fromList, ...fromFamily])).sort();
-  }, [groceryList, familyItems]);
+    return Array.from(new Set(Object.values(groceryList).flat().map((i) => i.store).filter(Boolean) as string[])).sort();
+  }, [groceryList]);
 
   const buildRecipeList = useCallback(async () => {
     if (!state.hydrated) return;
@@ -114,43 +108,6 @@ export default function GroceriesPage() {
 
   useEffect(() => { buildRecipeList(); }, [buildRecipeList]);
 
-  // Fetch family grocery items
-  useEffect(() => {
-    setFamilyLoading(true);
-    fetch("/api/groceries/family")
-      .then((r) => r.ok ? r.json() : { items: [] })
-      .then(({ items }) => setFamilyItems(items ?? []))
-      .finally(() => setFamilyLoading(false));
-  }, []);
-
-  async function handleClearFamilyItems() {
-    await fetch("/api/groceries/family", { method: "DELETE" });
-    setFamilyItems([]);
-  }
-
-  async function handleRemoveFamilyItem(id: string) {
-    await fetch(`/api/groceries/family/${id}`, { method: "DELETE" });
-    setFamilyItems((prev) => prev.filter((i) => i.id !== id));
-  }
-
-  async function handleToggleFamilyItem(id: string, checked: boolean) {
-    setFamilyItems((prev) => prev.map((i) => (i.id === id ? { ...i, checked } : i)));
-    await fetch(`/api/groceries/family/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ checked }),
-    });
-  }
-
-  async function handleSetFamilyItemStore(id: string, store: string | undefined) {
-    setFamilyItems((prev) => prev.map((i) => (i.id === id ? { ...i, store } : i)));
-    await fetch(`/api/groceries/family/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ store: store ?? null }),
-    });
-  }
-
   // Post-filter by selected store
   const filteredGroceryList = useMemo((): GroceryListByAisle => {
     if (!selectedStore) return groceryList;
@@ -177,26 +134,6 @@ export default function GroceriesPage() {
     ).length, 0
   );
 
-  const loading = tab === "family" ? familyLoading : recipeLoading;
-
-  const familyCheckedCount = familyItems.filter((i) => i.checked).length;
-  const visibleFamilyItems = familyItems
-    .filter((i) => !selectedStore || (
-      selectedStore === UNASSIGNED ? !i.store : i.store === selectedStore
-    ))
-    .filter((i) => !hideChecked || !i.checked);
-
-  // Group visible family items by who added them
-  const familyByMember = visibleFamilyItems.reduce<Record<string, FamilyGroceryItem[]>>((acc, item) => {
-    (acc[item.addedBy] ??= []).push(item);
-    return acc;
-  }, {});
-
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "all", label: "All" },
-    { id: "recipes", label: "Recipes" },
-    { id: "family", label: `Family${familyItems.length > 0 ? ` (${familyItems.length})` : ""}` },
-  ];
 
   return (
     <div className="pb-6">
@@ -205,16 +142,7 @@ export default function GroceriesPage() {
         <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-lg font-bold text-gray-800">Grocery List</h1>
-            {!loading && tab === "family" && familyItems.length > 0 && (
-              <p className="text-xs text-gray-500">
-                {hideChecked && familyCheckedCount > 0
-                  ? `${familyItems.length - familyCheckedCount} of ${familyItems.length} items · ${familyCheckedCount} hidden`
-                  : familyCheckedCount > 0
-                  ? `${familyItems.length} items · ${familyCheckedCount} shopped`
-                  : `${familyItems.length} items`}
-              </p>
-            )}
-            {!loading && (tab === "recipes" || tab === "all") && totalRecipeItems > 0 && (
+            {!recipeLoading && totalRecipeItems > 0 && (
               <p className="text-xs text-gray-500">
                 {hideChecked && checkedCount > 0
                   ? `${totalRecipeItems - checkedCount} of ${totalRecipeItems} items · ${checkedCount} hidden`
@@ -224,45 +152,45 @@ export default function GroceriesPage() {
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setHideChecked((v) => !v)}
-              className="flex items-center justify-center gap-1.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium active:bg-gray-200"
-              style={{ width: 120, height: 38 }}
-            >
-              {hideChecked ? <Eye size={16} /> : <EyeOff size={16} />}
-              {hideChecked ? "Show all" : "Hide checked"}
-            </button>
-            <button
-              onClick={() => setAddSheetOpen(true)}
-              className="flex items-center justify-center gap-1.5 bg-brand-500 text-white rounded-xl text-sm font-medium active:bg-brand-600"
-              style={{ width: 120, height: 38 }}
-            >
-              <Plus size={16} />
-              Add item
-            </button>
-          </div>
+          {tab === "list" && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setHideChecked((v) => !v)}
+                className="flex items-center justify-center gap-1.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium active:bg-gray-200"
+                style={{ width: 120, height: 38 }}
+              >
+                {hideChecked ? <Eye size={16} /> : <EyeOff size={16} />}
+                {hideChecked ? "Show all" : "Hide checked"}
+              </button>
+              <button
+                onClick={() => setAddSheetOpen(true)}
+                className="flex items-center justify-center gap-1.5 bg-brand-500 text-white rounded-xl text-sm font-medium active:bg-brand-600"
+                style={{ width: 120, height: 38 }}
+              >
+                <Plus size={16} />
+                Add item
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-          {tabs.map(({ id, label }) => (
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-2">
+          {(["list", "staples"] as Tab[]).map((id) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                tab === id
-                  ? "bg-white text-gray-800 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+              className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize ${
+                tab === id ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              {label}
+              {id === "list" ? "List" : `Staples${state.staples.length > 0 ? ` (${state.staples.length})` : ""}`}
             </button>
           ))}
         </div>
 
-        {/* Store filter chips */}
-        {(stores.length > 0 || hasUnassigned) && (
+        {/* Store filter chips — list tab only */}
+        {tab === "list" && (stores.length > 0 || hasUnassigned) && (
           <div className="flex flex-wrap gap-2 pt-2">
             <button
               onClick={() => setSelectedStore(null)}
@@ -303,179 +231,52 @@ export default function GroceriesPage() {
         )}
       </div>
 
-      {loading ? (
+      {tab === "staples" ? (
+        <StaplesTab />
+      ) : recipeLoading ? (
         <LoadingSpinner className="py-16" />
+      ) : aisles.length === 0 ? (
+        <EmptyState
+          icon={<ShoppingCart size={48} />}
+          title="No items yet"
+          description="Add recipes to your menu or tap 'Add item' to get started"
+          action={
+            <button
+              onClick={() => setAddSheetOpen(true)}
+              className="px-6 py-3 bg-brand-500 text-white rounded-xl text-sm font-semibold"
+            >
+              Add item
+            </button>
+          }
+        />
       ) : (
         <>
-          {/* ── Recipes tab ── */}
-          {(tab === "recipes" || tab === "all") && (
-            <>
-              {aisles.length === 0 && tab === "recipes" ? (
-                <EmptyState
-                  icon={<ShoppingCart size={48} />}
-                  title="No recipe items"
-                  description="Add recipes to your menu to see ingredients here"
-                />
-              ) : (
-                <>
-                  {aisles.map((aisle) => (
-                    <GrocerySection
-                      key={aisle}
-                      aisle={aisle}
-                      items={filteredGroceryList[aisle]}
-                      hideChecked={hideChecked}
-                    />
-                  ))}
-                  {selectedStore && selectedStore !== UNASSIGNED && (
-                    <div className="px-4 mt-4">
-                      <button
-                        onClick={() => dispatch({ type: "RESET_STORE_ITEMS", store: selectedStore })}
-                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-500 py-2"
-                      >
-                        <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1.5 8A6.5 6.5 0 1 0 3 3.5" />
-                          <path d="M1.5 3.5v4h4" />
-                        </svg>
-                        Reset {selectedStore} list
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
-
-          {/* ── Family tab ── */}
-          {(tab === "family" || tab === "all") && (
-            <div className={tab === "all" && aisles.length > 0 ? "mt-2 border-t border-gray-200 pt-2" : ""}>
-              {tab === "all" && (
-                <div className="flex items-center gap-2 px-4 pt-4 pb-2">
-                  <Users size={14} className="text-gray-500" />
-                  <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Family Requests</h2>
-                </div>
-              )}
-
-              {familyItems.length === 0 ? (
-                tab === "family" ? (
-                  <EmptyState
-                    icon={<Users size={48} />}
-                    title="No family requests"
-                    description="Family members can add items from their invite link"
-                  />
-                ) : (
-                  <p className="text-sm text-gray-400 text-center py-4 px-4">No family requests yet</p>
-                )
-              ) : (
-                <>
-                  {Object.entries(familyByMember).map(([memberName, items]) => (
-                    <div key={memberName}>
-                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest px-4 pt-4 pb-2">
-                        {memberName}
-                      </h3>
-                      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mx-4">
-                        {items.map((item, i) => (
-                          <div
-                            key={item.id}
-                            onClick={() => handleToggleFamilyItem(item.id, !item.checked)}
-                            className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors cursor-pointer ${i > 0 ? "border-t border-gray-50" : ""} ${item.checked ? "bg-gray-100" : "hover:bg-gray-50 active:bg-gray-100"}`}
-                          >
-                            <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${item.checked ? "bg-brand-500 border-brand-500" : "border-gray-300"}`}>
-                              {item.checked && (
-                                <svg viewBox="0 0 10 8" className="w-2.5 h-2.5 text-white" fill="none">
-                                  <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              )}
-                            </div>
-                            <span className={`flex-1 text-sm ${item.checked ? "text-gray-400 line-through" : "text-gray-800"}`}>
-                              {item.name}
-                            </span>
-                            <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                              <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 border text-xs pointer-events-none ${item.store ? "bg-brand-50 text-brand-600 border-brand-200" : "bg-gray-50 text-gray-400 border-gray-200"}`}>
-                                <Tag size={11} />
-                                {item.store && <span className="max-w-[60px] truncate">{item.store}</span>}
-                              </div>
-                              <select
-                                value={item.store ?? ""}
-                                onChange={(e) => handleSetFamilyItemStore(item.id, e.target.value || undefined)}
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full"
-                              >
-                                <option value="">No store</option>
-                                {state.stores.map((s) => <option key={s} value={s}>{s}</option>)}
-                              </select>
-                            </div>
-                            {confirmingFamilyId === item.id ? (
-                              <div className="flex items-center gap-1 flex-shrink-0">
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleRemoveFamilyItem(item.id); setConfirmingFamilyId(null); }}
-                                  className="p-1 text-red-500 hover:text-red-700 transition-colors"
-                                  title="Confirm delete"
-                                >
-                                  <Check size={14} />
-                                </button>
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setConfirmingFamilyId(null); }}
-                                  className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                                  title="Cancel"
-                                >
-                                  <X size={14} />
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setConfirmingFamilyId(item.id); }}
-                                className="text-gray-300 hover:text-red-400 transition-colors p-1"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-
-                  {hideChecked && familyCheckedCount > 0 && (
-                    <p className="text-xs text-gray-400 text-center pt-3 px-4">
-                      {familyCheckedCount} checked {familyCheckedCount === 1 ? "item" : "items"} hidden
-                    </p>
-                  )}
-
-                  {tab === "family" && (
-                    <div className="px-4 mt-4">
-                      <button
-                        onClick={() => { if (confirm("Clear all family requests?")) handleClearFamilyItems(); }}
-                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-400 py-2"
-                      >
-                        <Trash2 size={14} />
-                        Clear all family requests
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Empty state for All tab */}
-          {tab === "all" && aisles.length === 0 && familyItems.length === 0 && (
-            <EmptyState
-              icon={<ShoppingCart size={48} />}
-              title="No items yet"
-              description="Add recipes to your menu or tap 'Add item' to get started"
-              action={
-                <button
-                  onClick={() => setAddSheetOpen(true)}
-                  className="px-6 py-3 bg-brand-500 text-white rounded-xl text-sm font-semibold"
-                >
-                  Add item
-                </button>
-              }
+          {aisles.map((aisle) => (
+            <GrocerySection
+              key={aisle}
+              aisle={aisle}
+              items={filteredGroceryList[aisle]}
+              hideChecked={hideChecked}
             />
+          ))}
+          {selectedStore && selectedStore !== UNASSIGNED && (
+            <div className="px-4 mt-4">
+              <button
+                onClick={() => dispatch({ type: "RESET_STORE_ITEMS", store: selectedStore })}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-500 py-2"
+              >
+                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1.5 8A6.5 6.5 0 1 0 3 3.5" />
+                  <path d="M1.5 3.5v4h4" />
+                </svg>
+                Reset {selectedStore} list
+              </button>
+            </div>
           )}
         </>
       )}
 
-      <ManualAddSheet open={addSheetOpen} onClose={() => setAddSheetOpen(false)} />
+      {tab === "list" && <ManualAddSheet open={addSheetOpen} onClose={() => setAddSheetOpen(false)} />}
     </div>
   );
 }

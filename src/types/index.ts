@@ -122,6 +122,7 @@ export interface AggregatedIngredient {
   recipes: string[];
   manualId?: string;
   store?: string;
+  stapleId?: string;
 }
 
 export interface ManualGroceryItem {
@@ -131,6 +132,14 @@ export interface ManualGroceryItem {
   unit: string;
   aisle: string;
   checked: boolean;
+  store?: string;
+  stapleId?: string;
+}
+
+export interface StapleItem {
+  id: string;
+  name: string;
+  aisle: string;
   store?: string;
 }
 
@@ -142,15 +151,6 @@ export interface FamilyMember {
   id: string;          // uuid
   name: string;
   inviteToken: string; // uuid — used as the token in /view/[token]
-}
-
-export interface FamilyGroceryItem {
-  id: string;
-  name: string;
-  addedBy: string;  // member name
-  addedAt: string;  // ISO date string
-  checked: boolean;
-  store?: string;
 }
 
 // ─── Cheat Sheets ─────────────────────────────────────────────────────────────

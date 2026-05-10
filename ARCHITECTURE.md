@@ -151,9 +151,6 @@ Household {
   createdBy: string       // userId
 }
 
-MenuDayMeta {
-  isSet: boolean          // "Dinner is set" toggle for a calendar day
-}
 ```
 
 ### Tip Types
@@ -223,6 +220,14 @@ ManualGroceryItem {
   aisle: string
   checked: boolean
   store?: string
+  stapleId?: string             // set when item was added from the Staples list
+}
+
+StapleItem {
+  id: string
+  name: string
+  aisle: string
+  store?: string
 }
 
 FamilyGroceryItem {
@@ -255,7 +260,7 @@ Stored at `app-data:{userId}` (solo) or `household-data:{householdId}` (shared):
   tips: Tip[]
   eventPlans: EventPlan[]
   stores: string[]              // ordered list of store names for grocery assignment
-  menuDayMeta: Record<string, MenuDayMeta>  // key: "YYYY-MM-DD"
+  staples: StapleItem[]         // always-stocked items; can be pulled into the active grocery list
 }
 ```
 
@@ -294,7 +299,7 @@ AppState
 ├── tips                  Tip[]
 ├── eventPlans            EventPlan[]
 ├── stores                string[]                       ← ordered store names
-├── menuDayMeta           Record<string, MenuDayMeta>    ← "Dinner is set" per day
+├── staples               StapleItem[]                   ← always-stocked items
 ├── recipeCache           Record<string, RecipeDetail>   ← in-memory only, not persisted
 └── hydrated              boolean
 ```
@@ -311,7 +316,7 @@ AppState
 | Templates | `SAVE_DAY_AS_MENU`, `DELETE_SAVED_MENU`, `RENAME_SAVED_MENU`, `ADD_ENTRY_TO_SAVED_MENU` |
 | Tips | `ADD_TIP`, `UPDATE_TIP`, `DELETE_TIP` |
 | Event Plans | `ADD_EVENT_PLAN`, `UPDATE_EVENT_PLAN`, `DELETE_EVENT_PLAN`, `ADD_EVENT_DISH`, `REMOVE_EVENT_DISH`, `ADD_EVENT_TASK`, `UPDATE_EVENT_TASK`, `REMOVE_EVENT_TASK`, `TOGGLE_EVENT_GROCERIES` |
-| Menu Meta | `SET_DAY_META` |
+| Staples | `ADD_STAPLE`, `UPDATE_STAPLE`, `REMOVE_STAPLE`, `TOGGLE_STAPLE_IN_LIST`, `ADD_ALL_STAPLES_TO_LIST` |
 | Lifecycle | `HYDRATE` |
 
 ### Context Helper Methods
@@ -599,11 +604,14 @@ layout.tsx
 │       │       └── TipSheet + cheat sheet list (sorted by title)
 │       │
 │       ├── /groceries → GroceriesPage
-│       │   ├── Store filter chips (All, Unassigned, per-store)
-│       │   ├── Tab: All / Recipes / Family
-│       │   ├── GrocerySection × n    (recipe + event ingredients, grouped by aisle)
-│       │   ├── Family requests section (grouped by member name, owner can remove)
-│       │   └── ManualAddSheet        (add custom grocery item)
+│       │   ├── Tab: List / Staples
+│       │   ├── List tab:
+│       │   │   ├── Store filter chips (All, Unassigned, per-store)
+│       │   │   ├── GrocerySection × n    (recipe + event ingredients, grouped by aisle)
+│       │   │   ├── Family requests section (grouped by member name, owner can remove)
+│       │   │   └── ManualAddSheet        (add custom grocery item)
+│       │   └── Staples tab:
+│       │       └── StaplesTab (staples grouped by aisle; tap row to edit; ShoppingCart toggles into list)
 │       │
 │       ├── /event-planning → EventPlanningPage
 │       │   ├── Events tab

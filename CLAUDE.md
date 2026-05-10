@@ -40,8 +40,6 @@ Data is stored in Vercel KV. Solo users use `app-data:${userId}`. Users in a hou
 
 **Invite flow:** Executive Chef enters an email in Settings → `pending-invite:${email}` is stored → when that person signs in with Google OAuth, the `signIn` callback in `src/auth.ts` resolves the invite and adds them to the household automatically.
 
-**`menuDayMeta`**: `Record<"YYYY-MM-DD", { isSet: boolean }>` — per-day "Dinner is set" signal, toggled from the DayCard header (utensils icon). Stored in shared household data.
-
 ## Testing
 
 ### Unit tests (Vitest)

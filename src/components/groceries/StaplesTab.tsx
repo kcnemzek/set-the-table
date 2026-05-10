@@ -72,7 +72,7 @@ export default function StaplesTab() {
             </button>
           }
         />
-        <StapleAddSheet open={addSheetOpen} onClose={handleClose} />
+        <StapleAddSheet key={addSheetOpen ? "new" : "closed"} open={addSheetOpen} onClose={handleClose} />
       </>
     );
   }
@@ -177,6 +177,7 @@ export default function StaplesTab() {
       })}
 
       <StapleAddSheet
+        key={editingStaple?.id ?? (addSheetOpen ? "new" : "closed")}
         open={addSheetOpen || editingStaple !== null}
         onClose={handleClose}
         editingStaple={editingStaple ?? undefined}

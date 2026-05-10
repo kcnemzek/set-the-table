@@ -59,7 +59,6 @@ const SECTIONS = [
     tips: [
       { label: "Your Household", body: "Create a household to share your menu, recipes, and grocery list with family. Invite members by email — they join automatically the next time they sign in with Google." },
       { label: "Roles", body: "Executive Chef has full access. Sous Chef can view and edit. At the Table is view-only. Pick the right role when you invite someone." },
-      { label: "Read-Only Link", body: "Share this link with anyone who just wants to see the menu without signing in — grandparents, guests, anyone. Tap the reset icon to generate a new link if you need to revoke access." },
       { label: "My Stores", body: "Add your regular grocery stores here. You can then tag items to a specific store and filter your grocery list by store while you shop." },
     ],
   },

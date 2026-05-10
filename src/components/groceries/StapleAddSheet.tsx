@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
 import type { StapleItem } from "@/types";
@@ -19,17 +19,9 @@ interface StapleAddSheetProps {
 
 export default function StapleAddSheet({ open, onClose, editingStaple }: StapleAddSheetProps) {
   const { dispatch, state } = useAppContext();
-  const [name, setName] = useState("");
-  const [aisle, setAisle] = useState("Miscellaneous");
-  const [store, setStore] = useState("");
-
-  useEffect(() => {
-    if (open) {
-      setName(editingStaple?.name ?? "");
-      setAisle(editingStaple?.aisle ?? "Miscellaneous");
-      setStore(editingStaple?.store ?? "");
-    }
-  }, [open, editingStaple]);
+  const [name, setName] = useState(editingStaple?.name ?? "");
+  const [aisle, setAisle] = useState(editingStaple?.aisle ?? "Miscellaneous");
+  const [store, setStore] = useState(editingStaple?.store ?? "");
 
   const handleSave = () => {
     if (!name.trim()) return;

@@ -63,7 +63,7 @@ export default function DayEventSummaries({ dateStr }: DayEventSummariesProps) {
               className="w-full flex items-center gap-3 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 transition-colors text-left"
             >
               <span className="flex-shrink-0 text-base leading-none w-4 text-center">
-                {getRecipeEmoji(dish.title)}
+                {(() => { const cr = state.customRecipes.find((r) => r.id === dish.customRecipeId); return getRecipeEmoji(dish.title, cr?.category, cr?.emoji); })()}
               </span>
               <span className="flex-1 text-sm text-gray-800">{dish.title}</span>
             </button>

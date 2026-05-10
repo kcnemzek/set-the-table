@@ -9,7 +9,7 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 - **Favorites** — save recipes you love for quick access
 - **My Recipes** — add your own custom recipes with ingredients; import by pasting text or uploading up to 2 photos (snap or from library) for multi-page recipes (AI-powered)
 - **Cheat Sheets** — save the things you always look up: how long to poach chicken, ingredient swaps, timing tricks
-- **Grocery list** — auto-generated from the week's planned meals, with store assignment, store filter chips, and tabbed views for Recipes, Family requests, and All
+- **Grocery list** — auto-generated from the week's planned meals, with store assignment and store filter chips; **Staples tab** lets you manage items you always keep stocked and pull them into the active list with one tap (per-item or all at once)
 - **Event planning** — plan holiday dinners and special occasions with a dish list, prep timeline, and automatic grocery list integration; tasks are scheduled relative to the event date (e.g. "3 days before") and auto-shift when the event date changes; events and their tasks auto-surface on the relevant days in the menu view
 - **Templates** — save and reuse sets of day entries as named templates (e.g. Taco Tuesday); pick from the Add to Day sheet with per-entry deselect before stamping
 - **Household & roles** — create a household to share the menu and grocery list with family; three roles: Executive Chef (full access), Sous Chef (edit), and At the Table (view-only); Executive Chef invites by email and members join automatically when they sign in with Google

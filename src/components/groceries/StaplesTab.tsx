@@ -27,6 +27,7 @@ const DEFAULT_CONFIG = { color: "#6b7280", emoji: "🛒" };
 export default function StaplesTab() {
   const { state, dispatch } = useAppContext();
   const [addSheetOpen, setAddSheetOpen] = useState(false);
+  const [editingStaple, setEditingStaple] = useState<StapleItem | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const inListIds = useMemo(
@@ -42,7 +43,6 @@ export default function StaplesTab() {
       const aisle = s.aisle || "Miscellaneous";
       (map[aisle] ??= []).push(s);
     }
-    // Sort aisles, Miscellaneous last
     const sorted = Object.entries(map).sort(([a], [b]) => {
       if (a === "Miscellaneous") return 1;
       if (b === "Miscellaneous") return -1;
@@ -50,6 +50,11 @@ export default function StaplesTab() {
     });
     return sorted;
   }, [state.staples]);
+
+  const handleClose = () => {
+    setAddSheetOpen(false);
+    setEditingStaple(null);
+  };
 
   if (state.staples.length === 0) {
     return (
@@ -67,7 +72,7 @@ export default function StaplesTab() {
             </button>
           }
         />
-        <StapleAddSheet open={addSheetOpen} onClose={() => setAddSheetOpen(false)} />
+        <StapleAddSheet open={addSheetOpen} onClose={handleClose} />
       </>
     );
   }
@@ -115,31 +120,29 @@ export default function StaplesTab() {
                     key={staple.id}
                     className={`flex items-center gap-3 px-4 py-3.5 ${i > 0 ? "border-t border-gray-50" : ""}`}
                   >
-                    {/* In-list toggle */}
+                    {/* Tappable name + store badge — opens edit sheet */}
                     <button
-                      onClick={() => dispatch({ type: "TOGGLE_STAPLE_IN_LIST", stapleId: staple.id })}
-                      className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
-                        inList ? "border-brand-500 bg-brand-500" : "border-gray-300 hover:border-brand-400"
-                      }`}
+                      onClick={() => setEditingStaple(staple)}
+                      className="flex-1 flex items-center gap-2 text-left min-w-0"
                     >
-                      {inList && (
-                        <svg viewBox="0 0 10 8" className="w-2.5 h-2.5 text-white" fill="none">
-                          <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                      <span className={`text-sm truncate ${inList ? "text-gray-400" : "text-gray-800"}`}>
+                        {staple.name}
+                      </span>
+                      {staple.store && (
+                        <span className="text-xs bg-brand-50 text-brand-600 border border-brand-200 rounded-full px-2 py-0.5 flex-shrink-0">
+                          {staple.store}
+                        </span>
                       )}
                     </button>
 
-                    {/* Name */}
-                    <span className={`flex-1 text-sm ${inList ? "text-gray-400" : "text-gray-800"}`}>
-                      {staple.name}
-                    </span>
-
-                    {/* Store badge */}
-                    {staple.store && (
-                      <span className="text-xs bg-brand-50 text-brand-600 border border-brand-200 rounded-full px-2 py-0.5 flex-shrink-0">
-                        {staple.store}
-                      </span>
-                    )}
+                    {/* Add to / remove from list */}
+                    <button
+                      onClick={() => dispatch({ type: "TOGGLE_STAPLE_IN_LIST", stapleId: staple.id })}
+                      className={`p-1 flex-shrink-0 transition-colors ${inList ? "text-brand-500" : "text-gray-300 hover:text-brand-400"}`}
+                      title={inList ? "Remove from list" : "Add to list"}
+                    >
+                      <ShoppingCart size={16} />
+                    </button>
 
                     {/* Delete with confirm */}
                     {confirmingId === staple.id ? (
@@ -173,7 +176,11 @@ export default function StaplesTab() {
         );
       })}
 
-      <StapleAddSheet open={addSheetOpen} onClose={() => setAddSheetOpen(false)} />
+      <StapleAddSheet
+        open={addSheetOpen || editingStaple !== null}
+        onClose={handleClose}
+        editingStaple={editingStaple ?? undefined}
+      />
     </div>
   );
 }

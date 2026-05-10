@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
 import type { StapleItem } from "@/types";
@@ -14,31 +14,41 @@ const AISLES = [
 interface StapleAddSheetProps {
   open: boolean;
   onClose: () => void;
+  editingStaple?: StapleItem;
 }
 
-export default function StapleAddSheet({ open, onClose }: StapleAddSheetProps) {
+export default function StapleAddSheet({ open, onClose, editingStaple }: StapleAddSheetProps) {
   const { dispatch, state } = useAppContext();
   const [name, setName] = useState("");
   const [aisle, setAisle] = useState("Miscellaneous");
   const [store, setStore] = useState("");
 
-  const handleAdd = () => {
+  useEffect(() => {
+    if (open) {
+      setName(editingStaple?.name ?? "");
+      setAisle(editingStaple?.aisle ?? "Miscellaneous");
+      setStore(editingStaple?.store ?? "");
+    }
+  }, [open, editingStaple]);
+
+  const handleSave = () => {
     if (!name.trim()) return;
-    const staple: StapleItem = {
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      aisle,
-      store: store || undefined,
-    };
-    dispatch({ type: "ADD_STAPLE", staple });
-    setName("");
-    setAisle("Miscellaneous");
-    setStore("");
+    if (editingStaple) {
+      dispatch({ type: "UPDATE_STAPLE", staple: { ...editingStaple, name: name.trim(), aisle, store: store || undefined } });
+    } else {
+      const staple: StapleItem = {
+        id: crypto.randomUUID(),
+        name: name.trim(),
+        aisle,
+        store: store || undefined,
+      };
+      dispatch({ type: "ADD_STAPLE", staple });
+    }
     onClose();
   };
 
   return (
-    <BottomSheet open={open} onClose={onClose} title="Add Staple">
+    <BottomSheet open={open} onClose={onClose} title={editingStaple ? "Edit Staple" : "Add Staple"}>
       <div className="p-4 space-y-4 pb-8">
         <div>
           <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Item</label>
@@ -46,7 +56,7 @@ export default function StapleAddSheet({ open, onClose }: StapleAddSheetProps) {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            onKeyDown={(e) => e.key === "Enter" && handleSave()}
             placeholder="e.g. Olive oil"
             autoFocus
             spellCheck
@@ -82,11 +92,11 @@ export default function StapleAddSheet({ open, onClose }: StapleAddSheetProps) {
         </div>
 
         <button
-          onClick={handleAdd}
+          onClick={handleSave}
           disabled={!name.trim()}
           className="w-full py-3.5 bg-brand-500 text-white rounded-xl font-semibold text-sm disabled:opacity-40 active:bg-brand-600"
         >
-          Add to Staples
+          {editingStaple ? "Save" : "Add to Staples"}
         </button>
       </div>
     </BottomSheet>

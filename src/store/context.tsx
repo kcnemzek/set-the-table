@@ -119,6 +119,7 @@ type Action =
   | { type: "REORDER_EVENT_TASKS"; planId: string; tasks: EventTask[] }
   | { type: "SET_DAY_META"; dateStr: string; meta: MenuDayMeta }
   | { type: "ADD_STAPLE"; staple: StapleItem }
+  | { type: "UPDATE_STAPLE"; staple: StapleItem }
   | { type: "REMOVE_STAPLE"; id: string }
   | { type: "TOGGLE_STAPLE_IN_LIST"; stapleId: string }
   | { type: "ADD_ALL_STAPLES_TO_LIST" };
@@ -431,6 +432,16 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "ADD_STAPLE":
       return { ...state, staples: [...state.staples, action.staple] };
+
+    case "UPDATE_STAPLE": {
+      const updatedStaples = state.staples.map((s) => s.id === action.staple.id ? action.staple : s);
+      const updatedItems = state.manualGroceryItems.map((item) =>
+        item.stapleId === action.staple.id
+          ? { ...item, name: action.staple.name, aisle: action.staple.aisle, store: action.staple.store }
+          : item
+      );
+      return { ...state, staples: updatedStaples, manualGroceryItems: updatedItems };
+    }
 
     case "REMOVE_STAPLE":
       return {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Plus, ShoppingCart, Tag, Trash2, EyeOff, Eye } from "lucide-react";
+import { Plus, ShoppingCart, Tag, Trash2, EyeOff, ListFilter } from "lucide-react";
 import GrocerySection from "@/components/groceries/GrocerySection";
 import ManualAddSheet from "@/components/groceries/ManualAddSheet";
 import StaplesTab from "@/components/groceries/StaplesTab";
@@ -203,7 +203,7 @@ export default function GroceriesPage() {
                 className="flex items-center justify-center gap-1.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium active:bg-gray-200"
                 style={{ width: 120, height: 38 }}
               >
-                {hideChecked ? <Eye size={16} /> : <EyeOff size={16} />}
+                <ListFilter size={16} />
                 {hideChecked ? "Show all" : "Hide checked"}
               </button>
               <button

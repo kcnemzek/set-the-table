@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Plus, ShoppingCart, Tag, Trash2, EyeOff, Eye } from "lucide-react";
 import GrocerySection from "@/components/groceries/GrocerySection";
 import ManualAddSheet from "@/components/groceries/ManualAddSheet";
@@ -11,6 +11,8 @@ import { useAppContext } from "@/store/context";
 import { aggregateIngredients, groceryItemKey } from "@/lib/ingredient-utils";
 import { getNext10Days } from "@/lib/dates";
 import type { RecipeDetail, GroceryListByAisle } from "@/types";
+
+const SNAPSHOT_KEY = "grocery-list-snapshot";
 
 type Tab = "list" | "staples";
 
@@ -26,6 +28,10 @@ export default function GroceriesPage() {
   const [selectedStore, setSelectedStore] = useState<string | null>(() => {
     try { return localStorage.getItem("grocery-selected-store") ?? null; } catch { return null; }
   });
+  const [offlineMode, setOfflineMode] = useState(false);
+  const offlineModeRef = useRef(false);
+  const [snapshotSavedAt, setSnapshotSavedAt] = useState<string | null>(null);
+  const [pantryExpanded, setPantryExpanded] = useState(false);
 
   useEffect(() => {
     try { localStorage.setItem("grocery-hide-checked", String(hideChecked)); } catch { /* ignore */ }
@@ -38,6 +44,22 @@ export default function GroceriesPage() {
     } catch { /* ignore */ }
   }, [selectedStore]);
 
+  useEffect(() => {
+    if (!navigator.onLine) {
+      offlineModeRef.current = true;
+      setOfflineMode(true);
+      try {
+        const raw = localStorage.getItem(SNAPSHOT_KEY);
+        if (raw) {
+          const { list, savedAt } = JSON.parse(raw);
+          setGroceryList(list);
+          setSnapshotSavedAt(savedAt);
+        }
+      } catch { /* ignore */ }
+      setRecipeLoading(false);
+    }
+  }, []);
+
   const UNASSIGNED = "__unassigned__";
 
   const stores = useMemo(() => {
@@ -46,6 +68,7 @@ export default function GroceriesPage() {
 
   const buildRecipeList = useCallback(async () => {
     if (!state.hydrated) return;
+    if (offlineModeRef.current) return;
     setRecipeLoading(true);
 
     const days = getNext10Days();
@@ -102,7 +125,11 @@ export default function GroceriesPage() {
       }
     }
 
-    setGroceryList(aggregateIngredients(recipes, state.manualGroceryItems, state.groceryItemStores));
+    const list = aggregateIngredients(recipes, state.manualGroceryItems, state.groceryItemStores);
+    const savedAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({ list, savedAt })); } catch { /* ignore */ }
+    setSnapshotSavedAt(savedAt);
+    setGroceryList(list);
     setRecipeLoading(false);
   }, [state.hydrated, state.menu, state.customRecipes, state.manualGroceryItems, state.groceryItemStores, state.recipeCache, state.eventPlans, dispatch]);
 
@@ -126,10 +153,27 @@ export default function GroceriesPage() {
     [groceryList]
   );
 
-  const aisles = Object.keys(filteredGroceryList);
-  const totalRecipeItems = aisles.reduce((n, a) => n + filteredGroceryList[a].length, 0);
+  const pantryHiddenItems = useMemo(() => {
+    if (state.pantry.length === 0) return [];
+    return Object.values(filteredGroceryList).flat().filter(
+      (item) => state.pantry.includes(item.name.toLowerCase().trim())
+    );
+  }, [filteredGroceryList, state.pantry]);
+
+  const pantryFilteredGroceryList = useMemo((): GroceryListByAisle => {
+    if (state.pantry.length === 0) return filteredGroceryList;
+    const result: GroceryListByAisle = {};
+    for (const [aisle, items] of Object.entries(filteredGroceryList)) {
+      const filtered = items.filter((item) => !state.pantry.includes(item.name.toLowerCase().trim()));
+      if (filtered.length > 0) result[aisle] = filtered;
+    }
+    return result;
+  }, [filteredGroceryList, state.pantry]);
+
+  const aisles = Object.keys(pantryFilteredGroceryList);
+  const totalRecipeItems = aisles.reduce((n, a) => n + pantryFilteredGroceryList[a].length, 0);
   const checkedCount = aisles.reduce((n, a) =>
-    n + filteredGroceryList[a].filter((item) =>
+    n + pantryFilteredGroceryList[a].filter((item) =>
       item.manualId ? item.checked : (state.groceryChecked[groceryItemKey(item.aisle, item.name, item.unit)] ?? false)
     ).length, 0
   );
@@ -231,6 +275,12 @@ export default function GroceriesPage() {
         )}
       </div>
 
+      {offlineMode && (
+        <div className="mx-4 mt-3 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 font-medium">
+          Offline — showing list saved{snapshotSavedAt ? ` at ${snapshotSavedAt}` : ""}
+        </div>
+      )}
+
       {tab === "staples" ? (
         <StaplesTab />
       ) : recipeLoading ? (
@@ -255,22 +305,39 @@ export default function GroceriesPage() {
             <GrocerySection
               key={aisle}
               aisle={aisle}
-              items={filteredGroceryList[aisle]}
+              items={pantryFilteredGroceryList[aisle]}
               hideChecked={hideChecked}
             />
           ))}
-          {selectedStore && selectedStore !== UNASSIGNED && (
-            <div className="px-4 mt-4">
+
+          {pantryHiddenItems.length > 0 && (
+            <div className="mx-4 mt-4 mb-2">
               <button
-                onClick={() => dispatch({ type: "RESET_STORE_ITEMS", store: selectedStore })}
-                className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-500 py-2"
+                onClick={() => setPantryExpanded((v) => !v)}
+                className="flex items-center gap-2 text-xs text-gray-400 font-medium w-full text-left"
               >
-                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1.5 8A6.5 6.5 0 1 0 3 3.5" />
-                  <path d="M1.5 3.5v4h4" />
-                </svg>
-                Reset {selectedStore} list
+                <EyeOff size={12} />
+                {pantryHiddenItems.length} item{pantryHiddenItems.length !== 1 ? "s" : ""} always on hand (hidden)
+                <span className="ml-auto">{pantryExpanded ? "▲" : "▼"}</span>
               </button>
+              {pantryExpanded && (
+                <div className="mt-2 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+                  {pantryHiddenItems.map((item) => (
+                    <div
+                      key={`${item.aisle}-${item.name}-${item.unit}`}
+                      className="flex items-center gap-3 px-4 py-2.5 border-t border-gray-100 first:border-t-0"
+                    >
+                      <span className="flex-1 text-sm text-gray-400 capitalize">{item.name}</span>
+                      <button
+                        onClick={() => dispatch({ type: "REMOVE_FROM_PANTRY", name: item.name.toLowerCase().trim() })}
+                        className="text-xs text-brand-500 hover:text-brand-700 font-medium"
+                      >
+                        Restore
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </>

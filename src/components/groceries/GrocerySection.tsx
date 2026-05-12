@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import clsx from "clsx";
-import { Tag, Trash2, Check, X } from "lucide-react";
+import { Tag, Trash2, Check, X, EyeOff } from "lucide-react";
 import { useAppContext } from "@/store/context";
 import { groceryItemKey } from "@/lib/ingredient-utils";
 import type { AggregatedIngredient } from "@/types";
@@ -153,6 +153,17 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
                   ))}
                 </select>
               </div>
+
+              {/* Hide in pantry */}
+              {!item.manualId && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); dispatch({ type: "ADD_TO_PANTRY", name: item.name }); }}
+                  className="text-gray-300 hover:text-amber-400 transition-colors p-1 flex-shrink-0"
+                  title="Move to pantry (always on hand)"
+                >
+                  <EyeOff size={14} />
+                </button>
+              )}
 
               {/* Delete — manual items only (not staple-sourced items) */}
               {item.manualId && !item.stapleId && (

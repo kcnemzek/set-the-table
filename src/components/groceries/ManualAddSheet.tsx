@@ -121,14 +121,14 @@ export default function ManualAddSheet({ open, onClose }: ManualAddSheetProps) {
 
         <div>
           <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Store <span className="font-normal normal-case text-gray-400">(optional — makes it a staple)</span>
+            Store <span className="font-normal normal-case text-gray-400">(optional)</span>
           </label>
           <select
             value={store}
             onChange={(e) => setStore(e.target.value)}
             className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
           >
-            <option value="">No store (one-time item)</option>
+            <option value="">Any store</option>
             {state.stores.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}

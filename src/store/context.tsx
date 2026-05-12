@@ -45,6 +45,7 @@ interface AppState {
   /** key: "YYYY-MM-DD" → per-day metadata (e.g. "Dinner is set") */
   menuDayMeta: Record<string, MenuDayMeta>;
   staples: StapleItem[];
+  pantry: string[];
   /** cache of full recipe details fetched for grocery aggregation */
   recipeCache: Record<string, RecipeDetail>;
   hydrated: boolean;
@@ -65,6 +66,7 @@ const initialState: AppState = {
   eventPlans: [],
   menuDayMeta: {},
   staples: [],
+  pantry: [],
   recipeCache: {},
   hydrated: false,
 };
@@ -101,7 +103,6 @@ type Action =
   | { type: "ADD_TIP"; tip: Tip }
   | { type: "UPDATE_TIP"; tip: Tip }
   | { type: "DELETE_TIP"; id: string }
-  | { type: "RESET_STORE_ITEMS"; store: string }
   | { type: "SET_STORE_FOR_ALL_UNASSIGNED"; store: string }
   | { type: "SET_ITEM_STORE"; key: string; store: string | undefined }
   | { type: "SET_MANUAL_GROCERY_STORE"; id: string; store: string | undefined }
@@ -118,6 +119,8 @@ type Action =
   | { type: "REORDER_EVENT_DISHES"; planId: string; dishes: EventDish[] }
   | { type: "REORDER_EVENT_TASKS"; planId: string; tasks: EventTask[] }
   | { type: "SET_DAY_META"; dateStr: string; meta: MenuDayMeta }
+  | { type: "ADD_TO_PANTRY"; name: string }
+  | { type: "REMOVE_FROM_PANTRY"; name: string }
   | { type: "ADD_STAPLE"; staple: StapleItem }
   | { type: "UPDATE_STAPLE"; staple: StapleItem }
   | { type: "REMOVE_STAPLE"; id: string }
@@ -132,6 +135,7 @@ function reducer(state: AppState, action: Action): AppState {
         ...action.payload,
         stores: action.payload.stores?.length ? action.payload.stores : [...DEFAULT_STORES],
         menuDayMeta: action.payload.menuDayMeta ?? {},
+        pantry: action.payload.pantry ?? [],
         recipeCache: {},
         hydrated: true,
       };
@@ -142,6 +146,7 @@ function reducer(state: AppState, action: Action): AppState {
         ...action.payload,
         stores: action.payload.stores?.length ? action.payload.stores : [...DEFAULT_STORES],
         menuDayMeta: action.payload.menuDayMeta ?? {},
+        pantry: action.payload.pantry ?? [],
         hydrated: true,
       };
 
@@ -310,25 +315,6 @@ function reducer(state: AppState, action: Action): AppState {
     case "DELETE_TIP":
       return { ...state, tips: state.tips.filter((t) => t.id !== action.id) };
 
-    case "RESET_STORE_ITEMS": {
-      const updatedManual = state.manualGroceryItems.map((i) =>
-        i.store === action.store ? { ...i, checked: false } : i
-      );
-      const updatedChecked = { ...state.groceryChecked };
-      // Uncheck recipe ingredients assigned to this store
-      for (const [key, store] of Object.entries(state.groceryItemStores)) {
-        if (store === action.store) updatedChecked[key] = false;
-      }
-      // Uncheck manual items assigned to this store (UI reads from groceryChecked for all items)
-      for (const item of state.manualGroceryItems) {
-        if (item.store === action.store) {
-          const key = `${item.aisle}|${item.name.toLowerCase()}|${item.unit.toLowerCase()}`;
-          updatedChecked[key] = false;
-        }
-      }
-      return { ...state, manualGroceryItems: updatedManual, groceryChecked: updatedChecked };
-    }
-
     case "SET_STORE_FOR_ALL_UNASSIGNED":
       return {
         ...state,
@@ -429,6 +415,14 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         menuDayMeta: { ...state.menuDayMeta, [action.dateStr]: action.meta },
       };
+
+    case "ADD_TO_PANTRY": {
+      const normalized = action.name.toLowerCase().trim();
+      if (state.pantry.includes(normalized)) return state;
+      return { ...state, pantry: [...state.pantry, normalized] };
+    }
+    case "REMOVE_FROM_PANTRY":
+      return { ...state, pantry: state.pantry.filter((n) => n !== action.name) };
 
     case "ADD_STAPLE":
       return { ...state, staples: [...state.staples, action.staple] };
@@ -540,6 +534,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             stores: data.stores ?? [],
             menuDayMeta: data.menuDayMeta ?? {},
             staples: data.staples ?? [],
+            pantry: data.pantry ?? [],
           },
         });
       })
@@ -574,6 +569,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           eventPlans: state.eventPlans,
           menuDayMeta: state.menuDayMeta,
           staples: state.staples,
+          pantry: state.pantry,
         }),
       });
     }, 500);
@@ -593,6 +589,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.eventPlans,
     state.menuDayMeta,
     state.staples,
+    state.pantry,
     state.hydrated,
   ]);
 
@@ -625,6 +622,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             stores: data.stores ?? [],
             menuDayMeta: data.menuDayMeta ?? {},
             staples: data.staples ?? [],
+            pantry: data.pantry ?? [],
           },
         });
       } catch { /* ignore */ }
@@ -700,6 +698,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         eventPlans: state.eventPlans,
         menuDayMeta: state.menuDayMeta,
         staples: state.staples,
+        pantry: state.pantry,
       }),
     });
   }, [
@@ -717,6 +716,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.eventPlans,
     state.menuDayMeta,
     state.staples,
+    state.pantry,
   ]);
 
   return (

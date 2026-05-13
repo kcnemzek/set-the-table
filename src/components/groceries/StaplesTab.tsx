@@ -138,7 +138,7 @@ export default function StaplesTab() {
                     {/* Add to / remove from list */}
                     <button
                       onClick={() => dispatch({ type: "TOGGLE_STAPLE_IN_LIST", stapleId: staple.id })}
-                      className={`p-1 flex-shrink-0 transition-colors ${inList ? "text-brand-500" : "text-gray-300 hover:text-brand-400"}`}
+                      className={`flex-shrink-0 transition-all ${inList ? "bg-brand-500 text-white rounded-full p-1.5 hover:bg-brand-600" : "p-1.5 text-gray-300 hover:text-brand-400"}`}
                       title={inList ? "Remove from list" : "Add to list"}
                     >
                       <ShoppingCart size={16} />

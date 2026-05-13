@@ -60,6 +60,27 @@ export default function GroceriesPage() {
     }
   }, []);
 
+  // Keep snapshot up to date with the filtered view (pantry + checked state baked in)
+  useEffect(() => {
+    if (offlineMode || !state.hydrated || recipeLoading) return;
+    const snapshotList: GroceryListByAisle = {};
+    for (const [aisle, items] of Object.entries(groceryList)) {
+      let visible = items.filter(
+        (item) => !state.pantry.includes(item.name.toLowerCase().trim())
+      );
+      if (hideChecked) {
+        visible = visible.filter((item) => {
+          const key = groceryItemKey(item.aisle, item.name, item.unit);
+          return item.manualId ? !item.checked : !(state.groceryChecked[key] ?? false);
+        });
+      }
+      if (visible.length > 0) snapshotList[aisle] = visible;
+    }
+    const savedAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({ list: snapshotList, savedAt })); } catch { /* ignore */ }
+    setSnapshotSavedAt(savedAt);
+  }, [groceryList, state.pantry, state.groceryChecked, hideChecked, offlineMode, state.hydrated, recipeLoading]);
+
   const UNASSIGNED = "__unassigned__";
 
   const stores = useMemo(() => {
@@ -125,11 +146,7 @@ export default function GroceriesPage() {
       }
     }
 
-    const list = aggregateIngredients(recipes, state.manualGroceryItems, state.groceryItemStores);
-    const savedAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({ list, savedAt })); } catch { /* ignore */ }
-    setSnapshotSavedAt(savedAt);
-    setGroceryList(list);
+    setGroceryList(aggregateIngredients(recipes, state.manualGroceryItems, state.groceryItemStores));
     setRecipeLoading(false);
   }, [state.hydrated, state.menu, state.customRecipes, state.manualGroceryItems, state.groceryItemStores, state.recipeCache, state.eventPlans, dispatch]);
 
@@ -155,9 +172,13 @@ export default function GroceriesPage() {
 
   const pantryHiddenItems = useMemo(() => {
     if (state.pantry.length === 0) return [];
-    return Object.values(filteredGroceryList).flat().filter(
-      (item) => state.pantry.includes(item.name.toLowerCase().trim())
-    );
+    const seen = new Set<string>();
+    return Object.values(filteredGroceryList).flat().filter((item) => {
+      const norm = item.name.toLowerCase().trim();
+      if (!state.pantry.includes(norm) || seen.has(norm)) return false;
+      seen.add(norm);
+      return true;
+    });
   }, [filteredGroceryList, state.pantry]);
 
   const pantryFilteredGroceryList = useMemo((): GroceryListByAisle => {
@@ -307,10 +328,11 @@ export default function GroceriesPage() {
               aisle={aisle}
               items={pantryFilteredGroceryList[aisle]}
               hideChecked={hideChecked}
+              readOnly={offlineMode}
             />
           ))}
 
-          {pantryHiddenItems.length > 0 && (
+          {!offlineMode && pantryHiddenItems.length > 0 && (
             <div className="mx-4 mt-4 mb-2">
               <button
                 onClick={() => setPantryExpanded((v) => !v)}

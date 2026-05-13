@@ -28,9 +28,10 @@ interface GrocerySectionProps {
   aisle: string;
   items: AggregatedIngredient[];
   hideChecked?: boolean;
+  readOnly?: boolean;
 }
 
-export default function GrocerySection({ aisle, items, hideChecked }: GrocerySectionProps) {
+export default function GrocerySection({ aisle, items, hideChecked, readOnly }: GrocerySectionProps) {
   const { dispatch, state } = useAppContext();
   const config = AISLE_CONFIG[aisle] ?? DEFAULT_CONFIG;
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
@@ -59,7 +60,7 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
           return (
             <div
               key={key}
-              onClick={() => {
+              onClick={readOnly ? undefined : () => {
                 if (item.stapleId && item.manualId) {
                   dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.manualId });
                 } else {
@@ -67,40 +68,39 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
                 }
               }}
               className={clsx(
-                "w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors cursor-pointer",
+                "w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors",
                 i > 0 && "border-t border-gray-50",
-                checked ? "bg-gray-100" : "hover:bg-gray-100 active:bg-gray-200"
+                readOnly
+                  ? "cursor-default"
+                  : checked ? "bg-gray-100 cursor-pointer" : "hover:bg-gray-100 active:bg-gray-200 cursor-pointer"
               )}
             >
-              {/* Checkbox */}
-              <div
-                className={clsx(
-                  "w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors",
-                  checked ? "border-green-500" : "border-gray-300"
-                )}
-                style={checked ? { background: "#16a34a", borderColor: "#16a34a" } : {}}
-              >
-                {checked && (
-                  <svg viewBox="0 0 10 8" className="w-2.5 h-2.5 text-white" fill="none">
-                    <path
-                      d="M1 4l2.5 2.5L9 1"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </div>
+              {/* Checkbox — hidden in read-only mode */}
+              {!readOnly && (
+                <div
+                  className={clsx(
+                    "w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors",
+                    checked ? "border-green-500" : "border-gray-300"
+                  )}
+                  style={checked ? { background: "#16a34a", borderColor: "#16a34a" } : {}}
+                >
+                  {checked && (
+                    <svg viewBox="0 0 10 8" className="w-2.5 h-2.5 text-white" fill="none">
+                      <path
+                        d="M1 4l2.5 2.5L9 1"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </div>
+              )}
 
               {/* Name + recipe sources */}
               <div className="flex-1 min-w-0">
-                <span
-                  className={clsx(
-                    "text-sm capitalize",
-                    checked ? "text-gray-500 line-through" : "text-gray-800"
-                  )}
-                >
+                <span className="text-sm capitalize text-gray-800">
                   {item.name}
                 </span>
                 {item.recipes.length > 0 && (
@@ -116,7 +116,7 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
 
               {/* Amount */}
               {item.totalAmount > 0 && (
-                <span className={clsx("text-xs", checked ? "text-gray-400" : "text-gray-600")}>
+                <span className="text-xs text-gray-600">
                   {item.totalAmount % 1 === 0
                     ? item.totalAmount
                     : item.totalAmount.toFixed(2)}{" "}
@@ -124,38 +124,40 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
                 </span>
               )}
 
-              {/* Store picker */}
-              <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                <div className={clsx(
-                  "flex items-center gap-1 rounded-full px-2 py-0.5 border text-xs pointer-events-none",
-                  item.store
-                    ? "bg-brand-50 text-brand-600 border-brand-200"
-                    : "bg-gray-50 text-gray-400 border-gray-200"
-                )}>
-                  <Tag size={11} />
-                  {item.store && <span className="max-w-[60px] truncate">{item.store}</span>}
+              {/* Store picker — hidden in read-only mode */}
+              {!readOnly && (
+                <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <div className={clsx(
+                    "flex items-center gap-1 rounded-full px-2 py-0.5 border text-xs pointer-events-none",
+                    item.store
+                      ? "bg-brand-50 text-brand-600 border-brand-200"
+                      : "bg-gray-50 text-gray-400 border-gray-200"
+                  )}>
+                    <Tag size={11} />
+                    {item.store && <span className="max-w-[60px] truncate">{item.store}</span>}
+                  </div>
+                  <select
+                    value={item.store ?? ""}
+                    onChange={(e) => {
+                      const store = e.target.value || undefined;
+                      if (item.manualId) {
+                        dispatch({ type: "SET_MANUAL_GROCERY_STORE", id: item.manualId, store });
+                      } else {
+                        dispatch({ type: "SET_ITEM_STORE", key: groceryItemKey(item.aisle, item.name, item.unit), store });
+                      }
+                    }}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                  >
+                    <option value="">No store</option>
+                    {state.stores.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
                 </div>
-                <select
-                  value={item.store ?? ""}
-                  onChange={(e) => {
-                    const store = e.target.value || undefined;
-                    if (item.manualId) {
-                      dispatch({ type: "SET_MANUAL_GROCERY_STORE", id: item.manualId, store });
-                    } else {
-                      dispatch({ type: "SET_ITEM_STORE", key: groceryItemKey(item.aisle, item.name, item.unit), store });
-                    }
-                  }}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full"
-                >
-                  <option value="">No store</option>
-                  {state.stores.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
+              )}
 
-              {/* Hide in pantry */}
-              {!item.manualId && (
+              {/* Hide in pantry — hidden in read-only mode */}
+              {!readOnly && !item.manualId && (
                 <button
                   onClick={(e) => { e.stopPropagation(); dispatch({ type: "ADD_TO_PANTRY", name: item.name }); }}
                   className="text-gray-300 hover:text-amber-400 transition-colors p-1 flex-shrink-0"
@@ -165,8 +167,8 @@ export default function GrocerySection({ aisle, items, hideChecked }: GrocerySec
                 </button>
               )}
 
-              {/* Delete — manual items only (not staple-sourced items) */}
-              {item.manualId && !item.stapleId && (
+              {/* Delete — manual items only, hidden in read-only mode */}
+              {!readOnly && item.manualId && !item.stapleId && (
                 confirmingId === item.manualId ? (
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <button

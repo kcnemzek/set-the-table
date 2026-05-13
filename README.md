@@ -2,6 +2,8 @@
 
 A mobile-first meal planning web app for families. Plan the week's meals, build a grocery list automatically, and share a read-only view with family members.
 
+> **This is a live personal app.** Please contact [hello@setthetable.io](mailto:hello@setthetable.io) if you'd like a demo walkthrough.
+
 ## Features
 
 - **Menu planning** — plan meals for the next 10 days

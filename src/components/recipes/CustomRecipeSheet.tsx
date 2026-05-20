@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, X, Share2, Pencil, ClipboardPaste, Camera, ImagePlus, Loader2 } from "lucide-react";
+import { Plus, Trash2, X, Share2, Pencil, ClipboardPaste, Camera, ImagePlus, Loader2, Link } from "lucide-react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
 import { CATEGORIES, getRecipeEmoji } from "@/lib/recipe-emoji";
@@ -70,16 +70,26 @@ async function resizeImageToBase64(
   });
 }
 
+export interface RecipePrefill {
+  title?: string;
+  servings?: number;
+  directions?: string;
+  url?: string;
+  ingredients?: { text: string; aisle: string }[];
+}
+
 interface CustomRecipeSheetProps {
   open: boolean;
   onClose: () => void;
   existing?: CustomRecipe;
+  prefill?: RecipePrefill;
 }
 
 export default function CustomRecipeSheet({
   open,
   onClose,
   existing,
+  prefill,
 }: CustomRecipeSheetProps) {
   const { dispatch } = useAppContext();
   const [isEditing, setIsEditing] = useState(!existing);
@@ -98,8 +108,9 @@ export default function CustomRecipeSheet({
   const [shareCopied, setShareCopied] = useState(false);
 
   // Import state
-  const [importMode, setImportMode] = useState<"none" | "text">("none");
+  const [importMode, setImportMode] = useState<"none" | "text" | "url">("none");
   const [importText, setImportText] = useState("");
+  const [importUrl, setImportUrl] = useState("");
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
@@ -117,20 +128,39 @@ export default function CustomRecipeSheet({
   useEffect(() => {
     if (open) {
       setIsEditing(!existing);
-      setTitle(existing?.title ?? "");
-      setCategory(existing?.category ?? "");
-      setServings(String(existing?.servings || ""));
-      setDirections(existing?.directions ?? "");
-      setUrl(existing?.url ?? "");
-      setEmoji(existing?.emoji ?? "");
-      setRows(existing?.extendedIngredients.map(ingredientToRow) ?? [emptyRow()]);
+      if (existing) {
+        setTitle(existing.title);
+        setCategory(existing.category ?? "");
+        setServings(String(existing.servings || ""));
+        setDirections(existing.directions ?? "");
+        setUrl(existing.url ?? "");
+        setEmoji(existing.emoji ?? "");
+        setRows(existing.extendedIngredients.map(ingredientToRow));
+      } else if (prefill) {
+        setTitle(prefill.title ?? "");
+        setCategory("");
+        setServings(String(prefill.servings || ""));
+        setDirections(prefill.directions ?? "");
+        setUrl(prefill.url ?? "");
+        setEmoji("");
+        setRows(prefill.ingredients?.map((i) => ({ text: i.text, aisle: i.aisle })) ?? [emptyRow()]);
+      } else {
+        setTitle("");
+        setCategory("");
+        setServings("");
+        setDirections("");
+        setUrl("");
+        setEmoji("");
+        setRows([emptyRow()]);
+      }
       setShowConfirm(false);
       setImportMode("none");
       setImportText("");
+      setImportUrl("");
       setImportError(null);
       setPendingImages([]);
     }
-  }, [open, existing]);
+  }, [open, existing, prefill]);
 
   function applyParsedRecipe(parsed: {
     title?: string;
@@ -147,6 +177,28 @@ export default function CustomRecipeSheet({
     setImportMode("none");
     setImportText("");
     setImportError(null);
+  }
+
+  async function handleImportUrl() {
+    if (!importUrl.trim()) return;
+    setImporting(true);
+    setImportError(null);
+    try {
+      const res = await fetch("/api/recipes/fetch-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: importUrl.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail ?? data.error ?? "Import failed");
+      setUrl(importUrl.trim());
+      applyParsedRecipe(data);
+    } catch (err) {
+      console.error("[recipe url import]", err);
+      setImportError("Couldn't import from that URL. Try viewing the page and pasting the text instead.");
+    } finally {
+      setImporting(false);
+    }
   }
 
   async function handleImportText() {
@@ -392,14 +444,21 @@ export default function CustomRecipeSheet({
 
       <div className="p-4 space-y-4 pb-8">
 
-        {/* ── Import section (new recipes only) ── */}
-        {!existing && (
+        {/* ── Import section (new recipes only, not when opened with prefill) ── */}
+        {!existing && !prefill && (
           <div className="rounded-xl bg-brand-50 border border-brand-100 p-3 space-y-3">
             <p className="text-xs font-semibold text-brand-700 uppercase tracking-wide">
               Import a recipe
             </p>
             {pendingImages.length < 2 && (
               <div className="space-y-2">
+                <button
+                  onClick={() => setImportMode(importMode === "url" ? "none" : "url")}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
+                >
+                  <Link size={15} />
+                  From URL
+                </button>
                 <button
                   onClick={() => setImportMode(importMode === "text" ? "none" : "text")}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-200 bg-white text-sm text-brand-700 font-medium hover:bg-brand-50 active:bg-brand-100"
@@ -474,6 +533,25 @@ export default function CustomRecipeSheet({
                   className="w-full py-2.5 rounded-xl bg-brand-500 text-white text-sm font-semibold active:bg-brand-600"
                 >
                   {pendingImages.length > 1 ? "Import both pages" : "Import recipe"}
+                </button>
+              </div>
+            )}
+
+            {importMode === "url" && (
+              <div className="space-y-2">
+                <input
+                  type="url"
+                  value={importUrl}
+                  onChange={(e) => setImportUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                />
+                <button
+                  onClick={handleImportUrl}
+                  disabled={!importUrl.trim()}
+                  className="w-full py-2.5 rounded-xl bg-brand-500 text-white text-sm font-semibold disabled:opacity-40 active:bg-brand-600"
+                >
+                  Import
                 </button>
               </div>
             )}

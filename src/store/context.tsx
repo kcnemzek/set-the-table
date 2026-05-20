@@ -510,6 +510,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const hydrationOk = useRef(false);
   const lastLocalChangeRef = useRef(0);
+  const lastSavedStateRef = useRef("");
 
   // Hydrate from server on mount
   useEffect(() => {
@@ -549,28 +550,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Persist on state changes (debounced 500ms)
   useEffect(() => {
     if (!state.hydrated || !hydrationOk.current) return;
+    const payload = {
+      menu: state.menu,
+      favorites: state.favorites,
+      dislikedRecipes: state.dislikedRecipes,
+      customRecipes: state.customRecipes,
+      manualGroceryItems: state.manualGroceryItems,
+      groceryChecked: state.groceryChecked,
+      groceryItemStores: state.groceryItemStores,
+      familyMembers: state.familyMembers,
+      stores: state.stores,
+      savedMenus: state.savedMenus,
+      tips: state.tips,
+      eventPlans: state.eventPlans,
+      menuDayMeta: state.menuDayMeta,
+      staples: state.staples,
+      pantry: state.pantry,
+    };
+    const serialized = JSON.stringify(payload);
+    if (serialized === lastSavedStateRef.current) return;
     lastLocalChangeRef.current = Date.now();
     const handler = setTimeout(() => {
+      lastSavedStateRef.current = serialized;
       fetch("/api/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          menu: state.menu,
-          favorites: state.favorites,
-          dislikedRecipes: state.dislikedRecipes,
-          customRecipes: state.customRecipes,
-          manualGroceryItems: state.manualGroceryItems,
-          groceryChecked: state.groceryChecked,
-          groceryItemStores: state.groceryItemStores,
-          familyMembers: state.familyMembers,
-          stores: state.stores,
-          savedMenus: state.savedMenus,
-          tips: state.tips,
-          eventPlans: state.eventPlans,
-          menuDayMeta: state.menuDayMeta,
-          staples: state.staples,
-          pantry: state.pantry,
-        }),
+        body: serialized,
       });
     }, 500);
     return () => clearTimeout(handler);

@@ -395,6 +395,8 @@ User visits protected route
 | `/api/household/members` | DELETE | Yes | Remove a member (`?userId=`) or revoke invite (`?email=`) |
 | `/api/recipes/search` | GET | No | Search Edamam (query, cuisine, diet, type, pagination) |
 | `/api/recipes/generate` | GET | No | 10 random recipes (excludes disliked) |
+| `/api/recipes/web-search` | GET | No | Natural language recipe web search via Claude (`web_search_20250305` tool); returns `WebSearchResult[]` |
+| `/api/recipes/fetch-url` | POST | No | Fetch a recipe URL server-side, extract readable text, parse into structured recipe via Claude Haiku |
 | `/api/recipes/[id]` | GET | No | Full recipe detail (1h ISR cache) |
 | `/api/recipes/[id]/image` | GET | No | Proxied recipe image (24h cache) |
 | `/api/share-token` | GET | Yes | Get or create user's read-only share token |
@@ -410,6 +412,11 @@ User visits protected route
 | `/api/groceries/family/[id]` | DELETE | Yes | Owner removes a single family grocery request |
 | `/api/feedback` | POST | No | Create GitHub issue from in-app feedback |
 | `/api/recipes/parse` | POST | No | Parse recipe from pasted text or image via Claude Haiku; traced via LangSmith |
+
+### Notable Behaviors (recipes)
+
+- **`/api/recipes/web-search`** — `ClaudeWebSearchService` implements the `WebSearchService` interface (`src/lib/recipe-search.ts`). To swap the search provider (e.g. Brave Search), implement `WebSearchService` and update the route. Handles multi-turn tool_use if Claude requires it.
+- **`/api/recipes/fetch-url`** — fetches the page with a 10s timeout, strips scripts/styles/nav/header/footer via `extractTextFromHtml` (`src/lib/extract-html-text.ts`), then passes up to 8 000 chars to Claude Haiku. Returns the same JSON shape as `/api/recipes/parse`. Returns HTTP 422 when the page cannot be fetched (blocked, timeout, non-2xx).
 
 ### Notable Behaviors
 
@@ -552,10 +559,14 @@ KV_REST_API_URL set?
 ### Anthropic Claude
 
 - **Model**: `claude-haiku-4-5-20251001`
-- **Usage**: Recipe import — parses pasted text or photos into structured `CustomRecipe` JSON
-- **Route**: `POST /api/recipes/parse`
+- **Usage**:
+  - Recipe import — parses pasted text or photos into structured `CustomRecipe` JSON (`POST /api/recipes/parse`)
+  - Web recipe search — natural language queries using the `web_search_20250305` tool (`GET /api/recipes/web-search`)
+  - URL import — fetches a recipe page server-side and parses it (`POST /api/recipes/fetch-url`)
+- **Search abstraction**: `WebSearchService` interface in `src/lib/recipe-search.ts`; `ClaudeWebSearchService` is the current implementation inside the web-search route. Swap by implementing the interface and updating the route.
+- **HTML extraction**: `extractTextFromHtml` in `src/lib/extract-html-text.ts` strips non-content elements before passing page text to Claude.
 - **Env**: `ANTHROPIC_API_KEY`
-- **Tracing**: All calls wrapped with `wrapSDK` from `langsmith/wrappers`; traces appear in the `whats-for-dinner` LangSmith project
+- **Tracing**: Parse and fetch-url calls wrapped with `traceable` from `langsmith/traceable`; traces appear in the `whats-for-dinner` LangSmith project
 
 ### LangSmith
 
@@ -591,7 +602,10 @@ layout.tsx
 │       │       └── DayPickerSheet    (move entry to another day)
 │       │
 │       ├── /discover → DiscoverPage  (nav label: "Discover")
-│       │   └── SearchBar + cuisine/dish/diet filters + RecipeCard[] + AI Generate button
+│       │   ├── Browse mode: SearchBar + cuisine/dish/diet filters + RecipeCard[] + AI Generate button (Edamam)
+│       │   ├── Web Search mode: SearchBar → WebSearchResultCard[] (View ↗ + Import per result)
+│       │   │   Import flow: fetch-url → CustomRecipeSheet (prefill prop) → saved as CustomRecipe
+│       │   └── Mode toggle persists within session (Browse / Web Search)
 │       │
 │       ├── /recipes → RecipesPage  (nav label: "My Kitchen")
 │       │   ├── Favorites tab
@@ -599,7 +613,9 @@ layout.tsx
 │       │   ├── My Recipes tab
 │       │   │   └── CustomRecipeSheet (view mode by default → Edit button switches to edit mode)
 │       │   │       custom recipe list; ingredients entered as free text, parsed on save
-│       │   │       import options: paste text, or queue 1–2 photos (snap/upload) then send together
+│       │   │       import options: From URL (fetch-url route), paste text, or queue 1–2 photos (snap/upload)
+│       │   │       prefill prop: accepts pre-parsed data when opened from Discover web search import flow
+│       │   │       source URL always saved on CustomRecipe.url
 │       │   └── Cheat Sheets tab
 │       │       └── TipSheet + cheat sheet list (sorted by title)
 │       │

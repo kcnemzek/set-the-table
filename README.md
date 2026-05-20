@@ -7,9 +7,9 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 ## Features
 
 - **Menu planning** — plan meals for the next 10 days
-- **Discover** — search recipes or generate random AI-powered suggestions; its own dedicated tab separate from your saved library
+- **Discover** — two modes: **Browse** (search Edamam's recipe database with cuisine/diet/dish filters, or generate random AI-powered suggestions) and **Web Search** (natural language queries like "best mac and cheese recipe" powered by Claude; results show source, snippet, and a direct Import button)
 - **Favorites** — save recipes you love for quick access
-- **My Recipes** — add your own custom recipes with ingredients; import by pasting text or uploading up to 2 photos (snap or from library) for multi-page recipes (AI-powered)
+- **My Recipes** — add your own custom recipes with ingredients; import by pasting text, uploading up to 2 photos (snap or from library), or entering a URL (AI-powered); source URL is always saved with the recipe for reference
 - **Cheat Sheets** — save the things you always look up: how long to poach chicken, ingredient swaps, timing tricks
 - **Grocery list** — auto-generated from the week's planned meals, with store assignment and store filter chips; **Staples tab** lets you manage items you always keep stocked and pull them into the active list with one tap (per-item or all at once)
 - **Event planning** — plan holiday dinners and special occasions with a dish list, prep timeline, and automatic grocery list integration; tasks are scheduled relative to the event date (e.g. "3 days before") and auto-shift when the event date changes; events and their tasks auto-surface on the relevant days in the menu view

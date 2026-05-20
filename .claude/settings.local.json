@@ -27,7 +27,9 @@
       "Bash(ffmpeg -ss 5.75 -i \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/intro.mp4\" -vf \"crop=800:896:0:2\" -c:v libx264 -crf 18 -preset fast -c:a copy \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/STT_intro_final.mp4\" -y)",
       "Bash(ffmpeg -ss 5.75 -i \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/intro.webm\" -vf \"crop=800:896:0:2\" -c:v libx264 -crf 12 -preset slow -c:a copy \"C:/Users/karen/projects/ClaudeCode/set-the-table-website/videos/STT_intro_final.mp4\" -y)",
       "Bash(npm ls *)",
-      "Bash(awk '{print $NF}')"
+      "Bash(awk '{print $NF}')",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\karen\\\\projects\\\\ClaudeCode\\\\set-the-table\" -Force)",
+      "Bash(Select-Object -Property Name, FullName)"
     ]
   }
 }

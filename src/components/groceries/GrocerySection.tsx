@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import clsx from "clsx";
-import { Tag, Trash2, Check, X, EyeOff } from "lucide-react";
+import { Tag, X, EyeOff } from "lucide-react";
 import { useAppContext } from "@/store/context";
 import { groceryItemKey } from "@/lib/ingredient-utils";
 import type { AggregatedIngredient } from "@/types";
@@ -34,7 +33,6 @@ interface GrocerySectionProps {
 export default function GrocerySection({ aisle, items, hideChecked, readOnly }: GrocerySectionProps) {
   const { dispatch, state } = useAppContext();
   const config = AISLE_CONFIG[aisle] ?? DEFAULT_CONFIG;
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const visibleItems = hideChecked
     ? items.filter((item) => {
@@ -61,7 +59,7 @@ export default function GrocerySection({ aisle, items, hideChecked, readOnly }: 
             <div
               key={key}
               onClick={readOnly ? undefined : () => {
-                if (item.stapleId && item.manualId) {
+                if (item.manualId) {
                   dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.manualId });
                 } else {
                   dispatch({ type: "TOGGLE_GROCERY_CHECKED", key });
@@ -75,27 +73,33 @@ export default function GrocerySection({ aisle, items, hideChecked, readOnly }: 
                   : checked ? "bg-gray-100 cursor-pointer" : "hover:bg-gray-100 active:bg-gray-200 cursor-pointer"
               )}
             >
-              {/* Checkbox — hidden in read-only mode */}
+              {/* Checkbox (recipe items) or dismiss × (manual items) — hidden in read-only mode */}
               {!readOnly && (
-                <div
-                  className={clsx(
-                    "w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors",
-                    checked ? "border-green-500" : "border-gray-300"
-                  )}
-                  style={checked ? { background: "#16a34a", borderColor: "#16a34a" } : {}}
-                >
-                  {checked && (
-                    <svg viewBox="0 0 10 8" className="w-2.5 h-2.5 text-white" fill="none">
-                      <path
-                        d="M1 4l2.5 2.5L9 1"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </div>
+                item.manualId ? (
+                  <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center text-gray-300">
+                    <X size={14} />
+                  </div>
+                ) : (
+                  <div
+                    className={clsx(
+                      "w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors",
+                      checked ? "border-green-500" : "border-gray-300"
+                    )}
+                    style={checked ? { background: "#16a34a", borderColor: "#16a34a" } : {}}
+                  >
+                    {checked && (
+                      <svg viewBox="0 0 10 8" className="w-2.5 h-2.5 text-white" fill="none">
+                        <path
+                          d="M1 4l2.5 2.5L9 1"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                )
               )}
 
               {/* Name + recipe sources */}
@@ -167,34 +171,6 @@ export default function GrocerySection({ aisle, items, hideChecked, readOnly }: 
                 </button>
               )}
 
-              {/* Delete — manual items only, hidden in read-only mode */}
-              {!readOnly && item.manualId && !item.stapleId && (
-                confirmingId === item.manualId ? (
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); dispatch({ type: "REMOVE_MANUAL_GROCERY", id: item.manualId! }); setConfirmingId(null); }}
-                      className="p-1 text-red-500 hover:text-red-700 transition-colors"
-                      title="Confirm delete"
-                    >
-                      <Check size={14} />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setConfirmingId(null); }}
-                      className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                      title="Cancel"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setConfirmingId(item.manualId!); }}
-                    className="text-gray-300 hover:text-red-400 transition-colors p-1 flex-shrink-0"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )
-              )}
             </div>
           );
         })}

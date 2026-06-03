@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BottomSheet from "@/components/shared/BottomSheet";
 import { useAppContext } from "@/store/context";
 import type { ManualGroceryItem } from "@/types";
@@ -24,15 +24,20 @@ const AISLES = [
 interface ManualAddSheetProps {
   open: boolean;
   onClose: () => void;
+  defaultStore?: string;
 }
 
-export default function ManualAddSheet({ open, onClose }: ManualAddSheetProps) {
+export default function ManualAddSheet({ open, onClose, defaultStore }: ManualAddSheetProps) {
   const { dispatch, state } = useAppContext();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [unit, setUnit] = useState("");
   const [aisle, setAisle] = useState("Miscellaneous");
-  const [store, setStore] = useState("");
+  const [store, setStore] = useState(defaultStore ?? "");
+
+  useEffect(() => {
+    if (open) setStore(defaultStore ?? "");
+  }, [open, defaultStore]);
 
   const handleAdd = () => {
     if (!name.trim()) return;
@@ -50,7 +55,7 @@ export default function ManualAddSheet({ open, onClose }: ManualAddSheetProps) {
     setAmount("");
     setUnit("");
     setAisle("Miscellaneous");
-    setStore("");
+    setStore(defaultStore ?? "");
     onClose();
   };
 

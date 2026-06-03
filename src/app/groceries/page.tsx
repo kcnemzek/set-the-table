@@ -365,7 +365,13 @@ export default function GroceriesPage() {
         </>
       )}
 
-      {tab === "list" && <ManualAddSheet open={addSheetOpen} onClose={() => setAddSheetOpen(false)} />}
+      {tab === "list" && (
+        <ManualAddSheet
+          open={addSheetOpen}
+          onClose={() => setAddSheetOpen(false)}
+          defaultStore={selectedStore && selectedStore !== UNASSIGNED ? selectedStore : undefined}
+        />
+      )}
     </div>
   );
 }

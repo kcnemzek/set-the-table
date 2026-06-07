@@ -10,6 +10,7 @@ import {
   saveHousehold,
   setUserHouseholdId,
 } from "@/lib/household";
+import { pruneMenuHistory } from "@/lib/dates";
 import type { FamilyMember } from "@/types";
 
 const EMPTY = {
@@ -145,7 +146,10 @@ export async function POST(request: Request) {
   }
   try {
     const dataKey = await resolveDataKey(session.user.id);
-    const body = await request.json();
+    const body = await request.json() as Record<string, unknown>;
+    if (body.menu && typeof body.menu === "object" && !Array.isArray(body.menu)) {
+      body.menu = pruneMenuHistory(body.menu as Record<string, unknown[]>);
+    }
     await writeData(dataKey, body);
     return NextResponse.json({ ok: true });
   } catch (err) {

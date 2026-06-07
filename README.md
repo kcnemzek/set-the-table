@@ -6,7 +6,7 @@ A mobile-first meal planning web app for families. Plan the week's meals, build 
 
 ## Features
 
-- **Menu planning** — plan meals for the next 10 days
+- **Menu planning** — plan meals week by week; browse history up to 6 months back with prev/next week navigation; default view always shows today and at least a full week ahead
 - **Discover** — two modes: **Browse** (search Edamam's recipe database with cuisine/diet/dish filters, or generate random AI-powered suggestions) and **Web Search** (natural language queries like "best mac and cheese recipe" powered by Claude; results show source, snippet, and a direct Import button)
 - **Favorites** — save recipes you love for quick access
 - **My Recipes** — add your own custom recipes with ingredients; import by pasting text, uploading up to 2 photos (snap or from library), or entering a URL (AI-powered); source URL is always saved with the recipe for reference
@@ -52,7 +52,7 @@ src/
 │   ├── recipes/          # Recipe cards, search
 │   ├── groceries/        # Grocery sections
 │   └── shared/           # Reusable components
-├── lib/                  # Utilities (dates, emoji mapping, invite/household helpers)
+├── lib/                  # Utilities (dates/menu-week helpers, emoji mapping, invite/household helpers)
 ├── store/                # React context + state management
 ├── types/                # TypeScript types
 ├── auth.ts               # NextAuth configuration (+ household invite resolution)

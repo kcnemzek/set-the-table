@@ -287,7 +287,7 @@ Household records are stored at separate KV keys (not part of user data):
 
 ```
 AppState
-├── menu                  Menu (10-day rolling window)
+├── menu                  Menu (all dates; UI shows a week-based window)
 ├── favorites             string[]
 ├── dislikedRecipes       string[]
 ├── customRecipes         CustomRecipe[]
@@ -333,7 +333,7 @@ AppState
 |-------|------|-------------|
 | `/` | No | Redirects to `/menu` |
 | `/login` | No | Google OAuth sign-in |
-| `/menu` | Yes | 10-day meal plan |
+| `/menu` | Yes | Weekly meal plan with Sun–Sat week navigation and 6-month history |
 | `/discover` | Yes | Discover — recipe search + AI generate (Edamam) |
 | `/recipes` | Yes | My Kitchen — Favorites, My Recipes, Cheat Sheets tabs |
 | `/groceries` | Yes | Aggregated shopping list from 10-day menu + event plans; store filter chips |
@@ -440,6 +440,7 @@ User action
   → resolveDataKey(userId)
       → "household-data:{householdId}"  ← if in a household
          OR "app-data:{userId}"          ← solo
+  → pruneMenuHistory(state.menu)        ← drops dates older than 180 days
   → KV.set(dataKey, state)              ← if KV configured
      OR write ./data/{key-as-filename}.json ← fallback
 ```
@@ -590,8 +591,9 @@ layout.tsx
 │       │   └── logo, Menu / Recipes / Groceries tabs, user avatar
 │       ├── MobileHeader (mobile)
 │       │
-│       ├── /menu → MenuPage
-│       │   └── DayCard × 10
+│       ├── /menu → MenuPage (client — holds weekOffset state)
+│       │   ├── week nav header: ChevronLeft / range label / ChevronRight / Today button
+│       │   └── DayCard × 7–10 (week view; 8–10 days on Thu–Sat to bridge to next week)
 │       │       ├── DayEventSummaries (auto-surfaced event headlines + tasks; read-only, always top)
 │       │       ├── DayEntryItem × n  (recipe/text/headline rows, drag-to-reorder)
 │       │       ├── AddEntrySheet     (3 tabs: My Recipes, Favorites, Templates; + Note/Headline pills)

@@ -107,10 +107,10 @@ export default function AddEntrySheet({
     if (state.favorites.length === 0) { setFavRecipes([]); return; }
     setFavLoading(true);
     try {
-      const recipes = await Promise.all(
-        state.favorites.map((id) => fetch(`/api/recipes/${id}`).then((r) => r.json()))
+      const results = await Promise.all(
+        state.favorites.map((id) => fetch(`/api/recipes/${id}`).then((r) => r.ok ? r.json() : null))
       );
-      setFavRecipes(recipes);
+      setFavRecipes(results.filter((r): r is RecipeSummary => r !== null && typeof r.title === "string"));
     } catch {
       setFavRecipes([]);
     } finally {

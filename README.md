@@ -85,6 +85,33 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Testing
+
+### Unit tests (Vitest)
+
+```bash
+npm test               # run all unit tests once
+npm run test:watch     # watch mode
+npm run test:unit      # run core unit tests only (reducer, dates, emoji, ingredients)
+```
+
+Unit tests live in `src/test/`.
+
+### E2E tests (Playwright)
+
+Start the dev server first, then run tests in a second terminal. Playwright reuses the running server rather than starting its own.
+
+```bash
+# Terminal 1
+npm run dev
+
+# Terminal 2
+npm run test:e2e        # headless
+npm run test:e2e:ui     # opens the Playwright UI (recommended for development)
+```
+
+E2E tests live in `e2e/`. Auth is handled via a generated session cookie in `e2e/global-setup.ts` — requires `AUTH_SECRET` in `.env.local`.
+
 ## Data Storage
 
 User data is stored in **Upstash Redis** via `@vercel/kv`. Solo users have a single key; household members share one key routed by `resolveDataKey(userId)`:

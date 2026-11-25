@@ -18,6 +18,29 @@ function getTaskDate(task: EventTask, eventDate: string): string | null {
   return task.date ?? null;
 }
 
+/** "14:30" → "2:30 PM" */
+function formatTaskTime(time: string): string {
+  return new Date("1970-01-01T" + time).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+/** Timed tasks first (earliest → latest), then untimed tasks in their original order. */
+function sortTasksByTime(tasks: EventTask[]): EventTask[] {
+  return tasks
+    .map((task, index) => ({ task, index }))
+    .sort((a, b) => {
+      const ta = a.task.time;
+      const tb = b.task.time;
+      if (ta && tb) return ta.localeCompare(tb) || a.index - b.index;
+      if (ta) return -1;
+      if (tb) return 1;
+      return a.index - b.index;
+    })
+    .map(({ task }) => task);
+}
+
 interface DayEventSummariesProps {
   dateStr: string;
 }
@@ -29,8 +52,8 @@ export default function DayEventSummaries({ dateStr }: DayEventSummariesProps) {
   const relevant = state.eventPlans
     .map((plan) => {
       const isEventDay = plan.date === dateStr;
-      const tasks = plan.tasks.filter(
-        (t) => getTaskDate(t, plan.date) === dateStr
+      const tasks = sortTasksByTime(
+        plan.tasks.filter((t) => getTaskDate(t, plan.date) === dateStr)
       );
       return { plan, isEventDay, tasks };
     })
@@ -41,7 +64,7 @@ export default function DayEventSummaries({ dateStr }: DayEventSummariesProps) {
 
   return (
     <div className="mb-1">
-      {relevant.map(({ plan, tasks }) => (
+      {relevant.map(({ plan, isEventDay, tasks }) => (
         <div key={plan.id} className="-mx-4 border-y border-indigo-200 mb-1 last:mb-0">
           {/* Event header — taps to event page */}
           <button
@@ -56,7 +79,7 @@ export default function DayEventSummaries({ dateStr }: DayEventSummariesProps) {
           </button>
 
           {/* Dishes — shown only on the event day, tap navigates to event */}
-          {plan.date === dateStr && plan.dishes.map((dish) => (
+          {isEventDay && plan.dishes.map((dish) => (
             <button
               key={dish.id}
               onClick={() => router.push(`/event-planning/${plan.id}`)}
@@ -69,7 +92,14 @@ export default function DayEventSummaries({ dateStr }: DayEventSummariesProps) {
             </button>
           ))}
 
-          {/* Tasks due on this day */}
+          {/* Slight separator between dishes and tasks */}
+          {isEventDay && plan.dishes.length > 0 && tasks.length > 0 && (
+            <div className="bg-indigo-50 px-4">
+              <div className="border-t border-indigo-200/70" />
+            </div>
+          )}
+
+          {/* Tasks due on this day, ordered by time */}
           {tasks.map((task) => (
             <div key={task.id} className={clsx("flex items-center gap-3 px-4 py-2.5 bg-indigo-50", task.completed && "opacity-50")}>
               <button
@@ -97,6 +127,16 @@ export default function DayEventSummaries({ dateStr }: DayEventSummariesProps) {
                   task.completed ? "line-through text-gray-400" : "text-gray-800 hover:text-gray-900"
                 )}
               >
+                {task.time && (
+                  <span
+                    className={clsx(
+                      "mr-1.5 text-xs font-semibold tabular-nums",
+                      task.completed ? "text-gray-400" : "text-indigo-500"
+                    )}
+                  >
+                    {formatTaskTime(task.time)}
+                  </span>
+                )}
                 {task.text}
               </button>
             </div>
